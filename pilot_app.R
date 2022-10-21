@@ -14,9 +14,23 @@ library(data.table)
 library(ggpubr)
 library(RColorBrewer)
 #load data
-meta_lut_ven <- readRDS("/Users/stephanie/Documents/App-1/ShinyLessons/data/meta_lut_ven.Rds")
-qc<-load_multiqc("/Users/stephanie/Library/Mobile Documents/com~apple~CloudDocs/Desktop/InformaticsProjectfiles/multiqc_data.json", sections="raw") 
-exp.jordan.m0m5 <- read.csv("/Users/stephanie/Documents/App-1/ShinyLessons/data/vstlimma.csv", header = FALSE)
+meta_lut_ven <- 
+  readRDS(
+    "/Users/stephanie/Documents/App-1/ShinyLessons/data/meta_lut_ven.Rds"
+    )
+
+qc <-
+  load_multiqc(
+    "/Users/stephanie/Library/Mobile Documents/com~apple~CloudDocs/Desktop/InformaticsProjectfiles/multiqc_data.json", 
+    sections="raw"
+    ) 
+
+exp.jordan.m0m5 <- 
+  read.csv(
+    "/Users/stephanie/Documents/App-1/ShinyLessons/data/vstlimma.csv", 
+    header = FALSE
+    )
+
 label.jordan.m0m5 <- read.csv("/Users/stephanie/Documents/App-1/ShinyLessons/data/Jordan_M0M5_ROSlow_label.csv", header = TRUE) %>% as_tibble()
 eval.jordan.m0m5 <- as.logical(gene %in% exp.jordan.m0m5$V2)
 gene <- params$gene
@@ -40,39 +54,55 @@ gene.jordan.m0m5<-gene.jordan.m0m5[c("AML", "Specimen", "gene1", "gene2","gene3"
 df.jordan.m0m5 <-inner_join(gene.jordan.m0m5, label.jordan.m0m5, by = "AML")
 df.jordan.m0m5 <-df.jordan.m0m5[c("FAB", "Specimen.y", "Specimen.x", "AML", "gene1", "gene2","gene3")]
 
-ui <- navbarPage("EAGLe",
-                 navbarMenu("Cancer Discovery",
-                            tabPanel("QC"),
-                                     
-#   fluidPage(theme = shinytheme("flatly"),
-# 
-#     titlePanel("MultiQC Analysis"),
-# 
-# 
-#     sidebarLayout(
-#         sidebarPanel(
-# 
-# 
-# 
-#           selectInput("var2",
-#                       label="Choose a QC Variable to Display",
-#                       choices = c("raw.salmon.percent_mapped", "raw.salmon.num_mapped", "raw.star.uniquely_mapped_percent", "raw.star.uniquely_mapped"),
-#                       selected = "raw.salmon.percent_mapped"),
-#       ),
-# 
-#     mainPanel(
-#       tabsetPanel(type = "tabs",
-#                   tabPanel("Plot", plotOutput("plotgraph2")),
-#                   tabPanel("Table", tableOutput("table")),
-#                   tabPanel("Summary",textOutput("summary"))
-# 
-#       )
-#     )
-#         ),
-#   ),
-# ),
-
-   tabPanel("Gene Centric Analysis",
+ui <- 
+  navbarPage(
+    "EAGLe",
+    navbarMenu(
+      "Cancer Discovery",
+      tabPanel(
+        "QC",
+        fluidPage(
+          theme = 
+            shinytheme("flatly"),
+          titlePanel(
+            "MultiQC Analysis"
+            ),
+          sidebarLayout(
+            sidebarPanel(
+              selectInput(
+                "var2",
+                label="Choose a QC Variable to Display",
+                choices = 
+                  c("raw.salmon.percent_mapped", 
+                    "raw.salmon.num_mapped", 
+                    "raw.star.uniquely_mapped_percent", 
+                    "raw.star.uniquely_mapped"
+                    ),
+                selected = "raw.salmon.percent_mapped"
+                ),
+              ),
+            mainPanel(
+              tabsetPanel(
+                type = "tabs",
+                tabPanel(
+                  "Plot", 
+                  plotOutput("plotgraph2")
+                  ),
+                tabPanel(
+                  "Table", 
+                  tableOutput("table")
+                  ),
+                tabPanel(
+                  "Summary",
+                  textOutput("summary")
+                  )
+                )
+              ) # End mainPanel
+            ), # End sidebarlayout
+          )
+        ),
+      ),
+    tabPanel("Gene Centric Analysis",
             fluidPage(theme= shinytheme("flatly"),
                       
                       titlePanel("Gene Centric Analysis"),
