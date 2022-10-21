@@ -145,8 +145,10 @@ ui <-
     ) #end BEAT navbarMenu
   ) #end navbarPage
 
-server <- function(input, output, session) {
+server <- 
+  function(input, output, session) {
   
+  print("Initializing renderPlots")
   options(shiny.reactlog = TRUE)
   
   output$QCplot <- renderPlot({
@@ -184,6 +186,7 @@ server <- function(input, output, session) {
         geom_vline(xintercept=94, linetype="dashed", color = "green") +
         ggtitle(label = "PercentBlastsInBM and PercentBlastsInPB vs Ven AUC; 60% blast cutoff = 77")
     }) #end renderPlot
+   print("complete")
 } #end server
 
 
