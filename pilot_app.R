@@ -19,8 +19,8 @@ library(reactlog)
 #reactlogShow(time = TRUE)
 
 #load data
-meta_lut_ven <- readRDS("/Users/stephanie/Documents/App-1/ShinyLessons/data/meta_lut_ven.Rds")
-qcdt<-load_multiqc("/Users/stephanie/Library/Mobile Documents/com~apple~CloudDocs/Desktop/InformaticsProjectfiles/multiqc_data.json", sections="raw") 
+meta_lut_ven <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/meta_lut_ven.Rds")
+qcdt<-load_multiqc("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
 # exp.jordan.m0m5 <- read.table("/Users/stephanie/Documents/App-1/ShinyLessons/data/vstlimma.csv",sep = ",",header = TRUE)
 # label.jordan.m0m5 <- read.csv("/Users/stephanie/Documents/App-1/ShinyLessons/data/Jordan_M0M5_ROSlow_label.csv", header = TRUE) %>% as_tibble()
 # eval.jordan.m0m5 <- as.logical(gene %in% exp.jordan.m0m5$ext_gene)
