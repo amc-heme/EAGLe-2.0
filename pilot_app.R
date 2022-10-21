@@ -57,21 +57,21 @@ ui <-
               type =
                 "tabs",
               tabPanel(
-                "Plot",
+                "QC Plot",
                 plotOutput(
                   "QCplot"
                   )
               ), #end tabPanel
               tabPanel(
-                "Table",
+                "Table1",
                 tableOutput(
-                  "table"
+                  "table1"
                   )
               ), #end tabPanel
               tabPanel(
-                "Summary",
+                "Summary1",
                 textOutput(
-                  "summary"
+                  "summary1"
                   )
                 ) #end tabPanel
               ) #end tabsetPanel
@@ -117,21 +117,21 @@ ui <-
               type =
                 "tabs",
               tabPanel(
-                "Plot",
+                "BlastPercentagePlot",
                 plotOutput(
                   "BlastPlot"
                   )
               ), #end tabPanel
               tabPanel(
-                "Table",
+                "Table2",
                 tableOutput(
-                  "table"
+                  "table2"
                   ) 
               ),#end tabPanel
               tabPanel(
-                "Summary",
+                "Summary2",
                 textOutput(
-                  "summary"
+                  "summary2"
                   )
                 ) #end tabPanel
               ) #end tabsetPanel
@@ -160,7 +160,7 @@ server <-
                      "metadata.sample_id"= qcdt$metadata.sample_id)
     
     
-    ggplot(qcdt, aes(metadata.sample_id, QCdata)) +
+   QCplot <- ggplot(qcdt, aes(metadata.sample_id, QCdata)) +
         geom_point(size = 3) +
         theme_cowplot (12) +
         theme(axis.text.x =
