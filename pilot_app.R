@@ -14,6 +14,8 @@ library(data.table)
 library(ggpubr)
 library(RColorBrewer)
 library(janitor)
+library(reactlog)
+options(shiny.reactlog=TRUE)
 #load data
 meta_lut_ven <- readRDS("/Users/stephanie/Documents/App-1/ShinyLessons/data/meta_lut_ven.Rds")
 qcdt<-load_multiqc("/Users/stephanie/Library/Mobile Documents/com~apple~CloudDocs/Desktop/InformaticsProjectfiles/multiqc_data.json", sections="raw") 
