@@ -25,7 +25,8 @@ qcdt<-load_multiqc("/Users/stephanie/Library/Mobile Documents/com~apple~CloudDoc
 # label.jordan.m0m5 <- read.csv("/Users/stephanie/Documents/App-1/ShinyLessons/data/Jordan_M0M5_ROSlow_label.csv", header = TRUE) %>% as_tibble()
 # eval.jordan.m0m5 <- as.logical(gene %in% exp.jordan.m0m5$ext_gene)
 
-ui <- navbarPage(
+ui <-
+  navbarPage(
   "EAGLe",
   navbarMenu(
     "Cancer Discovery",
@@ -38,7 +39,7 @@ ui <- navbarPage(
             ),
         titlePanel(
           "MultiQC Analysis"
-        ), #end MultiQC tabPanel
+        ), 
         sidebarLayout(
           sidebarPanel(
             selectInput(
@@ -77,7 +78,7 @@ ui <- navbarPage(
             ) #end mainPanel
           ) #end sidebarLayout
         ) #end fluidPage
-      ), #end QC tabpanel
+      ), #end QC tabPanel
     tabPanel(
       "Gene Centric Analysis"
       ), #end Genecentric tabPanel
@@ -88,11 +89,9 @@ ui <- navbarPage(
       "GSEA"
       ) #end GSEA tabPanel
   ), #end CD navbarmenu
-  
-  navbarMenu(
-    "BEAT-AML",
+  navbarMenu("BEAT-AML",
     tabPanel(
-      "Gene Centric Analysis",
+      "Gene Centric Plots",
       fluidPage(
         theme =
           shinytheme(
@@ -122,19 +121,19 @@ ui <- navbarPage(
                 plotOutput(
                   "BlastPlot"
                   )
-              ),
+              ), #end tabPanel
               tabPanel(
                 "Table",
                 tableOutput(
                   "table"
-                  )
-              ),
+                  ) 
+              ),#end tabPanel
               tabPanel(
                 "Summary",
                 textOutput(
                   "summary"
                   )
-                )
+                ) #end tabPanel
               ) #end tabsetPanel
             ) #end mainPanel
           ) #end sidebarLayout
@@ -149,18 +148,16 @@ ui <- navbarPage(
 server <- function(input, output, session) {
   
   options(shiny.reactlog = TRUE)
- 
-   QCdata <- switch(
-    input$QCvar,
-    "raw.salmon.percent_mapped"= qcdt$raw.salmon.percent_mapped,
-    "raw.salmon.num_mapped" = qcdt$raw.salmon.num_mapped,
-    "raw.star.uniquely_mapped_percent" = qcdt$raw.star.uniquely_mapped_percent,
-    "raw.star.uniquely_mapped" = qcdt$raw.star.uniquely_mapped,
-    "metadata.sample_id"= qcdt$metadata.sample_id
-    )
-  
   
   output$QCplot <- renderPlot({
+    QCdata <- switch(input$QCvar,
+                     "raw.salmon.percent_mapped"= qcdt$raw.salmon.percent_mapped,
+                     "raw.salmon.num_mapped" = qcdt$raw.salmon.num_mapped,
+                     "raw.star.uniquely_mapped_percent" = qcdt$raw.star.uniquely_mapped_percent,
+                     "raw.star.uniquely_mapped" = qcdt$raw.star.uniquely_mapped,
+                     "metadata.sample_id"= qcdt$metadata.sample_id)
+    
+    
     ggplot(qcdt, aes(metadata.sample_id, QCdata)) +
         geom_point(size = 3) +
         theme_cowplot (12) +
@@ -170,15 +167,13 @@ server <- function(input, output, session) {
       QCplot
     }) #end renderPlot
   
-  BlastData <- switch (
-    input$BlastVar,
-    "SampleID" = meta_lut_ven$SampleID,
-    "PercentBlastsInBM" = meta_lut_ven$PercentBlastsInBM,
-    "PercentBlastsInPB" = meta_lut_ven$PercentBlastsInPB)
-  print("data:")
-  print(BlastData)
   
    output$BlastPlot <-renderPlot({
+     BlastData <- switch (input$BlastVar,
+                 "SampleID" = meta_lut_ven$SampleID,
+                 "PercentBlastsInBM" = meta_lut_ven$PercentBlastsInBM,
+                 "PercentBlastsInPB" = meta_lut_ven$PercentBlastsInPB)
+     
       ggplot(meta_lut_ven, aes(AUC, BlastData)) +
         geom_point() +
         theme_light() +
