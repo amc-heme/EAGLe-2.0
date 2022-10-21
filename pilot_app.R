@@ -147,19 +147,21 @@ ui <- navbarPage(
   ) #end navbarPage
 
 server <- function(input, output, session) {
+  
   options(shiny.reactlog = TRUE)
-  output$QCplot <-
-    renderPlot({
-      print("computing QCplot")
-      QCdata <- switch(
-        input$QCvar,
-        "raw.salmon.percent_mapped"= qc$raw.salmon.percent_mapped,
-        "raw.salmon.num_mapped" = qc$raw.salmon.num_mapped,
-        "raw.star.uniquely_mapped_percent" = qc$raw.star.uniquely_mapped_percent,
-        "raw.star.uniquely_mapped" = qc$raw.star.uniquely_mapped,
-        "metadata.sample_id"= qc$metadata.sample_id)
-
-      QCplot <- ggplot(qcdt, aes(metadata.sample_id, QCdata)) +
+ 
+   QCdata <- switch(
+    input$QCvar,
+    "raw.salmon.percent_mapped"= qcdt$raw.salmon.percent_mapped,
+    "raw.salmon.num_mapped" = qcdt$raw.salmon.num_mapped,
+    "raw.star.uniquely_mapped_percent" = qcdt$raw.star.uniquely_mapped_percent,
+    "raw.star.uniquely_mapped" = qcdt$raw.star.uniquely_mapped,
+    "metadata.sample_id"= qcdt$metadata.sample_id
+    )
+  
+  
+  output$QCplot <- renderPlot({
+    ggplot(qcdt, aes(metadata.sample_id, QCdata)) +
         geom_point(size = 3) +
         theme_cowplot (12) +
         theme(axis.text.x =
@@ -167,18 +169,17 @@ server <- function(input, output, session) {
       print(QCplot)
       QCplot
     }) #end renderPlot
-  output$BlastPlot <-
-    renderPlot({
-      print("computing blastplot")
-      BlastData <- switch(
-        input$BlastVar,
-        "SampleID" = meta_lut_ven$SampleID,
-        "PercentBlastsInBM" = meta_lut_ven$PercentBlastsInBM,
-        "PercentBlastsInPB" = meta_lut_ven$PercentBlastsInPB)
-      print("data:")
-      print(BlastData)
-
-      BlastPlot <- ggplot(meta_lut_ven, aes(AUC, BlastData)) +
+  
+  BlastData <- switch (
+    input$BlastVar,
+    "SampleID" = meta_lut_ven$SampleID,
+    "PercentBlastsInBM" = meta_lut_ven$PercentBlastsInBM,
+    "PercentBlastsInPB" = meta_lut_ven$PercentBlastsInPB)
+  print("data:")
+  print(BlastData)
+  
+   output$BlastPlot <-renderPlot({
+      ggplot(meta_lut_ven, aes(AUC, BlastData)) +
         geom_point() +
         theme_light() +
         geom_hline(yintercept=60, linetype="dashed", color = "red") +
@@ -187,8 +188,6 @@ server <- function(input, output, session) {
         geom_vline(xintercept=221, linetype="dashed", color = "green") +
         geom_vline(xintercept=94, linetype="dashed", color = "green") +
         ggtitle(label = "PercentBlastsInBM and PercentBlastsInPB vs Ven AUC; 60% blast cutoff = 77")
-      print(BlastPlot)
-      BlastPlot
     }) #end renderPlot
 } #end server
 
