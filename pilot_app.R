@@ -97,11 +97,11 @@ ui <-
                            choices = list("Value" = 1, "Class" = 2,
                                           "Gene" = 3),selected = 3),
               radioButtons("YaxisVar_CDgene", h3("Y axis variable"),
-                           choices = list("Value" = 1, "Class" = 2,
-                                          "Gene" = 3),selected = 1),
+                           choices = list("Value" = 4, "Class" = 5,
+                                          "Gene" = 6),selected = 4),
               radioButtons("FillVar_CDgene", h3("Fill variable"),
-                           choices = list("Value" = 1, "Class" = 2,
-                                          "Gene" = 3), selected = 2)
+                           choices = list("Value" = 7, "Class" = 8,
+                                          "Gene" = 9), selected = 8)
               ),
             mainPanel(
               tabsetPanel(
@@ -194,85 +194,116 @@ server <-
   options(shiny.reactlog = TRUE)
   
   output$QCplot <- renderPlot({
-    QCdata <- switch(input$QCvar,
-                     "raw.salmon.percent_mapped"= qcdt$raw.salmon.percent_mapped,
-                     "raw.salmon.num_mapped" = qcdt$raw.salmon.num_mapped,
-                     "raw.star.uniquely_mapped_percent" = qcdt$raw.star.uniquely_mapped_percent,
-                     "raw.star.uniquely_mapped" = qcdt$raw.star.uniquely_mapped,
-                     "metadata.sample_id"= qcdt$metadata.sample_id)
+    QCdata <- switch(
+      input$QCvar,
+      "raw.salmon.percent_mapped" = qcdt$raw.salmon.percent_mapped,
+      "raw.salmon.num_mapped" = qcdt$raw.salmon.num_mapped,
+      "raw.star.uniquely_mapped_percent" = qcdt$raw.star.uniquely_mapped_percent,
+      "raw.star.uniquely_mapped" = qcdt$raw.star.uniquely_mapped,
+      "metadata.sample_id" = qcdt$metadata.sample_id
+    )
     
     
-   QCplot <- ggplot(qcdt, aes(metadata.sample_id, QCdata)) +
-        geom_point(size = 3) +
-        theme_cowplot (12) +
-        theme(axis.text.x =
-                element_text(angle= 60, hjust = 1))
-      print(QCplot)
-      QCplot
-    }) #end renderPlot
-  #gene centric reactive plot
+    QCplot <- ggplot(qcdt, aes(metadata.sample_id, QCdata)) +
+      geom_point(size = 3) +
+      theme_cowplot (12) +
+      theme(axis.text.x =
+              element_text(angle = 60, hjust = 1))
+    print(QCplot)
+    QCplot
+  }) #end renderPlot
+#gene centric reactive plot output for selectizeInput 
   updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
-
-   xvar_CDgene <- reactiveValues(data = vst.goi)
-     observeEvent(input$XaxisVar_CDgene, {
-   if(input$XaxisVar_CDgene == "1"){
-     xvar_CDgene$data <- vst.goi$value}
-   if(input$XaxisVar_CDgene =="2"){
-     xvar_CDgene$data <- vst.goi$class}
-   if(input$XaxisVar_CDgene =="3"){
-     xvar_CDgene$data <- input$VSTCDgenechoice}
- })
-   yvar_CDgene <- reactiveValues(data = vst.goi)
-     observeEvent(input$YaxisVar_CDgene, {
-     if(input$YaxisVar_CDgene == "1"){
-       yvar_CDgene$data <- vst.goi$value}
-     if(input$YaxisVar_CDgene =="2"){
-       yvar_CDgene$data <- vst.goi$class}
-     if(input$YaxisVar_CDgene =="3"){
-       yvar_CDgene$data <- input$VSTCDgenechoice}
-   })
-   fillvar_CDgene <- reactiveValues(data = vst.goi)
-     observeEvent(input$FillVar_CDgene, {
-     if(input$ FillVar_CDgene== "1"){
-       fillvar_CDgene$data <- vst.goi$value}
-     if(input$FillVar_CDgene =="2"){
-       fillvar_CDgene$data <- vst.goi$class}
-     if(input$FillVar_CDgene =="3"){
-       fillvar_CDgene$data <- input$VSTCDgenechoice}
-   })
-  output$VSTCDplot<-
+#x axis output for gene centric plot in CD
+  xvar_CDgene <- reactiveValues(data = vst.goi)
+  observeEvent(input$XaxisVar_CDgene, {
+    if (input$XaxisVar_CDgene == "1") {
+      xvar_CDgene$data <- vst.goi$value
+    }
+    if (input$XaxisVar_CDgene == "2") {
+      xvar_CDgene$data <- vst.goi$class
+    }
+    if (input$XaxisVar_CDgene == "3") {
+      xvar_CDgene$data <- input$VSTCDgenechoice
+    }
+  })
+#y axis output for gene centric plot in CD
+  yvar_CDgene <- reactiveValues(data = vst.goi)
+  observeEvent(input$YaxisVar_CDgene, {
+    if (input$YaxisVar_CDgene == "4") {
+      yvar_CDgene$data <- vst.goi$value
+    }
+    if (input$YaxisVar_CDgene == "5") {
+      yvar_CDgene$data <- vst.goi$class
+    }
+    if (input$YaxisVar_CDgene == "6") {
+      yvar_CDgene$data <- input$VSTCDgenechoice
+    }
+  })
+   # fillvar_CDgene <- reactiveValues(data = vst.goi)
+   #   observeEvent(input$FillVar_CDgene, {
+   #   if(input$FillVar_CDgene== "7"){
+   #     fillvar_CDgene$data <- vst.goi$value}
+   #   if(input$FillVar_CDgene =="8"){
+   #     fillvar_CDgene$data <- vst.goi$class}
+   #   if(input$FillVar_CDgene =="9"){
+   #     fillvar_CDgene$data <- input$VSTCDgenechoice}
+   # })
+  output$VSTCDplot <-
     renderPlot({
-      colors <- c("#008080", "#DB4331")
-                      
-      ggplot(vst.goi, aes(x = xvar_CDgene$data, y = yvar_CDgene$data, fill = fillvar_CDgene$data)) +
+      #build a color palette
+      colors <-
+        colorRampPalette(c("red", "blue", "purple", "green", "yellow"))(12)
+      
+      ggplot(vst.goi,
+             aes(
+               x = xvar_CDgene$data,
+               y = yvar_CDgene$data,
+               fill = class
+             )) +
         geom_boxplot(outlier.shape = NA) +
         scale_fill_manual(values = colors) +
         scale_color_manual(values = colors) +
-        geom_point(alpha = 0.5, position = position_jitterdodge(jitter.width = 0.2), aes(color = class)) +
+        geom_point(alpha = 0.5,
+                   position = position_jitterdodge(jitter.width = 0.2),
+                   aes(color = class)) +
         theme_light() +
-        ylab("Batch Corrected Variance Stabilized Data") +
-        xlab("Gene") +
+        ylab("") +
+        xlab("") +
         ggtitle("Gene Expression:Sensitive vs Resistant")
     }) #end render plot
-
-
-   output$BlastPlot <-renderPlot({
-     BlastData <- switch (input$BlastVar,
-                 "SampleID" = meta_lut_ven$SampleID,
-                 "PercentBlastsInBM" = meta_lut_ven$PercentBlastsInBM,
-                 "PercentBlastsInPB" = meta_lut_ven$PercentBlastsInPB)
-     
-      ggplot(meta_lut_ven, aes(AUC, BlastData)) +
-        geom_point() +
-        theme_light() +
-        geom_hline(yintercept=60, linetype="dashed", color = "red") +
-        geom_vline(xintercept=255, linetype="dashed", color = "blue") +
-        geom_vline(xintercept=60, linetype="dashed", color = "blue") +
-        geom_vline(xintercept=221, linetype="dashed", color = "green") +
-        geom_vline(xintercept=94, linetype="dashed", color = "green") +
-        ggtitle(label = "PercentBlastsInBM and PercentBlastsInPB vs Ven AUC; 60% blast cutoff = 77")
-    }) #end renderPlot
-} #end server
+  
+  
+  
+  output$BlastPlot <- renderPlot({
+    BlastData <- switch (
+      input$BlastVar,
+      "SampleID" = meta_lut_ven$SampleID,
+      "PercentBlastsInBM" = meta_lut_ven$PercentBlastsInBM,
+      "PercentBlastsInPB" = meta_lut_ven$PercentBlastsInPB
+    )
+    
+    ggplot(meta_lut_ven, aes(AUC, BlastData)) +
+      geom_point() +
+      theme_light() +
+      geom_hline(yintercept = 60,
+                 linetype = "dashed",
+                 color = "red") +
+      geom_vline(xintercept = 255,
+                 linetype = "dashed",
+                 color = "blue") +
+      geom_vline(xintercept = 60,
+                 linetype = "dashed",
+                 color = "blue") +
+      geom_vline(xintercept = 221,
+                 linetype = "dashed",
+                 color = "green") +
+      geom_vline(xintercept = 94,
+                 linetype = "dashed",
+                 color = "green") +
+      ggtitle(label = "PercentBlastsInBM and PercentBlastsInPB vs Ven AUC; 60% blast cutoff = 77")
+  }) #end renderPlot
+  } #end server
 # Run the application 
  shinyApp(ui = ui, server = server)
 
