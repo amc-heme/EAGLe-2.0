@@ -21,6 +21,7 @@ library(reactlog)
 #load data
 meta_lut_ven <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/meta_lut_ven.Rds")
 qcdt<-load_multiqc("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
+vst.goi <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
 # exp.jordan.m0m5 <- read.table("/Users/stephanie/Documents/App-1/ShinyLessons/data/vstlimma.csv",sep = ",",header = TRUE)
 # label.jordan.m0m5 <- read.csv("/Users/stephanie/Documents/App-1/ShinyLessons/data/Jordan_M0M5_ROSlow_label.csv", header = TRUE) %>% as_tibble()
 # eval.jordan.m0m5 <- as.logical(gene %in% exp.jordan.m0m5$ext_gene)
@@ -63,15 +64,9 @@ ui <-
                   )
               ), #end tabPanel
               tabPanel(
-                "Table1",
-                tableOutput(
-                  "table1"
-                  )
-              ), #end tabPanel
-              tabPanel(
-                "Summary1",
-                textOutput(
-                  "summary1"
+              "Summary1",
+              textOutput(
+              "summary1"
                   )
                 ) #end tabPanel
               ) #end tabsetPanel
@@ -80,15 +75,62 @@ ui <-
         ) #end fluidPage
       ), #end QC tabPanel
     tabPanel(
-      "Gene Centric Analysis"
+      "Gene Centric Analysis",
+      fluidPage(
+        theme=
+          shinytheme("flatly"),
+        titlePanel(
+            "Gene Centric Analysis"
+            ),
+          sidebarLayout(
+            sidebarPanel(
+              selectizeInput(
+                "VSTCDgenechoice",
+                label=
+                  "Choose a gene for analysis",
+                choices =
+                  NULL,
+                selected = NULL,
+                options = list(maxItems = 5)
+                ),
+              radioButtons("XaxisVar_CDgene", h3("X axis variable"),
+                           choices = list("Value" = 1, "Class" = 2,
+                                          "Gene" = 3),selected = 3),
+              radioButtons("YaxisVar_CDgene", h3("Y axis variable"),
+                           choices = list("Value" = 1, "Class" = 2,
+                                          "Gene" = 3),selected = 1),
+              radioButtons("FillVar_CDgene", h3("Fill variable"),
+                           choices = list("Value" = 1, "Class" = 2,
+                                          "Gene" = 3), selected = 2)
+              ),
+            mainPanel(
+              tabsetPanel(
+                type =
+                  "tabs",
+                tabPanel(
+                  "Gene Centric Plot",
+                  plotOutput(
+                    "VSTCDplot"
+                    )
+                  ),
+                tabPanel(
+                  "VST Summary",
+                  textOutput(
+                    "VSTCDsummary"
+                    )
+                  )
+                )
+              )
+            )
+        )
       ), #end Genecentric tabPanel
     tabPanel(
       "DESeq Analysis"
       ), #end DE tabPanel
     tabPanel(
       "GSEA"
-      ) #end GSEA tabPanel
-  ), #end CD navbarmenu
+      )#end GSEA tabPanel
+    ),#end gene centric tabPanel #end CD navbarmenu
   navbarMenu("BEAT-AML",
     tabPanel(
       "Gene Centric Plots",
@@ -168,8 +210,52 @@ server <-
       print(QCplot)
       QCplot
     }) #end renderPlot
-  
-  
+  #gene centric reactive plot
+  updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
+
+   xvar_CDgene <- reactiveValues(data = vst.goi)
+     observeEvent(input$XaxisVar_CDgene, {
+   if(input$XaxisVar_CDgene == "1"){
+     xvar_CDgene$data <- vst.goi$value}
+   if(input$XaxisVar_CDgene =="2"){
+     xvar_CDgene$data <- vst.goi$class}
+   if(input$XaxisVar_CDgene =="3"){
+     xvar_CDgene$data <- input$VSTCDgenechoice}
+ })
+   yvar_CDgene <- reactiveValues(data = vst.goi)
+     observeEvent(input$YaxisVar_CDgene, {
+     if(input$YaxisVar_CDgene == "1"){
+       yvar_CDgene$data <- vst.goi$value}
+     if(input$YaxisVar_CDgene =="2"){
+       yvar_CDgene$data <- vst.goi$class}
+     if(input$YaxisVar_CDgene =="3"){
+       yvar_CDgene$data <- input$VSTCDgenechoice}
+   })
+   fillvar_CDgene <- reactiveValues(data = vst.goi)
+     observeEvent(input$FillVar_CDgene, {
+     if(input$ FillVar_CDgene== "1"){
+       fillvar_CDgene$data <- vst.goi$value}
+     if(input$FillVar_CDgene =="2"){
+       fillvar_CDgene$data <- vst.goi$class}
+     if(input$FillVar_CDgene =="3"){
+       fillvar_CDgene$data <- input$VSTCDgenechoice}
+   })
+  output$VSTCDplot<-
+    renderPlot({
+      colors <- c("#008080", "#DB4331")
+                      
+      ggplot(vst.goi, aes(x = xvar_CDgene$data, y = yvar_CDgene$data, fill = fillvar_CDgene$data)) +
+        geom_boxplot(outlier.shape = NA) +
+        scale_fill_manual(values = colors) +
+        scale_color_manual(values = colors) +
+        geom_point(alpha = 0.5, position = position_jitterdodge(jitter.width = 0.2), aes(color = class)) +
+        theme_light() +
+        ylab("Batch Corrected Variance Stabilized Data") +
+        xlab("Gene") +
+        ggtitle("Gene Expression:Sensitive vs Resistant")
+    }) #end render plot
+
+
    output$BlastPlot <-renderPlot({
      BlastData <- switch (input$BlastVar,
                  "SampleID" = meta_lut_ven$SampleID,
@@ -186,11 +272,8 @@ server <-
         geom_vline(xintercept=94, linetype="dashed", color = "green") +
         ggtitle(label = "PercentBlastsInBM and PercentBlastsInPB vs Ven AUC; 60% blast cutoff = 77")
     }) #end renderPlot
-   print("complete")
 } #end server
-
-
 # Run the application 
-shinyApp(ui = ui, server = server)
+ shinyApp(ui = ui, server = server)
 
 
