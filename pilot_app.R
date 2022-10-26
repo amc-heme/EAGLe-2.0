@@ -97,11 +97,11 @@ ui <-
                            choices = list("Value" = 1, "Class" = 2,
                                           "Gene" = 3),selected = 3),
               radioButtons("YaxisVar_CDgene", h3("Y axis variable"),
-                           choices = list("Value" = 4, "Class" = 5,
-                                          "Gene" = 6),selected = 4),
-              radioButtons("FillVar_CDgene", h3("Fill variable"),
-                           choices = list("Value" = 7, "Class" = 8,
-                                          "Gene" = 9), selected = 8)
+                           choices = list("Value" = 4, "Class" = 5)
+              #                             "Gene" = 6),selected = 4),
+              # radioButtons("FillVar_CDgene", h3("Fill variable"),
+              #              choices = list("Value" = 7, "Class" = 8,
+              #                             "Gene" = 9), selected = 8)
               ),
             mainPanel(
               tabsetPanel(
@@ -240,15 +240,7 @@ server <-
       yvar_CDgene$data <- input$VSTCDgenechoice
     }
   })
-   # fillvar_CDgene <- reactiveValues(data = vst.goi)
-   #   observeEvent(input$FillVar_CDgene, {
-   #   if(input$FillVar_CDgene== "7"){
-   #     fillvar_CDgene$data <- vst.goi$value}
-   #   if(input$FillVar_CDgene =="8"){
-   #     fillvar_CDgene$data <- vst.goi$class}
-   #   if(input$FillVar_CDgene =="9"){
-   #     fillvar_CDgene$data <- input$VSTCDgenechoice}
-   # })
+
   output$VSTCDplot <-
     renderPlot({
       #build a color palette
@@ -272,8 +264,6 @@ server <-
         xlab("") +
         ggtitle("Gene Expression:Sensitive vs Resistant")
     }) #end render plot
-  
-  
   
   output$BlastPlot <- renderPlot({
     BlastData <- switch (
