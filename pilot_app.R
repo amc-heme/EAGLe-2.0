@@ -22,6 +22,7 @@ library(reactlog)
 meta_lut_ven <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/meta_lut_ven.Rds")
 qcdt<-load_multiqc("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
 vst.goi <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
+dds.res <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/DEtable.rds")
 # exp.jordan.m0m5 <- read.table("/Users/stephanie/Documents/App-1/ShinyLessons/data/vstlimma.csv",sep = ",",header = TRUE)
 # label.jordan.m0m5 <- read.csv("/Users/stephanie/Documents/App-1/ShinyLessons/data/Jordan_M0M5_ROSlow_label.csv", header = TRUE) %>% as_tibble()
 # eval.jordan.m0m5 <- as.logical(gene %in% exp.jordan.m0m5$ext_gene)
@@ -93,13 +94,13 @@ ui <-
                 selected = NULL,
                 options = list(maxItems = 5)
                 ),
-              radioButtons("XaxisVar_CDgene", h3("X axis variable"),
+              radioButtons("XaxisVar_CDgene", h4("X axis variable"),
                            choices = list("Value" = "xvalue", "Class" = "xclass",
                                           "Gene" = "xgene"),selected = "xgene"),
-              radioButtons("YaxisVar_CDgene", h3("Y axis variable"),
+              radioButtons("YaxisVar_CDgene", h4("Y axis variable"),
                            choices = list("Value" = "yvalue", "Class" = "yclass",
                                           "Gene" = "ygene"),selected = "yvalue"),
-              radioButtons("FillVar_CDgene", h3("Fill variable"),
+              radioButtons("FillVar_CDgene", h4("Fill variable"),
                            choices = list("Class" = "fillclass", "Gene" = "fillgene"), selected = "fillclass")
               ),
             mainPanel(
@@ -123,23 +124,69 @@ ui <-
             )
         )
       ), #end Genecentric tabPanel
-    tabPanel(
-      "DESeq Analysis"
-      # fluidPage(
-      #   theme =
-      #     shinytheme(
-      #       "flatly"
-      #     ),
-      #   titlePanel(
-      #     "DE Table"
-      #   ), #end title
-      #   sidebarLayout(
-      #     sidebarPanel(
-      #       
-      #     )
-      #   )
-      # )
-      ), #end DE tabPanel
+    tabPanel("DESeq2 Analysis",
+             fluidPage(
+               theme =
+                 shinytheme("flatly"),
+               titlePanel("DESeq2 Table and Plot"),
+               #end title
+               sidebarLayout(
+                 sidebarPanel( 
+                   selectizeInput( #pick genes to filter DE table by
+                     "DECDgenechoice",
+                     label=
+                       "Choose a gene or group of genes from DE table",
+                     choices =
+                       NULL,
+                     selected = NULL,
+                     options = list(maxItems = 5)
+                   ),
+                   
+                   hr(),
+                   
+                   sliderInput( # OR pick a padj value range to search table by
+                     "CDpadj_slider",
+                     label = h4(
+                       "Select padj value range"
+                       ),
+                     min = 0,
+                     max = 8,
+                     value = c(0, 1)
+                     ),
+                   
+                   hr(),
+                   
+                   sliderInput( #filter by expression
+                     "CDlog2foldchangeslider",
+                     label = h4(
+                       "Select log2 fold change range"
+                     ),
+                     min = -4,
+                     max = 5,
+                     value = c(0, 5)
+                   )
+                   ),
+                 mainPanel(
+                   tabsetPanel(
+                     type =
+                       "tabs",
+                     tabPanel(
+                       "DE Table",
+                       tableOutput(
+                         "DETable"
+                       )
+                     ),
+                     tabPanel(
+                       "DE Plot",
+                       plotOutput(
+                         "DE Volcano Plot"
+                         )
+                       )
+                     )
+                   ) #end mainPanel
+                 ) #end sidebarlayout
+               ) #end fluidPage
+             ), #end DE tabPanel
     tabPanel(
       "GSEA"
       )#end GSEA tabPanel
@@ -206,6 +253,8 @@ server <-
   print("Initializing renderPlots")
   options(shiny.reactlog = TRUE)
   
+  
+##QC-Cancer Discovery output
   output$QCplot <- renderPlot({
     QCdata <- switch(
       input$QCvar,
@@ -225,7 +274,8 @@ server <-
     print(QCplot)
     QCplot
   }) #end renderPlot
-#gene centric reactive plot output for selectizeInput 
+  
+##Gene Centric-Cancer Discovery output
  updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
  
  datavst<-
@@ -233,7 +283,7 @@ server <-
      vst.goi %>% 
        dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
    })
- 
+  #x axis output
  xvar_CDgene <-
    eventReactive(input$XaxisVar_CDgene, {
      if (input$XaxisVar_CDgene == "xvalue") {
@@ -244,7 +294,7 @@ server <-
        "ext_gene"
      }
    })
- #y axis output for gene centric plot in CD
+  #y axis output f
  yvar_CDgene <-
    eventReactive(input$YaxisVar_CDgene, {
      if (input$YaxisVar_CDgene == "yvalue") {
@@ -255,7 +305,7 @@ server <-
        "ext_gene"
      }
    })
- 
+  #fill output
  fillvar_CDgene <-
    eventReactive(input$FillVar_CDgene, {
      if (input$FillVar_CDgene == "fillclass") {
@@ -264,10 +314,10 @@ server <-
        "ext_gene"
      }
    })
-
+ #plot output
   output$VSTCDplot <-
     renderPlot({
-#build a color palette
+ #build a color palette
       colors <-
         colorRampPalette(c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2"))(5)
       ggplot(datavst(),
@@ -281,13 +331,14 @@ server <-
         scale_color_manual(values = colors) +
         geom_point(alpha = 0.5,
                    position = position_jitterdodge(jitter.width = 0.2),
-                   aes(color = ext_gene)) +
+                   aes(color = ext_gene)) + #this needs to be reactive too
         theme_light() +
         ylab("") +
         xlab("") +
         ggtitle("Gene Expression:Sensitive vs Resistant")
     }) #end render plot
-  
+
+##Blast Percent plots- BEAT-AML output
   output$BlastPlot <- renderPlot({
     BlastData <- switch (
       input$BlastVar,
@@ -316,6 +367,29 @@ server <-
                  color = "green") +
       ggtitle(label = "PercentBlastsInBM and PercentBlastsInPB vs Ven AUC; 60% blast cutoff = 77")
   }) #end renderPlot
+
+  
+## DESeq2- Cancer Discovery outputs
+  updateSelectizeInput(session,"DECDgenechoice", choices = dds.res$Gene, server = TRUE)
+  
+  dataDECD<-
+    reactive({
+      dds.res %>% 
+        dplyr::filter(Gene %in% input$DECDgenechoice)
+    })
+  DEpadj <-
+    eventReactive({
+      dds.res %>% 
+        dplyr::filter(padj %in% input$CDpadj_slider)
+    })
+  DElog2 <-
+    eventReactive({
+      dds.res %>% 
+        dplyr::filter(log2FoldChange %in% input$CDlog2foldchangeslider)
+    })
+  output$DETable <- renderTable({
+    
+  })
   } #end server
 # Run the application 
  shinyApp(ui = ui, server = server)
