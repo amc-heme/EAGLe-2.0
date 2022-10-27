@@ -94,11 +94,11 @@ ui <-
                 options = list(maxItems = 5)
                 ),
               radioButtons("XaxisVar_CDgene", h3("X axis variable"),
-                           choices = list("Value" = 1, "Class" = 2,
-                                          "Gene" = 3),selected = 3),
+                           choices = list("Value" = "xvalue", "Class" = "xclass",
+                                          "Gene" = "xgene"),selected = "xgene"),
               radioButtons("YaxisVar_CDgene", h3("Y axis variable"),
-                           choices = list("Value" = 4, "Class" = 5)
-              #                             "Gene" = 6),selected = 4),
+                           choices = list("Value" = "yvalue", "Class" = "yclass",
+                                          "Gene" = "ygene"),selected = "yvalue")
               # radioButtons("FillVar_CDgene", h3("Fill variable"),
               #              choices = list("Value" = 7, "Class" = 8,
               #                             "Gene" = 9), selected = 8)
@@ -126,6 +126,20 @@ ui <-
       ), #end Genecentric tabPanel
     tabPanel(
       "DESeq Analysis"
+      # fluidPage(
+      #   theme =
+      #     shinytheme(
+      #       "flatly"
+      #     ),
+      #   titlePanel(
+      #     "DE Table"
+      #   ), #end title
+      #   sidebarLayout(
+      #     sidebarPanel(
+      #       
+      #     )
+      #   )
+      # )
       ), #end DE tabPanel
     tabPanel(
       "GSEA"
@@ -213,44 +227,45 @@ server <-
     QCplot
   }) #end renderPlot
 #gene centric reactive plot output for selectizeInput 
-  updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
-#x axis output for gene centric plot in CD
-  xvar_CDgene <- reactiveValues(data = vst.goi)
-  observeEvent(input$XaxisVar_CDgene, {
-    if (input$XaxisVar_CDgene == "1") {
-      xvar_CDgene$data <- vst.goi$value
-    }
-    if (input$XaxisVar_CDgene == "2") {
-      xvar_CDgene$data <- vst.goi$class
-    }
-    if (input$XaxisVar_CDgene == "3") {
-      xvar_CDgene$data <- input$VSTCDgenechoice
-    }
-  })
-#y axis output for gene centric plot in CD
-  yvar_CDgene <- reactiveValues(data = vst.goi)
-  observeEvent(input$YaxisVar_CDgene, {
-    if (input$YaxisVar_CDgene == "4") {
-      yvar_CDgene$data <- vst.goi$value
-    }
-    if (input$YaxisVar_CDgene == "5") {
-      yvar_CDgene$data <- vst.goi$class
-    }
-    if (input$YaxisVar_CDgene == "6") {
-      yvar_CDgene$data <- input$VSTCDgenechoice
-    }
-  })
-
+ updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
+ 
   output$VSTCDplot <-
     renderPlot({
+      xvar_CDgene <- 
+        eventReactive(
+          input$XaxisVar_CDgene, {
+          if (input$XaxisVar_CDgene == "xvalue") {
+            xvar_CDgene <- vst.goi$value
+          }
+          if (input$XaxisVar_CDgene == "xclass") {
+            xvar_CDgene <- vst.goi$class
+          }
+          if (input$XaxisVar_CDgene == "xgene") {
+            xvar_CDgene <- input$VSTCDgenechoice
+          }
+        })
+      #y axis output for gene centric plot in CD
+      yvar_CDgene <-
+        eventReactive(
+          input$YaxisVar_CDgene, {
+          if (input$YaxisVar_CDgene == "yvalue") {
+            yvar_CDgene <- vst.goi$value
+          }
+          if (input$YaxisVar_CDgene == "yclass") {
+            yvar_CDgene <- vst.goi$class
+          }
+          if (input$YaxisVar_CDgene == "ygene") {
+            yvar_CDgene <- input$VSTCDgenechoice
+          }
+        })
+
       #build a color palette
       colors <-
-        colorRampPalette(c("red", "blue", "purple", "green", "yellow"))(12)
-      
+        colorRampPalette(c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2"))(75)
       ggplot(vst.goi,
              aes(
-               x = xvar_CDgene$data,
-               y = yvar_CDgene$data,
+               x = ,
+               y = ,
                fill = class
              )) +
         geom_boxplot(outlier.shape = NA) +
