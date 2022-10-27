@@ -98,10 +98,9 @@ ui <-
                                           "Gene" = "xgene"),selected = "xgene"),
               radioButtons("YaxisVar_CDgene", h3("Y axis variable"),
                            choices = list("Value" = "yvalue", "Class" = "yclass",
-                                          "Gene" = "ygene"),selected = "yvalue")
-              # radioButtons("FillVar_CDgene", h3("Fill variable"),
-              #              choices = list("Value" = 7, "Class" = 8,
-              #                             "Gene" = 9), selected = 8)
+                                          "Gene" = "ygene"),selected = "yvalue"),
+              radioButtons("FillVar_CDgene", h3("Fill variable"),
+                           choices = list("Class" = "fillclass", "Gene" = "fillgene"), selected = "fillclass")
               ),
             mainPanel(
               tabsetPanel(
@@ -229,51 +228,60 @@ server <-
 #gene centric reactive plot output for selectizeInput 
  updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
  
+ datavst<-
+   reactive({
+     vst.goi %>% 
+       dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
+   })
+ 
+ xvar_CDgene <-
+   eventReactive(input$XaxisVar_CDgene, {
+     if (input$XaxisVar_CDgene == "xvalue") {
+       "value"
+     } else if (input$XaxisVar_CDgene == "xclass") {
+       "class"
+     } else if (input$XaxisVar_CDgene == "xgene") {
+       "ext_gene"
+     }
+   })
+ #y axis output for gene centric plot in CD
+ yvar_CDgene <-
+   eventReactive(input$YaxisVar_CDgene, {
+     if (input$YaxisVar_CDgene == "yvalue") {
+       "value"
+     } else if (input$YaxisVar_CDgene == "yclass") {
+       "class"
+     } else if (input$YaxisVar_CDgene == "ygene") {
+       "ext_gene"
+     }
+   })
+ 
+ fillvar_CDgene <-
+   eventReactive(input$FillVar_CDgene, {
+     if (input$FillVar_CDgene == "fillclass") {
+       "class"
+     } else if (input$FillVar_CDgene == "fillgene") {
+       "ext_gene"
+     }
+   })
+
   output$VSTCDplot <-
     renderPlot({
-      xvar_CDgene <- 
-        eventReactive(
-          input$XaxisVar_CDgene, {
-          if (input$XaxisVar_CDgene == "xvalue") {
-            xvar_CDgene <- vst.goi$value
-          }
-          if (input$XaxisVar_CDgene == "xclass") {
-            xvar_CDgene <- vst.goi$class
-          }
-          if (input$XaxisVar_CDgene == "xgene") {
-            xvar_CDgene <- input$VSTCDgenechoice
-          }
-        })
-      #y axis output for gene centric plot in CD
-      yvar_CDgene <-
-        eventReactive(
-          input$YaxisVar_CDgene, {
-          if (input$YaxisVar_CDgene == "yvalue") {
-            yvar_CDgene <- vst.goi$value
-          }
-          if (input$YaxisVar_CDgene == "yclass") {
-            yvar_CDgene <- vst.goi$class
-          }
-          if (input$YaxisVar_CDgene == "ygene") {
-            yvar_CDgene <- input$VSTCDgenechoice
-          }
-        })
-
-      #build a color palette
+#build a color palette
       colors <-
-        colorRampPalette(c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2"))(75)
-      ggplot(vst.goi,
+        colorRampPalette(c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2"))(5)
+      ggplot(datavst(),
              aes(
-               x = ,
-               y = ,
-               fill = class
+               x = .data[[xvar_CDgene()]],
+               y =  .data[[yvar_CDgene()]],
+               fill = .data[[fillvar_CDgene()]]
              )) +
         geom_boxplot(outlier.shape = NA) +
         scale_fill_manual(values = colors) +
         scale_color_manual(values = colors) +
         geom_point(alpha = 0.5,
                    position = position_jitterdodge(jitter.width = 0.2),
-                   aes(color = class)) +
+                   aes(color = ext_gene)) +
         theme_light() +
         ylab("") +
         xlab("") +
