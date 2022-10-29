@@ -15,6 +15,7 @@ library(ggpubr)
 library(RColorBrewer)
 library(janitor)
 library(reactlog)
+library(DT)
 #options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
@@ -23,6 +24,7 @@ meta_lut_ven <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/meta_l
 qcdt<-load_multiqc("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
 vst.goi <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
 dds.res <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/DEtable.rds")
+
 
 ui <-
   navbarPage(
@@ -136,23 +138,31 @@ ui <-
                      choices =
                        NULL,
                      selected = NULL,
-                     options = list(maxItems = 5)
+                     options = list(maxItems = NULL)
                    ),
                    
+                  hr(),
+                   
+                   # sliderInput( # OR pick a padj value range to search table by
+                   #   "CDpadj_slider",
+                   #   label = h4(
+                   #     "Select padj value range"
+                   #     ),
+                   #   min = 0,
+                   #   max = 7.5,
+                   #   value = c(0, 0.5)
+                   #   ),
+                  radioButtons("padjbutton", h4("padj range"), 
+                               choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "> 0.05" = "nonsigvar"), selected = "sigvar5"),
+                  
+                   
                    hr(),
                    
-                   sliderInput( # OR pick a padj value range to search table by
-                     "CDpadj_slider",
-                     label = h4(
-                       "Select padj value range"
-                       ),
-                     min = 0,
-                     max = 8,
-                     value = c(0, 1)
-                     ),
-                   
-                   hr(),
-                   
+                  radioButtons("DiffExpButton", h4("Differential Expression"),
+                               choices = list("Up" = "DEup", "Down" = "DEdown"), selected = "DEup"),
+                  
+                  hr(),
+                  
                    sliderInput( #filter by expression
                      "CDlog2foldchangeslider",
                      label = h4(
@@ -368,28 +378,75 @@ server <-
   
 ## DESeq2- Cancer Discovery outputs
   updateSelectizeInput(session,"DECDgenechoice", choices = dds.res$Gene, server = TRUE)
-  
+
   dataDECD<-
     reactive({
-      dds.res %>% 
+      dds.res %>%
         dplyr::filter(Gene %in% input$DECDgenechoice)
     })
-  DEpadj <-
-    reactive({
-      dds.res %>%
-        dplyr::filter(padj %in% input$CDpadj_slider)
+  
+  DEpadj <- 
+    eventReactive(input$padjbutton, {
+      if (input$padjbutton == "sigvar1") {
+        dds.res %>%
+          dplyr::filter(padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5") {
+        dds.res %>%
+          dplyr::filter(padj <= 0.05)
+      } else if (input$padjbutton == "nonsigvar") {
+        dds.res %>%
+          dplyr::filter(padj > 0.05)
+      }
     })
+ DEDiffExp <- 
+   eventReactive(input$DiffExpButton, {
+     if (input$DiffExpButton == "DEup") {
+       dds.res %>% 
+         dplyr::filter(DiffExp == "up")
+     } else if (input$DiffExpButton == "DEdown") {
+       dds.res %>% 
+         dplyr::filter(DiffExp == "down")
+     }
+   })
+
   DElog2 <-
     reactive({
-      dds.res %>%
-        dplyr::filter(log2FoldChange %in% input$CDlog2foldchangeslider)
+      dds.res[dds.res$log2FoldChange >= input$CDlog2foldchangeslider & dds.res$log2FoldChange <= input$CDlog2foldchangeslider, ]
     })
-  sliderValues <- reactive({
-    
-    
-  })
-  output$DETable <- renderDT({
+  
+  CD_DE_DT <- 
+    reactive({
+      if (input$padjbutton == "sigvar1" &
+               input$DiffExpButton == "DEup") {
+        dds.res %>%
+          dplyr::filter(DiffExp == "up" & padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5" &
+                 input$DiffExpButton == "DEup") {
+        dds.res %>%
+          dplyr::filter(DiffExp == "up" & padj <= 0.05)
+      } else if (input$padjbutton == "nonsigvar" &
+                 input$DiffExpButton == "DEup") {
+        dds.res %>%
+          dplyr::filter(DiffExp == "up" & padj > 0.05)
+      } else if (input$padjbutton == "sigvar1" &
+                 input$DiffExpButton == "DEdown") {
+        dds.res %>%
+          dplyr::filter(DiffExp == "down" & padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5" &
+                 input$DiffExpButton == "DEdown") {
+        dds.res %>%
+          dplyr::filter(DiffExp == "down" & padj <= 0.05)
+      } else if (input$padjbutton == "nonsigvar" &
+                 input$DiffExpButton == "DEdown") {
+        dds.res %>%
+          dplyr::filter(DiffExp == "down" & padj > 0.05)
+      }
+    })
 
+  output$DETable <- renderDataTable({
+    
+   CD_DE_DT() 
+     
   })
   } #end server
 # Run the application 

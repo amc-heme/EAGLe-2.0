@@ -183,6 +183,7 @@ ggplot(bcvsd.pca, aes(x = PC1, y = PC2, fill = batch, shape = condition)) +
 ```
 ## DE tables
 ```{r, include=F, message=F}
+library(DESeq2)
 ddsTxi.filt <- ddsTxi[rowMins(counts(ddsTxi)) > 5,]
 dds <- DESeq(ddsTxi.filt)
 # add in gene names
@@ -214,8 +215,9 @@ dds.res %>%
   dplyr::select(-baseMean,-DiffExp) %>%
   arrange(padj) %>%
   DT::datatable() %>% 
-saveRDS(dds.res, file = "/Users/stephanie/Documents/GitHub/CancerDiscovery-Bulk/DEtable.rds")
+#saveRDS(dds.res, file = "/Users/stephanie/Documents/GitHub/CancerDiscovery-Bulk/DEtable.rds")
 
+        
 #make the table interactive on shiny
 #choose a gene or group of genes
 # or filter out non significant gene padj <= 0.05, choose your threshold 
