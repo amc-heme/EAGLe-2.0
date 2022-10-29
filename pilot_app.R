@@ -23,9 +23,6 @@ meta_lut_ven <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/meta_l
 qcdt<-load_multiqc("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
 vst.goi <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
 dds.res <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/DEtable.rds")
-# exp.jordan.m0m5 <- read.table("/Users/stephanie/Documents/App-1/ShinyLessons/data/vstlimma.csv",sep = ",",header = TRUE)
-# label.jordan.m0m5 <- read.csv("/Users/stephanie/Documents/App-1/ShinyLessons/data/Jordan_M0M5_ROSlow_label.csv", header = TRUE) %>% as_tibble()
-# eval.jordan.m0m5 <- as.logical(gene %in% exp.jordan.m0m5$ext_gene)
 
 ui <-
   navbarPage(
@@ -172,7 +169,7 @@ ui <-
                        "tabs",
                      tabPanel(
                        "DE Table",
-                       tableOutput(
+                       DTOutput(
                          "DETable"
                        )
                      ),
@@ -378,17 +375,21 @@ server <-
         dplyr::filter(Gene %in% input$DECDgenechoice)
     })
   DEpadj <-
-    eventReactive({
-      dds.res %>% 
+    reactive({
+      dds.res %>%
         dplyr::filter(padj %in% input$CDpadj_slider)
     })
   DElog2 <-
-    eventReactive({
-      dds.res %>% 
+    reactive({
+      dds.res %>%
         dplyr::filter(log2FoldChange %in% input$CDlog2foldchangeslider)
     })
-  output$DETable <- renderTable({
+  sliderValues <- reactive({
     
+    
+  })
+  output$DETable <- renderDT({
+
   })
   } #end server
 # Run the application 
