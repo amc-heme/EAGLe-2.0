@@ -57,13 +57,35 @@ ui <-
             hr(),
             
             selectInput(
+              "PCAclass",
+              label = "Choose Cell Type",
+              choices =
+                c("prim", "mono", "both"),
+              selected = 
+                "both"
+            ),
+            
+            hr(),
+            
+            selectInput(
+              "PCAbatch",
+              label = "Choose Batch",
+              choices =
+                c("A", "B", "both"),
+              selected = 
+                "both"
+            ),
+            
+            hr(),
+            
+            selectInput(
               "QCvar",
               label=
-                "Choose a MultiQC Variable to Display",
+                "Choose MultiQC test",
               choices =
-                c("raw.salmon.percent_mapped", "raw.salmon.num_mapped", "raw.star.uniquely_mapped_percent", "raw.star.uniquely_mapped"),
+                c("% mapped reads", "# mapped reads", "% uniquely mapped reads", "# uniquely mapped reads"),
               selected =
-                "raw.salmon.percent_mapped"
+                "% mapped reads"
             ) #end selectInput
           ), #end sidebarPanel
           mainPanel(
@@ -266,11 +288,11 @@ server <-
   output$QCplot <- renderPlot({
     QCdata <- switch(
       input$QCvar,
-      "raw.salmon.percent_mapped" = qcdt$raw.salmon.percent_mapped,
-      "raw.salmon.num_mapped" = qcdt$raw.salmon.num_mapped,
-      "raw.star.uniquely_mapped_percent" = qcdt$raw.star.uniquely_mapped_percent,
-      "raw.star.uniquely_mapped" = qcdt$raw.star.uniquely_mapped,
-      "metadata.sample_id" = qcdt$metadata.sample_id
+      "% mapped reads" = qcdt$raw.salmon.percent_mapped,
+      "# mapped reads" = qcdt$raw.salmon.num_mapped,
+      "% uniquely mapped reads" = qcdt$raw.star.uniquely_mapped_percent,
+      "# uniquely mapped reads" = qcdt$raw.star.uniquely_mapped,
+      "Sample_ID" = qcdt$metadata.sample_id
     )
     
     
