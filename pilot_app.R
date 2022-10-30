@@ -17,6 +17,7 @@ library(janitor)
 library(reactlog)
 library(DT)
 library(ggrepel)
+
 #options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
@@ -40,14 +41,25 @@ ui <-
             "flatly"
             ),
         titlePanel(
-          "MultiQC Analysis"
+          "QC Analysis"
         ), 
         sidebarLayout(
           sidebarPanel(
             selectInput(
+              "PCAvar",
+              label = "Choose PCA plot",
+              choices =
+                c("counts PCA", "VST PCA", "VST + batch corrected PCA"),
+              selected = 
+                "counts PCA"
+            ),
+            
+            hr(),
+            
+            selectInput(
               "QCvar",
               label=
-                "Choose a QC Variable to Display",
+                "Choose a MultiQC Variable to Display",
               choices =
                 c("raw.salmon.percent_mapped", "raw.salmon.num_mapped", "raw.star.uniquely_mapped_percent", "raw.star.uniquely_mapped"),
               selected =
@@ -56,22 +68,28 @@ ui <-
           ), #end sidebarPanel
           mainPanel(
             tabsetPanel(
-              type =
-                "tabs",
-              tabPanel(
-                "QC Plot",
-                plotOutput(
-                  "QCplot"
-                  )
-              ), #end tabPanel
-              tabPanel(
+            type =
+              "tabs",
+            tabPanel(
+              "PCA Plots",
+                     plotOutput(
+                       "PCAplot"
+                       )
+              ),
+            tabPanel(
+              "MultiQC Plots",
+                     plotOutput(
+                       "QCplot"
+                       )
+              ),
+            tabPanel(
               "Summary1",
-              textOutput(
-              "summary1"
-                  )
-                ) #end tabPanel
-              ) #end tabsetPanel
-            ) #end mainPanel
+                     textOutput(
+                       "summary1"
+                       )
+              ) #end tabPanel
+          ) #end tabsetPanel) 
+          )#end mainPanel
           ) #end sidebarLayout
         ) #end fluidPage
       ), #end QC tabPanel
@@ -142,7 +160,9 @@ ui <-
                   radioButtons("DiffExpButton", h4("Differential Expression"),
                                choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall"),
                   
-                  # hr(),
+                  #hr(),
+                  
+                  
                   # 
                   #  sliderInput( #filter by expression
                   #    "CDlog2foldchangeslider",
@@ -366,29 +386,40 @@ server <-
 #         dplyr::filter(Gene %in% input$DECDgenechoice)
 #     })
 # 
-#   DEpadj <-
-#     eventReactive(input$padjbutton, {
-#       if (input$padjbutton == "sigvar1") {
-#         dds.res %>%
-#           dplyr::filter(padj <= 0.01)
-#       } else if (input$padjbutton == "sigvar5") {
-#         dds.res %>%
-#           dplyr::filter(padj <= 0.05)
-#       } else if (input$padjbutton == "nonsigvar") {
-#         dds.res %>%
-#           dplyr::filter(padj > 0.05)
-#       }
-#     })
-#  DEDiffExp <-
-#    eventReactive(input$DiffExpButton, {
-#      if (input$DiffExpButton == "DEup") {
-#        dds.res %>%
-#          dplyr::filter(DiffExp == "up")
-#      } else if (input$DiffExpButton == "DEdown") {
-#        dds.res %>%
-#          dplyr::filter(DiffExp == "down")
-#      }
-#    })
+  # DEpadj <-
+  #   eventReactive(input$padjbutton, {
+  #     if (input$padjbutton == "sigvar1") {
+  #       dds.res %>%
+  #         dplyr::filter(padj <= 0.01)
+  #     } else if (input$padjbutton == "sigvar5") {
+  #       dds.res %>%
+  #         dplyr::filter(padj <= 0.05)
+  #     } else if (input$padjbutton == "allvar") {
+  #       dds.res %>%
+  #         dplyr::filter(padj >= 0)
+  #     }
+  #   })
+  # DEDiffExp <-
+  #   eventReactive(input$DiffExpButton, {
+  #     if (input$DiffExpButton == "DEup") {
+  #       dds.res %>%
+  #         dplyr::filter(DiffExp == "up")
+  #     } else if (input$DiffExpButton == "DEdown") {
+  #       dds.res %>%
+  #         dplyr::filter(DiffExp == "down")
+  #     } else if (input$DiffExpButton == "DEno") {
+  #       dds.res %>%
+  #         dplyr::filter(DiffExp == "no")
+  #     } else if (input$DiffExpButton == "DEall") {
+  #       dds.res %>%
+  #         dplyr::filter(DiffExp == c("up", "down", "no"))
+  #     }
+  #   })
+  # DElog2 <-
+  #   reactive({
+  #     dds.res %>% 
+  #       dplyr::filter(log2FoldChange)
+  #   })
 # 
 #   DElog2 <-
 #     reactive({
@@ -440,43 +471,58 @@ server <-
       } else if (input$padjbutton == "sigvar1" &
                  input$DiffExpButton == "DEall") {
         dds.res %>%
-          dplyr::filter(DiffExp == c("up", "down") &padj <= 0.01)
+          dplyr::filter(DiffExp == c("up", "down", "no") & padj <= 0.01)
       } else if (input$padjbutton == "sigvar5" &
                  input$DiffExpButton == "DEall") {
         dds.res %>%
-          dplyr::filter(DiffExp == c("up", "down") & padj <= 0.05)
+          dplyr::filter(DiffExp == c("up", "down", "no") & padj <= 0.05)
       }
     })
   
-  output$DETable <- renderDataTable({
-    
-    CD_DE_DT()
-     
-  })
   
-  output$DEVolcanoPlot <- renderPlot({
-    colors <-
-      colorRampPalette(c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2"))(3)
-    ggplot(CD_DE_DT(), aes(
-      x = log2FoldChange,
-      y = -log10(padj),
-      col = DiffExp
-    )) +
-      geom_point() +
-      theme_light() +
-      scale_colour_manual(values = colors) +
-      geom_text_repel(
-        max.overlaps = 15,
-        aes(label = ifelse(
-          padj < 5e-20 &
-            abs(log2FoldChange) >= 0.5,
-          as.character(Gene), ""
-        )),
-        hjust = 0,
-        vjust = 0
-      ) +
-      coord_cartesian(xlim = c(-10, 7))
-  })
+   output$DETable <-
+     renderDataTable({
+       CD_DE_DT()
+       
+     })
+  
+   output$DEVolcanoPlot <-
+     renderPlot({
+       colors <-
+         colorRampPalette(
+           c(
+             "#1B9E77",
+             "#D95F02",
+             "#7570B3",
+             "#E7298A",
+             "#66A61E",
+             "#E6AB02",
+             "#A6761D",
+             "#666666"
+           )
+         )(3)
+       
+       ggplot(CD_DE_DT(), aes(
+         x = log2FoldChange,
+         y = -log10(padj),
+         col = DiffExp
+       )) +
+         geom_point() +
+         theme_light() +
+         scale_colour_manual(values = colors) +
+         geom_text_repel(
+           max.overlaps = 15,
+           aes(label = ifelse(
+             padj < 5e-20 &
+               abs(log2FoldChange) >= 0.5,
+             as.character(Gene),
+             ""
+           )),
+           hjust = 0,
+           vjust = 0
+         ) +
+         coord_cartesian(xlim = c(-10, 7))
+     })
   } #end server
 # Run the application 
  shinyApp(ui = ui, server = server)
