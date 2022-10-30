@@ -16,6 +16,7 @@ library(RColorBrewer)
 library(janitor)
 library(reactlog)
 library(DT)
+library(ggrepel)
 #options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
@@ -123,55 +124,35 @@ ui <-
             )
         )
       ), #end Genecentric tabPanel
-    tabPanel("DESeq2 Analysis",
+    tabPanel("DESeq Analysis",
              fluidPage(
                theme =
                  shinytheme("flatly"),
-               titlePanel("DESeq2 Table and Plot"),
+               titlePanel("DESeq Table and Plot"),
                #end title
                sidebarLayout(
                  sidebarPanel( 
-                   selectizeInput( #pick genes to filter DE table by
-                     "DECDgenechoice",
-                     label=
-                       "Choose a gene or group of genes from DE table",
-                     choices =
-                       NULL,
-                     selected = NULL,
-                     options = list(maxItems = NULL)
-                   ),
-                   
-                  hr(),
-                   
-                   # sliderInput( # OR pick a padj value range to search table by
-                   #   "CDpadj_slider",
-                   #   label = h4(
-                   #     "Select padj value range"
-                   #     ),
-                   #   min = 0,
-                   #   max = 7.5,
-                   #   value = c(0, 0.5)
-                   #   ),
-                  radioButtons("padjbutton", h4("padj range"), 
-                               choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "> 0.05" = "nonsigvar"), selected = "sigvar5"),
+            
+                  radioButtons("padjbutton", h4("padj Value"), 
+                               choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
                   
                    
                    hr(),
                    
                   radioButtons("DiffExpButton", h4("Differential Expression"),
-                               choices = list("Up" = "DEup", "Down" = "DEdown"), selected = "DEup"),
+                               choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall"),
                   
-                  hr(),
-                  
-                   sliderInput( #filter by expression
-                     "CDlog2foldchangeslider",
-                     label = h4(
-                       "Select log2 fold change range"
-                     ),
-                     min = -4,
-                     max = 5,
-                     value = c(0, 5)
-                   )
+                  # hr(),
+                  # 
+                  #  sliderInput( #filter by expression
+                  #    "CDlog2foldchangeslider",
+                  #    label = h4(
+                  #      "Select log2 fold change range"
+                  #    ),
+                  #    min = -4,
+                  #    max = 5,
+                  #    value = c(0, 5)
+                  #  )
                    ),
                  mainPanel(
                    tabsetPanel(
@@ -186,7 +167,7 @@ ui <-
                      tabPanel(
                        "DE Plot",
                        plotOutput(
-                         "DE Volcano Plot"
+                         "DEVolcanoPlot"
                          )
                        )
                      )
@@ -377,57 +358,54 @@ server <-
 
   
 ## DESeq2- Cancer Discovery outputs
-  updateSelectizeInput(session,"DECDgenechoice", choices = dds.res$Gene, server = TRUE)
+# updateSelectizeInput(session,"DECDgenechoice", choices = dds.res$Gene, server = TRUE)
+# 
+#   dataDECD<-
+#     reactive({
+#       dds.res %>%
+#         dplyr::filter(Gene %in% input$DECDgenechoice)
+#     })
+# 
+#   DEpadj <-
+#     eventReactive(input$padjbutton, {
+#       if (input$padjbutton == "sigvar1") {
+#         dds.res %>%
+#           dplyr::filter(padj <= 0.01)
+#       } else if (input$padjbutton == "sigvar5") {
+#         dds.res %>%
+#           dplyr::filter(padj <= 0.05)
+#       } else if (input$padjbutton == "nonsigvar") {
+#         dds.res %>%
+#           dplyr::filter(padj > 0.05)
+#       }
+#     })
+#  DEDiffExp <-
+#    eventReactive(input$DiffExpButton, {
+#      if (input$DiffExpButton == "DEup") {
+#        dds.res %>%
+#          dplyr::filter(DiffExp == "up")
+#      } else if (input$DiffExpButton == "DEdown") {
+#        dds.res %>%
+#          dplyr::filter(DiffExp == "down")
+#      }
+#    })
+# 
+#   DElog2 <-
+#     reactive({
+#       dds.res[dds.res$log2FoldChange >= input$CDlog2foldchangeslider & dds.res$log2FoldChange <= input$CDlog2foldchangeslider, ]
+#     })
 
-  dataDECD<-
-    reactive({
-      dds.res %>%
-        dplyr::filter(Gene %in% input$DECDgenechoice)
-    })
-  
-  DEpadj <- 
-    eventReactive(input$padjbutton, {
-      if (input$padjbutton == "sigvar1") {
-        dds.res %>%
-          dplyr::filter(padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5") {
-        dds.res %>%
-          dplyr::filter(padj <= 0.05)
-      } else if (input$padjbutton == "nonsigvar") {
-        dds.res %>%
-          dplyr::filter(padj > 0.05)
-      }
-    })
- DEDiffExp <- 
-   eventReactive(input$DiffExpButton, {
-     if (input$DiffExpButton == "DEup") {
-       dds.res %>% 
-         dplyr::filter(DiffExp == "up")
-     } else if (input$DiffExpButton == "DEdown") {
-       dds.res %>% 
-         dplyr::filter(DiffExp == "down")
-     }
-   })
-
-  DElog2 <-
-    reactive({
-      dds.res[dds.res$log2FoldChange >= input$CDlog2foldchangeslider & dds.res$log2FoldChange <= input$CDlog2foldchangeslider, ]
-    })
-  
+  #function for sidebar input to create filtered DE table and associated volcano plot
   CD_DE_DT <- 
     reactive({
       if (input$padjbutton == "sigvar1" &
-               input$DiffExpButton == "DEup") {
+          input$DiffExpButton == "DEup") {
         dds.res %>%
           dplyr::filter(DiffExp == "up" & padj <= 0.01)
       } else if (input$padjbutton == "sigvar5" &
                  input$DiffExpButton == "DEup") {
         dds.res %>%
           dplyr::filter(DiffExp == "up" & padj <= 0.05)
-      } else if (input$padjbutton == "nonsigvar" &
-                 input$DiffExpButton == "DEup") {
-        dds.res %>%
-          dplyr::filter(DiffExp == "up" & padj > 0.05)
       } else if (input$padjbutton == "sigvar1" &
                  input$DiffExpButton == "DEdown") {
         dds.res %>%
@@ -436,17 +414,68 @@ server <-
                  input$DiffExpButton == "DEdown") {
         dds.res %>%
           dplyr::filter(DiffExp == "down" & padj <= 0.05)
-      } else if (input$padjbutton == "nonsigvar" &
+      } else if (input$padjbutton == "sigvar1" &
+                 input$DiffExpButton == "DEno") {
+        dds.res %>%
+          dplyr::filter(DiffExp == "no" & padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5" &
+                 input$DiffExpButton == "DEno") {
+        dds.res %>%
+          dplyr::filter(DiffExp == "no" & padj <= 0.05)
+      } else if (input$padjbutton == "allvar" &
+                 input$DiffExpButton == "DEall") {
+        dds.res
+      } else if (input$padjbutton == "allvar" &
+                 input$DiffExpButton == "DEup") {
+        dds.res %>%
+          dplyr::filter(DiffExp == "up" & padj >= 0)
+      } else if (input$padjbutton == "allvar" &
                  input$DiffExpButton == "DEdown") {
         dds.res %>%
-          dplyr::filter(DiffExp == "down" & padj > 0.05)
+          dplyr::filter(DiffExp == "down" & padj >= 0)
+      } else if (input$padjbutton == "allvar" &
+                 input$DiffExpButton == "DEno") {
+        dds.res %>%
+          dplyr::filter(DiffExp == "no" & padj >= 0)
+      } else if (input$padjbutton == "sigvar1" &
+                 input$DiffExpButton == "DEall") {
+        dds.res %>%
+          dplyr::filter(DiffExp == c("up", "down") &padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5" &
+                 input$DiffExpButton == "DEall") {
+        dds.res %>%
+          dplyr::filter(DiffExp == c("up", "down") & padj <= 0.05)
       }
     })
-
+  
   output$DETable <- renderDataTable({
     
-   CD_DE_DT() 
+    CD_DE_DT()
      
+  })
+  
+  output$DEVolcanoPlot <- renderPlot({
+    colors <-
+      colorRampPalette(c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2"))(3)
+    ggplot(CD_DE_DT(), aes(
+      x = log2FoldChange,
+      y = -log10(padj),
+      col = DiffExp
+    )) +
+      geom_point() +
+      theme_light() +
+      scale_colour_manual(values = colors) +
+      geom_text_repel(
+        max.overlaps = 15,
+        aes(label = ifelse(
+          padj < 5e-20 &
+            abs(log2FoldChange) >= 0.5,
+          as.character(Gene), ""
+        )),
+        hjust = 0,
+        vjust = 0
+      ) +
+      coord_cartesian(xlim = c(-10, 7))
   })
   } #end server
 # Run the application 
