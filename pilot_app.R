@@ -294,15 +294,19 @@ server <-
       "# uniquely mapped reads" = qcdt$raw.star.uniquely_mapped,
       "Sample_ID" = qcdt$metadata.sample_id
     )
-    
-    
-    QCplot <- ggplot(qcdt, aes(metadata.sample_id, QCdata)) +
-      geom_point(size = 3) +
-      theme_cowplot (12) +
-      theme(axis.text.x =
-              element_text(angle = 60, hjust = 1))
-    print(QCplot)
-    QCplot
+ 
+ Sample_ID <-qcdt$metadata.sample_id 
+  
+  ggplot(
+    qcdt,
+    aes(
+      x = Sample_ID,
+      y = QCdata
+      )) +
+    geom_point(alpha = 0.5) +
+    theme_cowplot (12) +
+    theme(axis.text.x =
+            element_text(angle = 60, hjust = 1))
   }) #end renderPlot
   
   # PCA CD plots output
@@ -378,7 +382,7 @@ server <-
       geom_point(size = 5) + 
       scale_shape() + 
       scale_fill_manual(values = colors ) +
-      theme_classic(16) + xlab(paste('PC1')) + 
+      theme_cowplot(16) + xlab(paste('PC1')) + 
       ylab(paste('PC2')) +
       ggtitle("") +
       guides(fill=guide_legend(override.aes = list(color=colors))) +
