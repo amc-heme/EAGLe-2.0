@@ -168,7 +168,7 @@ ui <-
              fluidPage(
                theme =
                  shinytheme("flatly"),
-               titlePanel("DESeq Table and Plot"),
+               titlePanel("DESeq Table and Plots"),
                #end title
                sidebarLayout(
                  sidebarPanel( 
@@ -207,16 +207,22 @@ ui <-
                        )
                      ),
                      tabPanel(
-                       "DE Plot",
+                       "Volcano Plot",
                        plotOutput(
                          "DEVolcanoPlot"
                          )
+                       ),
+                     tabPanel(
+                       "MA Plot",
+                       plotOutput(
+                         "DEMAPlot"
                        )
-                     )
-                   ) #end mainPanel
-                 ) #end sidebarlayout
-               ) #end fluidPage
-             ), #end DE tabPanel
+                     ) #end MA tab
+                   ) #end tabset panel
+                 ) #end mainPanel
+               )
+             ) #end fluidPage
+    ), #end DE
     tabPanel(
       "GSEA"
       )#end GSEA tabPanel
@@ -627,6 +633,33 @@ server <-
          ) +
          coord_cartesian(xlim = c(-10, 7))
      })
+   
+   output$DEMAPlot <- renderPlot ({
+     
+     ggmaplot(
+       CD_DE_DT(),
+       fdr = 0.05,
+       fc = (2 ^ 1),
+       size = 1.5,
+       alpha = 0.7,
+       palette = colorRampPalette(
+         c(
+           "#1B9E77",
+           "#D95F02",
+           "#7570B3",
+           "#E7298A",
+           "#66A61E",
+           "#E6AB02",
+           "#A6761D",
+           "#666666"
+         )
+       )(3),
+       legend = NULL,
+       top = 0,
+       ggtheme = ggplot2::theme_light()
+     )
+     
+   })
   } #end server
 # Run the application 
  shinyApp(ui = ui, server = server)
