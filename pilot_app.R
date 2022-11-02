@@ -31,7 +31,9 @@ metadata <- read.table(file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/
 nonvsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/nonvsd.pca.rds")
 vsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.pca.rds")
 bcvsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.pca.rds")
-vsd <- read.table(file ="/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd")
+nonvsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/nonvsd.variance.rds")
+vsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.variance.rds")
+bcvsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.variance.rds")
 #2. UI- CancerDiscovery ####
 ui <-
   navbarPage(
@@ -56,7 +58,7 @@ ui <-
               "PCAvar",
               h4("Choose PCA plot"),
               choices =
-                list("counts PCA", "VST PCA", "VST + batch corrected PCA", "PCA variance"),
+                list("counts PCA", "VST PCA", "VST + batch corrected PCA"),
               selected =
                 "counts PCA"
             ),
@@ -306,62 +308,51 @@ server <-
         vsd.pca
       } else if (input$PCAvar == "VST + batch corrected PCA") {
         bcvsd.pca
-      } else if (input$PCAvar == "PCA variance") {
-        PCA_variance
+      # } else if (input$PCAvar == "PCA variance") {
+      #   PCA_variance
+       }
+    })
+  #define objects for defining x label to include % variance of PC1
+  pc1var <- paste("PC1", (round(nonvsd.variance[3, 1] * 100, 1)), "% variance")
+  pc1varvsd <- paste("PC1", (round(vsd.variance[3, 1] * 100, 1)), "% variance")
+  pc1varbcvsd <- paste("PC1", (round(bcvsd.variance[3, 1] * 100, 1)), "% variance")
+  
+  # add reactive expression for x label for PC1 
+  variance_PC1 <-
+    eventReactive(input$PCAvar, {
+      if (input$PCAvar == "counts PCA") {
+        pc1var
+      } else if (input$PCAvar == "VST PCA") {
+        pc1varvsd
+      } else if (input$PCAvar == "VST + batch corrected PCA") {
+        pc1varbcvsd
+      }
+    })
+  #new objects with calculation only to use in calculation of PC2 % variance
+  pc1 <- round(nonvsd.variance[3, 1] * 100, 1)
+  pc12 <- round(vsd.variance[3, 1] * 100, 1)
+  pc13 <- round(bcvsd.variance[3, 1] * 100, 1)
+  
+  #create objects for defining Y label of PC2
+  pc2var <-
+    paste("PC2", (round(nonvsd.variance[3, 2] * 100 - pc1, 1)), "% variance")
+  pc2varvsd <-
+    paste("PC2", (round(vsd.variance[3, 2] * 100 - pc12, 1)), "% variance")
+  pc2varbcvsd <-
+    paste("PC2", (round(bcvsd.variance[3, 2] * 100 - pc13, 1)), "% variance")
+
+    #reactive expression for adding y labels for pc2
+  variance_PC2 <-
+    reactive({
+      if (input$PCAvar == "counts PCA") {
+        pc2var
+      } else if (input$PCAvar == "VST PCA") {
+        pc2varvsd
+      } else if (input$PCAvar == "VST + batch corrected PCA") {
+        pc2varbcvsd
       }
     })
   
- 
-  # PCAdatafx <-
-  #   reactive({
-  #     if (input$PCAclass == "prim" &
-  #         input$PCAvar == "counts PCA") {
-  #       nonvsd.pca %>%
-  #         dplyr::filter(condition == "prim")
-  #     } else if (input$PCAclass== "mono" &
-  #                input$PCAvar == "counts PCA") {
-  #       nonvsd.pca %>%
-  #         dplyr::filter(condition == "mono")
-  #     } else if (input$PCAclass == "both" &
-  #                input$PCAvar == "counts PCA") {
-  #       nonvsd.pca %>%
-  #         dplyr::filter(condition == c("prim", "mono"))
-  #     } else if (input$PCAclass == "prim" &
-  #                input$PCAvar == "VST PCA") {
-  #       vsd.pca %>%
-  #         dplyr::filter(condition == "prim")
-  #     } else if (input$PCAclass == "mono" &
-  #                input$PCAvar == "VST PCA") {
-  #       vsd.pca %>%
-  #         dplyr::filter(condition == "mono")
-  #     } else if (input$PCAclass == "both" &
-  #                input$PCAvar == "VST PCA") {
-  #       vsd.pca %>%
-  #         dplyr::filter(condition == c("prim", "mono"))
-  #     } else if (input$PCAclass == "prim" &
-  #                input$PCAvar == "VST + batch corrected PCA") {
-  #       bcvsd.pca %>%
-  #         dplyr::filter(condition == "prim")
-  #     } else if (input$PCAclass == "mono" &
-  #                input$PCAvar == "VST + batch corrected PCA") {
-  #       bcvsd.pca %>%
-  #         dplyr::filter(condition == "mono")
-  #     } else if (input$PCAclass == "both" &
-  #                input$PCAvar == "VST + batch corrected PCA") {
-  #       bcvsd.pca %>%
-  #         dplyr::filter(condition == c("prim","mono"))
-  #     }
-  #   })
-  # scale_shape <- 
-  #   reactive({
-  #     if(input$PCAclass == "prim") {
-  #       scale_shape_manual(values = 21, name = '')
-  #     } else if(input$PCAclass == "mono") {
-  #       scale_shape_manual(values = 24, name = '')
-  #     } else if(input$PCAclass == "both") {
-  #       scale_shape_manual(values = c(21,24), name = '')
-  #     }
-  #   })
   
   output$PCAplot <- renderPlot ({
     colors <-
@@ -370,8 +361,9 @@ server <-
       geom_point(size = 5) + 
       scale_shape_manual(values = c(21, 24), name = '') +
       scale_fill_manual(values = colors ) +
-      theme_cowplot(16) + xlab(paste('PC1')) + 
-      ylab(paste('PC2')) +
+      theme_cowplot(16) + 
+      xlab(variance_PC1()) + 
+      ylab(variance_PC2()) +
       ggtitle("") +
       guides(fill=guide_legend(override.aes = list(color=colors))) +
       geom_text_repel(aes(label=sample_name),hjust=0, vjust=0)
