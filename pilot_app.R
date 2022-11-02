@@ -17,11 +17,12 @@ library(janitor)
 library(reactlog)
 library(DT)
 library(ggrepel)
+library(DESeq2)
 
 #options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
-#load data
+#1.Data ####
 meta_lut_ven <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/meta_lut_ven.Rds")
 qcdt<-load_multiqc("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
 vst.goi <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
@@ -30,13 +31,14 @@ metadata <- read.table(file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/
 nonvsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/nonvsd.pca.rds")
 vsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.pca.rds")
 bcvsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.pca.rds")
-
+vsd <- read.table(file ="/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd")
+#2. UI- CancerDiscovery ####
 ui <-
   navbarPage(
   "EAGLe",
   navbarMenu(
     "Cancer Discovery",
-    tabPanel(
+    tabPanel(  # 3. UI- QC tab ####
       "QC",
       fluidPage(
         theme =
@@ -54,34 +56,13 @@ ui <-
               "PCAvar",
               h4("Choose PCA plot"),
               choices =
-                list("counts PCA", "VST PCA", "VST + batch corrected PCA"),
+                list("counts PCA", "VST PCA", "VST + batch corrected PCA", "PCA variance"),
               selected =
                 "counts PCA"
             ),
             
             hr(),
             
-            
-            radioButtons(
-              "PCAclass",
-              h4("Choose Cell Type"),
-              choices =
-                list("prim", "mono", "both"),
-              selected =
-                "both"
-            ), 
-            
-            hr(),
-            
-            # radioButtons(
-            #   "PCAbatch",
-            #   h4("Choose Batch"),
-            #   choices =
-            #     list("A", "B", "both"),
-            #   selected =
-            #     "both"
-            # ), 
-            # 
             h3("MultiQC Plots"),
             # 
             selectInput(
@@ -115,7 +96,7 @@ ui <-
           ) #end sidebarLayout
         ) #end fluidPage
       ), #end QC tabPanel
-    tabPanel(
+    tabPanel( #4. UI Gene Centric tab panel ####
       "Gene Centric Analysis",
       fluidPage(
         theme=
@@ -164,7 +145,7 @@ ui <-
             )
         )
       ), #end Genecentric tabPanel
-    tabPanel("DESeq Analysis",
+    tabPanel("DESeq Analysis", # 5. UI DESeq tab ####
              fluidPage(
                theme =
                  shinytheme("flatly"),
@@ -223,12 +204,12 @@ ui <-
                )
              ) #end fluidPage
     ), #end DE
-    tabPanel(
+    tabPanel( # 6. UI GSEA tab ####
       "GSEA"
       )#end GSEA tabPanel
     ),#end gene centric tabPanel #end CD navbarmenu
-  navbarMenu("BEAT-AML",
-    tabPanel(
+  navbarMenu("BEAT-AML", # 7. UI BEAT- AML Gene Centric ####
+    tabPanel( 
       "Gene Centric Plots",
       fluidPage(
         theme =
@@ -277,7 +258,7 @@ ui <-
           ) #end sidebarLayout
         ) #end fluidPage
       ), #end Gene centric tabPanel
-    tabPanel(
+    tabPanel( # 8. UI BEAT DESeq and GSEA tab ####
       "DESeq and GSEA Anlaysis"
       ) #end tabPanel
     ) #end BEAT navbarMenu
@@ -290,7 +271,7 @@ server <-
   options(shiny.reactlog = TRUE)
   
   
-##QC- MultiQC Cancer Discovery output
+##QC- Server MultiQC Cancer Discovery output ####
   output$QCplot <- renderPlot({
     QCdata <- switch(
       input$QCvar,
@@ -315,78 +296,79 @@ server <-
             element_text(angle = 60, hjust = 1))
   }) #end renderPlot
   
-  # PCA CD plots output
-  
-  
-  # PCAdata <- 
-  #   eventReactive(input$PCAvar, {
-  #     if (input$PCAvar == "counts PCA") {
-  #       nonvsd.pca
-  #     } else if (input$PCAvar == "VST PCA") {
-  #       vsd.pca
-  #     } else if (input$PCAvar == "VST + batch corrected PCA") {
-  #       bcvsd.pca
-  #     }
-  #   })
+  # Server PCA CD plots output ####
+ 
+  PCAdata <-
+    eventReactive(input$PCAvar, {
+      if (input$PCAvar == "counts PCA") {
+        nonvsd.pca
+      } else if (input$PCAvar == "VST PCA") {
+        vsd.pca
+      } else if (input$PCAvar == "VST + batch corrected PCA") {
+        bcvsd.pca
+      } else if (input$PCAvar == "PCA variance") {
+        PCA_variance
+      }
+    })
   
  
-  PCAdatafx <-
-    reactive({
-      if (input$PCAclass == "prim" &
-          input$PCAvar == "counts PCA") {
-        nonvsd.pca %>%
-          dplyr::filter(condition == "prim")
-      } else if (input$PCAclass== "mono" &
-                 input$PCAvar == "counts PCA") {
-        nonvsd.pca %>%
-          dplyr::filter(condition == "mono")
-      } else if (input$PCAclass == "both" &
-                 input$PCAvar == "counts PCA") {
-        nonvsd.pca %>%
-          dplyr::filter(condition == c("prim", "mono"))
-      } else if (input$PCAclass == "prim" &
-                 input$PCAvar == "VST PCA") {
-        vsd.pca %>%
-          dplyr::filter(condition == "prim")
-      } else if (input$PCAclass == "mono" &
-                 input$PCAvar == "VST PCA") {
-        vsd.pca %>%
-          dplyr::filter(condition == "mono")
-      } else if (input$PCAclass == "both" &
-                 input$PCAvar == "VST PCA") {
-        vsd.pca %>%
-          dplyr::filter(condition == c("prim", "mono"))
-      } else if (input$PCAclass == "prim" &
-                 input$PCAvar == "VST + batch corrected PCA") {
-        bcvsd.pca %>%
-          dplyr::filter(condition == "prim")
-      } else if (input$PCAclass == "mono" &
-                 input$PCAvar == "VST + batch corrected PCA") {
-        bcvsd.pca %>%
-          dplyr::filter(condition == "mono")
-      } else if (input$PCAclass == "both" &
-                 input$PCAvar == "VST + batch corrected PCA") {
-        bcvsd.pca %>%
-          dplyr::filter(condition == c("prim","mono"))
-      }
-    })
-  scale_shape <- 
-    reactive({
-      if(input$PCAclass == "prim") {
-        scale_shape_manual(values = 21, name = '')
-      } else if(input$PCAclass == "mono") {
-        scale_shape_manual(values = 24, name = '')
-      } else if(input$PCAclass == "both") {
-        scale_shape_manual(values = c(21,24), name = '')
-      }
-    })
+  # PCAdatafx <-
+  #   reactive({
+  #     if (input$PCAclass == "prim" &
+  #         input$PCAvar == "counts PCA") {
+  #       nonvsd.pca %>%
+  #         dplyr::filter(condition == "prim")
+  #     } else if (input$PCAclass== "mono" &
+  #                input$PCAvar == "counts PCA") {
+  #       nonvsd.pca %>%
+  #         dplyr::filter(condition == "mono")
+  #     } else if (input$PCAclass == "both" &
+  #                input$PCAvar == "counts PCA") {
+  #       nonvsd.pca %>%
+  #         dplyr::filter(condition == c("prim", "mono"))
+  #     } else if (input$PCAclass == "prim" &
+  #                input$PCAvar == "VST PCA") {
+  #       vsd.pca %>%
+  #         dplyr::filter(condition == "prim")
+  #     } else if (input$PCAclass == "mono" &
+  #                input$PCAvar == "VST PCA") {
+  #       vsd.pca %>%
+  #         dplyr::filter(condition == "mono")
+  #     } else if (input$PCAclass == "both" &
+  #                input$PCAvar == "VST PCA") {
+  #       vsd.pca %>%
+  #         dplyr::filter(condition == c("prim", "mono"))
+  #     } else if (input$PCAclass == "prim" &
+  #                input$PCAvar == "VST + batch corrected PCA") {
+  #       bcvsd.pca %>%
+  #         dplyr::filter(condition == "prim")
+  #     } else if (input$PCAclass == "mono" &
+  #                input$PCAvar == "VST + batch corrected PCA") {
+  #       bcvsd.pca %>%
+  #         dplyr::filter(condition == "mono")
+  #     } else if (input$PCAclass == "both" &
+  #                input$PCAvar == "VST + batch corrected PCA") {
+  #       bcvsd.pca %>%
+  #         dplyr::filter(condition == c("prim","mono"))
+  #     }
+  #   })
+  # scale_shape <- 
+  #   reactive({
+  #     if(input$PCAclass == "prim") {
+  #       scale_shape_manual(values = 21, name = '')
+  #     } else if(input$PCAclass == "mono") {
+  #       scale_shape_manual(values = 24, name = '')
+  #     } else if(input$PCAclass == "both") {
+  #       scale_shape_manual(values = c(21,24), name = '')
+  #     }
+  #   })
   
   output$PCAplot <- renderPlot ({
     colors <-
       colorRampPalette(c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2"))(2)
-    ggplot(PCAdatafx(), aes(x = PC1, y = PC2, fill = batch, shape = condition)) + 
+    ggplot(PCAdata(), aes(x = PC1, y = PC2, fill = batch, shape = condition)) + 
       geom_point(size = 5) + 
-      scale_shape() + 
+      scale_shape_manual(values = c(21, 24), name = '') +
       scale_fill_manual(values = colors ) +
       theme_cowplot(16) + xlab(paste('PC1')) + 
       ylab(paste('PC2')) +
@@ -394,7 +376,7 @@ server <-
       guides(fill=guide_legend(override.aes = list(color=colors))) +
       geom_text_repel(aes(label=sample_name),hjust=0, vjust=0)
   })
-##Gene Centric-Cancer Discovery output
+##Gene Centric-Cancer Discovery output ####
  updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
  
  datavst<-
@@ -457,7 +439,7 @@ server <-
         ggtitle("Gene Expression:Sensitive vs Resistant")
     }) #end render plot
 
-##Blast Percent plots- BEAT-AML output
+##Blast Percent plots- BEAT-AML output ####
   output$BlastPlot <- renderPlot({
     BlastData <- switch (
       input$BlastVar,
@@ -486,6 +468,7 @@ server <-
       ggtitle(label = "PercentBlastsInBM and PercentBlastsInPB vs Ven AUC; 60% blast cutoff = 77")
   }) #end renderPlot
 
+  #DESEq #####
   
 ## DESeq2- Cancer Discovery outputs
 # updateSelectizeInput(session,"DECDgenechoice", choices = dds.res$Gene, server = TRUE)
