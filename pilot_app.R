@@ -34,6 +34,9 @@ bcvsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.pca
 nonvsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/nonvsd.variance.rds")
 vsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.variance.rds")
 bcvsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.variance.rds")
+nonvsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/nonvsd2.pca.rds")
+vsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd2.pca.rds")
+bcvsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd2.pca.rds")
 #2. UI- CancerDiscovery ####
 ui <-
   navbarPage(
@@ -65,6 +68,17 @@ ui <-
             
             hr(),
             
+            radioButtons(
+              "PCAvarscree",
+              h4("PCA Scree Plots"),
+              choices =
+                list("counts PCA", "VST PCA", "VST + batch corrected PCA"),
+              selected =
+                "counts PCA"
+            ),
+            
+            hr(),
+            
             h3("MultiQC Plots"),
             # 
             selectInput(
@@ -87,6 +101,12 @@ ui <-
                        "PCAplot"
                        )
               ),
+            tabPanel(
+              "PCA Scree Plots",
+              plotOutput(
+                "PCAvarplot"
+              )
+            ),
             tabPanel(
               "MultiQC Plots",
                      plotOutput(
@@ -312,6 +332,31 @@ server <-
       #   PCA_variance
        }
     })
+  #non VSD PCA variance
+  PC_var <-data.frame(PC =paste0("PC", 1:12),variance = (((nonvsd2.pca$sdev) ^ 2 / sum((nonvsd2.pca$sdev) ^ 2)) * 100))
+  lorder <-as.vector(outer(c("PC"), 1:12, paste, sep = ""))
+  PC_var$PC <-factor(PC_var$PC,levels = lorder)
+  
+  # VSD PCA variance
+  PC_var_VST <- data.frame(PC =paste0("PC", 1:12),variance =(((vsd2.pca$sdev) ^ 2 / sum((vsd2.pca$sdev) ^ 2)) * 100))
+  lorder_VST <- as.vector(outer(c("PC"), 1:12, paste, sep = ""))
+  PC_var_VST$PC <-factor(PC_var_VST$PC,levels = lorder_VST)
+  
+  #batch corrected PCA variance
+  PC_var_bc <-data.frame(PC =paste0("PC", 1:12),variance =(((bcvsd2.pca$sdev) ^ 2 / sum((bcvsd2.pca$sdev) ^ 2)) * 100))
+  lorder_bc <-as.vector(outer(c("PC"), 1:12, paste, sep = ""))
+  PC_var_bc$PC <-factor(PC_var_bc$PC,levels = lorder_bc)
+  
+  PC_var_data <-
+    eventReactive(input$PCAvarscree, {
+      if (input$PCAvarscree == "counts PCA") {
+        PC_var
+      } else if (input$PCAvarscree == "VST PCA") {
+        PC_var_VST
+      } else if (input$PCAvarscree == "VST + batch corrected PCA") {
+        PC_var_bc
+      }
+    })
   #define objects for defining x label to include % variance of PC1
   pc1var <- paste("PC1", (round(nonvsd.variance[3, 1] * 100, 1)), "% variance")
   pc1varvsd <- paste("PC1", (round(vsd.variance[3, 1] * 100, 1)), "% variance")
@@ -367,6 +412,20 @@ server <-
       ggtitle("") +
       guides(fill=guide_legend(override.aes = list(color=colors))) +
       geom_text_repel(aes(label=sample_name),hjust=0, vjust=0)
+  })
+  
+  output$PCAvarplot <- renderPlot ({
+    ggplot(PC_var_data(),
+           aes(x = PC,
+               y = variance,
+               group = 2)) +
+      geom_point(size = 2) +
+      geom_line() +
+      theme_cowplot() +
+      labs(x = "PC",
+           y = "% Variance") +
+      labs(title =
+             "")
   })
 ##Gene Centric-Cancer Discovery output ####
  updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
@@ -630,7 +689,7 @@ server <-
          )
        )(3),
        legend = NULL,
-       top = 0,
+       top = TRUE,
        ggtheme = ggplot2::theme_light()
      )
      
