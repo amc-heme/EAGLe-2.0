@@ -66,11 +66,13 @@ ui <-
                 "counts PCA"
             ),
             
+            downloadButton("downloadPlot", label = "Download Plot"),
+  
             hr(),
             
             radioButtons(
               "PCAvarscree",
-              h4("PCA Scree Plots"),
+              h4("Choose PCA for Scree Plot"),
               choices =
                 list("counts PCA", "VST PCA", "VST + batch corrected PCA"),
               selected =
@@ -402,7 +404,7 @@ server <-
   output$PCAplot <- renderPlot ({
     colors <-
       colorRampPalette(c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2"))(2)
-    ggplot(PCAdata(), aes(x = PC1, y = PC2, fill = batch, shape = condition)) + 
+   ggplot(PCAdata(), aes(x = PC1, y = PC2, fill = batch, shape = condition)) + 
       geom_point(size = 5) + 
       scale_shape_manual(values = c(21, 24), name = '') +
       scale_fill_manual(values = colors ) +
@@ -412,8 +414,15 @@ server <-
       ggtitle("") +
       guides(fill=guide_legend(override.aes = list(color=colors))) +
       geom_text_repel(aes(label=sample_name),hjust=0, vjust=0)
+ 
   })
   
+  output$downloadPlot <- downloadHandler(
+    filename = function() { paste(input$PCAvar, '.png', sep='') },
+    content = function(file) {
+      ggsave(file, device = "png")
+    }
+  )
   output$PCAvarplot <- renderPlot ({
     ggplot(PC_var_data(),
            aes(x = PC,
