@@ -18,6 +18,8 @@ library(reactlog)
 library(DT)
 library(ggrepel)
 library(DESeq2)
+library(shinyWidgets)
+library(shinyjs)
 
 #options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
@@ -55,33 +57,47 @@ ui <-
         ), 
         sidebarLayout(
           sidebarPanel(
-            h3("PCA plots"),
+            h3(
+              "PCA plots"
+              ),
             
             radioButtons(
               "PCAvar",
-              h4("Choose PCA plot"),
+              h4(
+                "Choose PCA plot"
+                ),
               choices =
                 list("counts PCA", "VST PCA", "VST + batch corrected PCA"),
               selected =
                 "counts PCA"
             ),
             
-            downloadButton("downloadPlot", label = "Download Plot"),
+            downloadButton("downloadPlotPCA", label = "Download Plot"),
   
             hr(),
             
             radioButtons(
               "PCAvarscree",
-              h4("Choose PCA for Scree Plot"),
+              h4(
+                "Choose PCA for Scree Plot"
+                ),
               choices =
                 list("counts PCA", "VST PCA", "VST + batch corrected PCA"),
               selected =
                 "counts PCA"
             ),
             
+            downloadButton(
+              "downloadPlotscree",
+              label =
+                "Download Plot"
+              ),
+            
             hr(),
             
-            h3("MultiQC Plots"),
+            h3(
+              "MultiQC Plots"
+              ),
             # 
             selectInput(
               "QCvar",
@@ -130,6 +146,7 @@ ui <-
             ),
           sidebarLayout(
             sidebarPanel(
+              useShinyjs(),
               selectizeInput(
                 "VSTCDgenechoice",
                 label=
@@ -137,7 +154,7 @@ ui <-
                 choices =
                   NULL,
                 selected = NULL,
-                options = list(maxItems = 5)
+                options = list(maxItems = NULL)
                 ),
               radioButtons("XaxisVar_CDgene", h4("X axis variable"),
                            choices = list("Value" = "xvalue", "Class" = "xclass",
@@ -146,8 +163,25 @@ ui <-
                            choices = list("Value" = "yvalue", "Class" = "yclass",
                                           "Gene" = "ygene"),selected = "yvalue"),
               radioButtons("FillVar_CDgene", h4("Fill variable"),
-                           choices = list("Class" = "fillclass", "Gene" = "fillgene"), selected = "fillclass")
+                           choices = list("Class" = "fillclass", "Gene" = "fillgene"), selected = "fillclass"),
+              
+            
+            h3(
+              "Aesthetics"
               ),
+            
+            materialSwitch(
+              inputId =
+                "genefacetbutton",
+              label =
+                "Facet Grid",
+              value =
+                FALSE,
+              right =
+                TRUE
+            )
+            ),
+            
             mainPanel(
               tabsetPanel(
                 type =
@@ -359,6 +393,18 @@ server <-
         PC_var_bc
       }
     })
+  # reactive function for plot title
+  PCA_title <- 
+    reactive({
+        if (input$PCAvar == "counts PCA") {
+          print("counts PCA")
+        } else if (input$PCAvar == "VST PCA") {
+          print("VST PCA")
+        } else if (input$PCAvar == "VST + batch corrected PCA") {
+          print("VST + batch corrected PCA")
+        }
+    })
+  
   #define objects for defining x label to include % variance of PC1
   pc1var <- paste("PC1", (round(nonvsd.variance[3, 1] * 100, 1)), "% variance")
   pc1varvsd <- paste("PC1", (round(vsd.variance[3, 1] * 100, 1)), "% variance")
@@ -408,21 +454,25 @@ server <-
       geom_point(size = 5) + 
       scale_shape_manual(values = c(21, 24), name = '') +
       scale_fill_manual(values = colors ) +
-      theme_cowplot(16) + 
+      theme_cowplot() + 
+      theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+      theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
       xlab(variance_PC1()) + 
       ylab(variance_PC2()) +
-      ggtitle("") +
+      ggtitle(PCA_title()) +
       guides(fill=guide_legend(override.aes = list(color=colors))) +
       geom_text_repel(aes(label=sample_name),hjust=0, vjust=0)
  
   })
   
-  output$downloadPlot <- downloadHandler(
+  
+  output$downloadPlotPCA <- downloadHandler(
     filename = function() { paste(input$PCAvar, '.png', sep='') },
     content = function(file) {
-      ggsave(file, device = "png")
+      ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
     }
   )
+  
   output$PCAvarplot <- renderPlot ({
     ggplot(PC_var_data(),
            aes(x = PC,
@@ -436,6 +486,13 @@ server <-
       labs(title =
              "")
   })
+  
+  output$downloadPlotscree <- downloadHandler(
+    filename = function() { paste(input$PCAvarscree, '.png', sep='') },
+    content = function(file) {
+      ggsave(file, device = "png")
+    }
+  )
 ##Gene Centric-Cancer Discovery output ####
  updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
  
@@ -444,6 +501,19 @@ server <-
      vst.goi %>% 
        dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
    })
+#make sure duplicate selections are not allowed with radio buttons
+ observeEvent(input$XaxisVar_CDgene, {
+   if(input$XaxisVar_CDgene == "xvalue") {
+     mychoices <- c("Class" = "yclass", "Gene" = "ygene")
+      }else if(input$XaxisVar_CDgene=="xclass") {
+     mychoices <- c("Value"="yvalue", "Gene"="ygene")
+     } else if(input$XaxisVar_CDgene=="xgene") {
+     mychoices <- c("Value" = "yvalue", "Class" = "yclass")
+     }
+   updateRadioButtons(session, "YaxisVar_CDgene", choices = mychoices)
+ })
+ 
+ 
   #x axis output
  xvar_CDgene <-
    eventReactive(input$XaxisVar_CDgene, {
@@ -475,12 +545,18 @@ server <-
        "ext_gene"
      }
    })
+ Gene_facet <- 
+   eventReactive(input$genefacetbutton, {
+     if(input$genefacetbutton == TRUE) {
+       facet_grid(ext_gene ~ class, scales = 'free') 
+     } else(NULL)
+   })
  #plot output
   output$VSTCDplot <-
     renderPlot({
  #build a color palette
       colors <-
-        colorRampPalette(c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2"))(5)
+        colorRampPalette(c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2"))(10)
       ggplot(datavst(),
              aes(
                x = .data[[xvar_CDgene()]],
@@ -494,6 +570,7 @@ server <-
                    position = position_jitterdodge(jitter.width = 0.2),
                    aes(color = ext_gene)) + #this needs to be reactive too
         theme_light() +
+        Gene_facet() +
         ylab("") +
         xlab("") +
         ggtitle("Gene Expression:Sensitive vs Resistant")
@@ -531,49 +608,7 @@ server <-
   #DESEq #####
   
 ## DESeq2- Cancer Discovery outputs
-# updateSelectizeInput(session,"DECDgenechoice", choices = dds.res$Gene, server = TRUE)
-# 
-#   dataDECD<-
-#     reactive({
-#       dds.res %>%
-#         dplyr::filter(Gene %in% input$DECDgenechoice)
-#     })
-# 
-  # DEpadj <-
-  #   eventReactive(input$padjbutton, {
-  #     if (input$padjbutton == "sigvar1") {
-  #       dds.res %>%
-  #         dplyr::filter(padj <= 0.01)
-  #     } else if (input$padjbutton == "sigvar5") {
-  #       dds.res %>%
-  #         dplyr::filter(padj <= 0.05)
-  #     } else if (input$padjbutton == "allvar") {
-  #       dds.res %>%
-  #         dplyr::filter(padj >= 0)
-  #     }
-  #   })
-  # DEDiffExp <-
-  #   eventReactive(input$DiffExpButton, {
-  #     if (input$DiffExpButton == "DEup") {
-  #       dds.res %>%
-  #         dplyr::filter(DiffExp == "up")
-  #     } else if (input$DiffExpButton == "DEdown") {
-  #       dds.res %>%
-  #         dplyr::filter(DiffExp == "down")
-  #     } else if (input$DiffExpButton == "DEno") {
-  #       dds.res %>%
-  #         dplyr::filter(DiffExp == "no")
-  #     } else if (input$DiffExpButton == "DEall") {
-  #       dds.res %>%
-  #         dplyr::filter(DiffExp == c("up", "down", "no"))
-  #     }
-  #   })
-  # DElog2 <-
-  #   reactive({
-  #     dds.res %>% 
-  #       dplyr::filter(log2FoldChange)
-  #   })
-# 
+
 #   DElog2 <-
 #     reactive({
 #       dds.res[dds.res$log2FoldChange >= input$CDlog2foldchangeslider & dds.res$log2FoldChange <= input$CDlog2foldchangeslider, ]
@@ -631,7 +666,7 @@ server <-
           dplyr::filter(DiffExp == c("up", "down", "no") & padj <= 0.05)
       }
     })
-  
+ 
   
    output$DETable <-
      renderDataTable({
@@ -663,6 +698,7 @@ server <-
          geom_point() +
          theme_light() +
          scale_colour_manual(values = colors) +
+         ggtitle("DE Volcano Plot") +
          geom_text_repel(
            max.overlaps = 15,
            aes(label = ifelse(
@@ -699,6 +735,7 @@ server <-
        )(3),
        legend = NULL,
        top = TRUE,
+       title = "DE MA Plot",
        ggtheme = ggplot2::theme_light()
      )
      
