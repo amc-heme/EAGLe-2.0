@@ -24,7 +24,7 @@ library(shinyjs)
 #options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
-#1.Data ####
+#Data ####
 meta_lut_ven <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/meta_lut_ven.Rds")
 qcdt<-load_multiqc("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
 vst.goi <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
@@ -39,27 +39,24 @@ bcvsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvs
 nonvsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/nonvsd2.pca.rds")
 vsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd2.pca.rds")
 bcvsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd2.pca.rds")
-#2. UI- CancerDiscovery ####
+# UI ####
 ui <-
   navbarPage(
-  "EAGLe",
-  navbarMenu(
-    "Cancer Discovery",
-    tabPanel(  # 3. UI- QC tab ####
-      "QC",
+  "EAGLe: Cancer Discovery",
+  navbarMenu( #QC Menu ####
+    "QC",
+    tabPanel(  # PCA plots ####
+      "PCA Plots",
       fluidPage(
         theme =
           shinytheme(
             "flatly"
             ),
         titlePanel(
-          "QC Analysis"
+          "QC Analysis: PCA Plots"
         ), 
         sidebarLayout(
           sidebarPanel(
-            h3(
-              "PCA plots"
-              ),
             
             radioButtons(
               "PCAvar",
@@ -73,70 +70,83 @@ ui <-
             ),
             
             downloadButton("downloadPlotPCA", label = "Download Plot"),
-  
-            hr(),
-            
-            radioButtons(
-              "PCAvarscree",
-              h4(
-                "Choose PCA for Scree Plot"
-                ),
-              choices =
-                list("counts PCA", "VST PCA", "VST + batch corrected PCA"),
-              selected =
-                "counts PCA"
-            ),
-            
-            downloadButton(
-              "downloadPlotscree",
-              label =
-                "Download Plot"
-              ),
-            
-            hr(),
-            
-            h3(
-              "MultiQC Plots"
-              ),
-            # 
-            selectInput(
-              "QCvar",
-              label=
-                "Choose MultiQC test",
-              choices =
-                c("% mapped reads", "# mapped reads", "% uniquely mapped reads", "# uniquely mapped reads"),
-              selected =
-                "% mapped reads"
-            ) #end selectInput
+
           ), #end sidebarPanel
           mainPanel(
-            tabsetPanel(
-            type =
-              "tabs",
-            tabPanel(
-              "PCA Plots",
-                     plotOutput(
-                       "PCAplot"
-                       )
-              ),
-            tabPanel(
-              "PCA Scree Plots",
-              plotOutput(
-                "PCAvarplot"
+            plotOutput(
+              "PCAplot"
               )
-            ),
-            tabPanel(
-              "MultiQC Plots",
-                     plotOutput(
-                       "QCplot"
-                       )
               )
-          ) #end tabsetPanel) 
-          )#end mainPanel
-          ) #end sidebarLayout
-        ) #end fluidPage
-      ), #end QC tabPanel
-    tabPanel( #4. UI Gene Centric tab panel ####
+            ) 
+            )
+          ),
+    tabPanel(  # PCA Scree Plots ####
+               "PCA Scree Plots",
+               fluidPage(
+                 theme =
+                   shinytheme(
+                     "flatly"
+                   ),
+                 titlePanel(
+                   "QC Analysis: PCA Scree Plots"
+                 ), 
+                 sidebarLayout(
+                   sidebarPanel(
+                     radioButtons(
+                       "PCAvarscree",
+                       h4(
+                         "Choose PCA for Scree Plot"
+                       ),
+                       choices =
+                         list("counts PCA", "VST PCA", "VST + batch corrected PCA"),
+                       selected =
+                         "counts PCA"
+                     ),
+                     
+                     downloadButton(
+                       "downloadPlotscree",
+                       label =
+                         "Download Plot"
+                     )
+                   ), #end sidebarPanel
+                   mainPanel(
+                         plotOutput(
+                           "PCAvarplot"
+                         )
+                       )
+                   )
+                 )
+               ), 
+    tabPanel( #MultiQC Plots ####
+      "MultiQC",
+      fluidPage(
+        theme = 
+          shinytheme("flatly"),
+        titlePanel(
+          "QC Analysis: MultiQC Plots"
+        ),
+        sidebarLayout(
+          sidebarPanel(
+            selectInput(
+            "QCvar",
+            label=
+              "Choose MultiQC test",
+            choices =
+              c("% mapped reads", "# mapped reads", "% uniquely mapped reads", "# uniquely mapped reads"),
+            selected =
+              "% mapped reads"
+          ) #end selectInput
+        ), #end sidebar panel
+        mainPanel(
+            plotOutput(
+              "QCplot"
+              )
+            )
+          )
+        )
+        )
+      ),
+    tabPanel( #Gene centric analysis ####
       "Gene Centric Analysis",
       fluidPage(
         theme=
@@ -166,7 +176,7 @@ ui <-
                            choices = list("Class" = "fillclass", "Gene" = "fillgene"), selected = "fillclass"),
               
             
-            h3(
+            h4(
               "Aesthetics"
               ),
             
@@ -179,7 +189,14 @@ ui <-
                 FALSE,
               right =
                 TRUE
-            )
+            ),
+           hr(), #consider plot size, not changing axis- just scale, width, height
+           sliderInput("geneheightslider", "Adjust plot height",
+                                   min = 0, max = 10, value = 4
+           ),
+           sliderInput("genewidthslider", "Adjust plot width",
+                       min = 0, max = 10, value = 6
+           )
             ),
             
             mainPanel(
@@ -203,125 +220,101 @@ ui <-
             )
         )
       ), #end Genecentric tabPanel
-    tabPanel("DESeq Analysis", # 5. UI DESeq tab ####
-             fluidPage(
-               theme =
-                 shinytheme("flatly"),
-               titlePanel("DESeq Table and Plots"),
-               #end title
-               sidebarLayout(
-                 sidebarPanel( 
-            
-                  radioButtons("padjbutton", h4("padj Value"), 
+    navbarMenu("DESeq Analysis",# DESeq Menu ####
+               tabPanel("DESeq Analysis: Table", #DESeq table ####
+                        fluidPage(
+                          theme =
+                            shinytheme("flatly"),
+                          titlePanel(
+                            "DESeq Table"
+                            ),#end title
+                          sidebarLayout(
+                            sidebarPanel( 
+                              radioButtons("padjbutton", h4("padj Value"), 
                                choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
-                  
-                   
-                   hr(),
-                   
-                  radioButtons("DiffExpButton", h4("Differential Expression"),
+                              
+                              hr(),
+                              radioButtons("DiffExpButton", h4("Differential Expression"),
                                choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall")
-                  
-                  #hr(),
-                  
-                  
-                  # 
-                  #  sliderInput( #filter by expression
-                  #    "CDlog2foldchangeslider",
-                  #    label = h4(
-                  #      "Select log2 fold change range"
-                  #    ),
-                  #    min = -4,
-                  #    max = 5,
-                  #    value = c(0, 5)
-                  #  )
-                   ),
-                 mainPanel(
-                   tabsetPanel(
-                     type =
-                       "tabs",
-                     tabPanel(
-                       "DE Table",
-                       DTOutput(
-                         "DETable"
-                       )
-                     ),
-                     tabPanel(
-                       "Volcano Plot",
-                       plotOutput(
-                         "DEVolcanoPlot"
-                         )
-                       ),
-                     tabPanel(
-                       "MA Plot",
-                       plotOutput(
-                         "DEMAPlot"
-                       )
-                     ) #end MA tab
-                   ) #end tabset panel
-                 ) #end mainPanel
+                              ),
+                            mainPanel(
+                              DTOutput(
+                                "DETable"
+                                )
+                              )
+                          )
+                        )
+               ),
+               tabPanel("DESeq Volcano Plot", #DESeq volcano plot ####
+                        fluidPage(
+                          theme =
+                            shinytheme("flatly"),
+                          titlePanel(
+                            "DESeq Analysis: Volcano Plot"
+                          ),#end title
+                          sidebarLayout(
+                            sidebarPanel( 
+                              radioButtons("sigvaluesbutton", h4("padj Value"), 
+                                           choices = list("<= 0.01" = "sigvar0.01", "<= 0.05" = "sigvar0.05", "All" = "allvar2"), selected = "allvar"),
+                              # 
+                              # hr(),
+                              # radioButtons("DiffExpButton", h4("Differential Expression"),
+                              #              choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall")
+                              downloadButton(
+                                          "downloadDEVolcano",
+                                          label =
+                                            "Download Plot"
+                                        )
+                            ),
+                            mainPanel(
+                              plotOutput(
+                                "DEVolcanoPlot"
+                              )
+                            )
+                          )
+                        )
+               ),
+               tabPanel("DESeq MA Plot", #DESeq MA Plot####
+                        fluidPage(
+                          theme =
+                            shinytheme("flatly"),
+                          titlePanel(
+                            "DESeq Analysis: MA Plot"
+                          ),#end title
+                          sidebarLayout(
+                            sidebarPanel( 
+                              # radioButtons("padjbutton", h4("padj Value"), 
+                              #              choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
+                              # 
+                              # hr(),
+                              # radioButtons("DiffExpButton", h4("Differential Expression"),
+                              #              choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall")
+                              downloadButton(
+                                "downloadDEMA",
+                                label =
+                                  "Download Plot"
+                              )
+                            ),
+                            mainPanel(
+                              plotOutput(
+                                "DEMAPlot"
+                              )
+                            )
+                          )
+                        )
                )
-             ) #end fluidPage
-    ), #end DE
-    tabPanel( # 6. UI GSEA tab ####
-      "GSEA"
-      )#end GSEA tabPanel
-    ),#end gene centric tabPanel #end CD navbarmenu
-  navbarMenu("BEAT-AML", # 7. UI BEAT- AML Gene Centric ####
-    tabPanel( 
-      "Gene Centric Plots",
-      fluidPage(
-        theme =
-          shinytheme(
-            "flatly"
-            ),
-        titlePanel(
-          "BEAT-AML"
-        ), #end title
-        sidebarLayout(
-          sidebarPanel(
-            selectInput(
-              "BlastVar",
-              label =
-                "Choose a Variable to Display",
-              choices =
-                c("PercentBlastsInBM", "PercentBlastsInPB"),
-              selected =
-                "PercentBlastsInBM"
-            ) #end selectInput
-          ), #end sidebarPanel
-          mainPanel(
-            tabsetPanel(
-              type =
-                "tabs",
-              tabPanel(
-                "BlastPercentagePlot",
-                plotOutput(
-                  "BlastPlot"
-                  )
-              ), #end tabPanel
-              tabPanel(
-                "Table2",
-                tableOutput(
-                  "table2"
-                  ) 
-              ),#end tabPanel
-              tabPanel(
-                "Summary2",
-                textOutput(
-                  "summary2"
-                  )
-                ) #end tabPanel
-              ) #end tabsetPanel
-            ) #end mainPanel
-          ) #end sidebarLayout
-        ) #end fluidPage
-      ), #end Gene centric tabPanel
-    tabPanel( # 8. UI BEAT DESeq and GSEA tab ####
-      "DESeq and GSEA Anlaysis"
-      ) #end tabPanel
-    ) #end BEAT navbarMenu
-  ) #end navbarPage
-
+              
+               ), 
+#GSEA menu ####
+ navbarMenu( 
+   "GSEA"
+ ),
+#WGCNA menu####
+ navbarMenu(
+   "WGCNA"
+ )
+)
+#Server ####
 server <- 
   function(input, output, session) {
   
@@ -329,7 +322,7 @@ server <-
   options(shiny.reactlog = TRUE)
   
   
-##QC- Server MultiQC Cancer Discovery output ####
+##QC-MultiQC plots####
   output$QCplot <- renderPlot({
     QCdata <- switch(
       input$QCvar,
@@ -354,7 +347,7 @@ server <-
             element_text(angle = 60, hjust = 1))
   }) #end renderPlot
   
-  # Server PCA CD plots output ####
+  # PCA plots ####
  
   PCAdata <-
     eventReactive(input$PCAvar, {
@@ -368,6 +361,8 @@ server <-
       #   PCA_variance
        }
     })
+  
+  # PCA Scree data ####
   #non VSD PCA variance
   PC_var <-data.frame(PC =paste0("PC", 1:12),variance = (((nonvsd2.pca$sdev) ^ 2 / sum((nonvsd2.pca$sdev) ^ 2)) * 100))
   lorder <-as.vector(outer(c("PC"), 1:12, paste, sep = ""))
@@ -465,14 +460,14 @@ server <-
  
   })
   
-  
+  #PCA plots download ####
   output$downloadPlotPCA <- downloadHandler(
     filename = function() { paste(input$PCAvar, '.png', sep='') },
     content = function(file) {
       ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
     }
   )
-  
+  # PCA scree plot ####
   output$PCAvarplot <- renderPlot ({
     ggplot(PC_var_data(),
            aes(x = PC,
@@ -486,14 +481,14 @@ server <-
       labs(title =
              "")
   })
-  
+  #PCA Scree download ####
   output$downloadPlotscree <- downloadHandler(
     filename = function() { paste(input$PCAvarscree, '.png', sep='') },
     content = function(file) {
-      ggsave(file, device = "png")
+      ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
     }
   )
-##Gene Centric-Cancer Discovery output ####
+##Gene Centric output ####
  updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
  
  datavst<-
@@ -501,6 +496,24 @@ server <-
      vst.goi %>% 
        dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
    })
+ 
+
+
+    
+ # heightgene <- 
+ #  reactive({
+ #  height = input$geneheightslider
+ #   })
+
+# observeEvent(input$YaxisVar_CDgene, {
+#    if (input$YaxisVar_CDgene == "yvalue") {
+#      #shinyjs::disable("xaxisslider") &
+#        coord_cartesian(ylim = input$yaxisslider)
+#    } else {
+#      coord_cartesian()
+#    }
+#  })
+ 
 #make sure duplicate selections are not allowed with radio buttons
  observeEvent(input$XaxisVar_CDgene, {
    if(input$XaxisVar_CDgene == "xvalue") {
@@ -576,34 +589,7 @@ server <-
         ggtitle("Gene Expression:Sensitive vs Resistant")
     }) #end render plot
 
-##Blast Percent plots- BEAT-AML output ####
-  output$BlastPlot <- renderPlot({
-    BlastData <- switch (
-      input$BlastVar,
-      "PercentBlastsInBM" = meta_lut_ven$PercentBlastsInBM,
-      "PercentBlastsInPB" = meta_lut_ven$PercentBlastsInPB
-    )
-    
-    ggplot(meta_lut_ven, aes(AUC, BlastData)) +
-      geom_point() +
-      theme_light() +
-      geom_hline(yintercept = 60,
-                 linetype = "dashed",
-                 color = "red") +
-      geom_vline(xintercept = 255,
-                 linetype = "dashed",
-                 color = "blue") +
-      geom_vline(xintercept = 60,
-                 linetype = "dashed",
-                 color = "blue") +
-      geom_vline(xintercept = 221,
-                 linetype = "dashed",
-                 color = "green") +
-      geom_vline(xintercept = 94,
-                 linetype = "dashed",
-                 color = "green") +
-      ggtitle(label = "PercentBlastsInBM and PercentBlastsInPB vs Ven AUC; 60% blast cutoff = 77")
-  }) #end renderPlot
+
 
   #DESEq #####
   
@@ -667,12 +653,37 @@ server <-
       }
     })
  
+  vol_sig_values <- 
+    reactive({
+      if(input$sigvaluesbutton == "sigvar0.05") {
+        dds.res %>% 
+          dplyr::filter(padj <= 0.05)
+      } else if(input$sigvaluesbutton == "sigvar0.01") {
+        dds.res %>% 
+          dplyr::filter(padj <= 0.01)
+      }else if(input$sigvaluesbutton == "allvar2") {
+        dds.res %>% 
+          dplyr::filter(padj > 0)
+      }
+      })
   
    output$DETable <-
      renderDataTable({
        CD_DE_DT()
        
      })
+  # colorsvol <-
+  #   for(padj in dds.res) {
+  #     if(padj <= 0.01) {
+  #       scale_colour_manual(values = "red")
+  #     }else if(padj <= 0.05) {
+  #       scale_colour_manual( values = "blue")
+  #        } else if(padj > 0.05) {
+  #          scale_colour_manual(values ="grey")
+  #        } else for(DiffExp in dds.res) {
+  #          scale_colour_manual(values = colors)
+  #         }}
+        
   
    output$DEVolcanoPlot <-
      renderPlot({
@@ -690,7 +701,7 @@ server <-
            )
          )(3)
        
-       ggplot(CD_DE_DT(), aes(
+       ggplot(vol_sig_values(), aes(
          x = log2FoldChange,
          y = -log10(padj),
          col = DiffExp
@@ -716,7 +727,7 @@ server <-
    output$DEMAPlot <- renderPlot ({
      
      ggmaplot(
-       CD_DE_DT(),
+       dds.res,
        fdr = 0.05,
        fc = (2 ^ 1),
        size = 1.5,
