@@ -192,10 +192,10 @@ ui <-
             ),
            hr(), #consider plot size, not changing axis- just scale, width, height
            sliderInput("geneheightslider", "Adjust plot height",
-                                   min = 0, max = 10, value = 4
+                                   min = 200, max = 1200, value = 600
            ),
            sliderInput("genewidthslider", "Adjust plot width",
-                       min = 0, max = 10, value = 6
+                       min = 200, max = 1200, value = 800
            )
             ),
             
@@ -255,7 +255,7 @@ ui <-
                           sidebarLayout(
                             sidebarPanel( 
                               radioButtons("sigvaluesbutton", h4("padj Value"), 
-                                           choices = list("<= 0.01" = "sigvar0.01", "<= 0.05" = "sigvar0.05", "All" = "allvar2"), selected = "allvar"),
+                                           choices = list("<= 0.01" = "sigvar0.01", "<= 0.05" = "sigvar0.05", "All" = "allvar2"), selected = "allvar2"),
                               # 
                               # hr(),
                               # radioButtons("DiffExpButton", h4("Differential Expression"),
@@ -498,22 +498,6 @@ server <-
    })
  
 
-
-    
- # heightgene <- 
- #  reactive({
- #  height = input$geneheightslider
- #   })
-
-# observeEvent(input$YaxisVar_CDgene, {
-#    if (input$YaxisVar_CDgene == "yvalue") {
-#      #shinyjs::disable("xaxisslider") &
-#        coord_cartesian(ylim = input$yaxisslider)
-#    } else {
-#      coord_cartesian()
-#    }
-#  })
- 
 #make sure duplicate selections are not allowed with radio buttons
  observeEvent(input$XaxisVar_CDgene, {
    if(input$XaxisVar_CDgene == "xvalue") {
@@ -566,7 +550,10 @@ server <-
    })
  #plot output
   output$VSTCDplot <-
-    renderPlot({
+    renderPlot(
+      width = function() input$genewidthslider,
+      height = function() input$geneheightslider,
+      {
  #build a color palette
       colors <-
         colorRampPalette(c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2"))(10)
@@ -672,17 +659,6 @@ server <-
        CD_DE_DT()
        
      })
-  # colorsvol <-
-  #   for(padj in dds.res) {
-  #     if(padj <= 0.01) {
-  #       scale_colour_manual(values = "red")
-  #     }else if(padj <= 0.05) {
-  #       scale_colour_manual( values = "blue")
-  #        } else if(padj > 0.05) {
-  #          scale_colour_manual(values ="grey")
-  #        } else for(DiffExp in dds.res) {
-  #          scale_colour_manual(values = colors)
-  #         }}
         
   
    output$DEVolcanoPlot <-
@@ -724,6 +700,12 @@ server <-
          coord_cartesian(xlim = c(-10, 7))
      })
    
+   output$downloadDEVolcano <- downloadHandler(
+     filename = function() { paste(input$sigvaluesbutton, '.png', sep='') },
+     content = function(file) {
+       ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+     }
+   )
    output$DEMAPlot <- renderPlot ({
      
      ggmaplot(
@@ -751,6 +733,12 @@ server <-
      )
      
    })
+   output$downloadDEMA <- downloadHandler(
+     filename = function() { paste('DESeqMAplot', '.png', sep='') },
+     content = function(file) {
+       ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+     }
+   )
   } #end server
 # Run the application 
  shinyApp(ui = ui, server = server)
