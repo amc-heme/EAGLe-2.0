@@ -196,7 +196,9 @@ ui <-
            ),
            sliderInput("genewidthslider", "Adjust plot width",
                        min = 200, max = 1200, value = 800
-           )
+           ),
+           downloadButton("downloadGenePlot", label = "Download Plot"),
+           
             ),
             
             mainPanel(
@@ -576,7 +578,13 @@ server <-
         ggtitle("Gene Expression:Sensitive vs Resistant")
     }) #end render plot
 
-
+  output$downloadGenePlot <- downloadHandler(
+    filename = function() { paste('GeneCentricPlot','.png', sep='') },
+    content = function(file) {
+      ggsave(file, device = "png", width = 8,
+             height = 8, dpi = 72)
+    }
+  )
 
   #DESEq #####
   
