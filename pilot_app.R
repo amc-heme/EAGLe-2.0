@@ -191,16 +191,19 @@ ui <-
               right =
                 TRUE
             ),
-           hr(), 
+           hr(),
            #Palettes from colorBrewer
            selectInput("PaletteChoices", "Choose a color palette", choices =
                          c("Dark2", "Paired", "Set1"), selected = "Dark2"),
+           hr(),
            sliderInput("geneheightslider", "Adjust plot height",
                                    min = 200, max = 1200, value = 600
            ),
+           hr(),
            sliderInput("genewidthslider", "Adjust plot width",
                        min = 200, max = 1200, value = 800
            ),
+           hr(),
           
            downloadButton("downloadGenePlot", label = "Download Plot"),
            
@@ -242,7 +245,9 @@ ui <-
                               
                               hr(),
                               radioButtons("DiffExpButton", h4("Differential Expression"),
-                               choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall")
+                               choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall"),
+                              hr(),
+                              downloadButton("downloadDEtable", label = "Download Table"),
                               ),
                             mainPanel(
                               DTOutput(
@@ -706,7 +711,12 @@ colorpalettechoices <-
        
      })
         
-  
+   output$downloadDEtable <- downloadHandler(
+     filename = function() { paste("DESeqTable", '.csv', sep='') },
+     content = function(file) {
+       write.csv(CD_DE_DT(),file)
+     }
+   )
    output$DEVolcanoPlot <-
      renderPlot( 
        width = function() input$volwidthslider,
