@@ -175,11 +175,12 @@ ui <-
               radioButtons("FillVar_CDgene", h4("Fill variable"),
                            choices = list("Class" = "fillclass", "Gene" = "fillgene"), selected = "fillclass"),
               
+            hr(),
             
-            h4(
-              "Aesthetics"
+            h3(
+              "Aesthetics:"
               ),
-            
+            hr(),
             materialSwitch(
               inputId =
                 "genefacetbutton",
@@ -190,13 +191,17 @@ ui <-
               right =
                 TRUE
             ),
-           hr(), #consider plot size, not changing axis- just scale, width, height
+           hr(), 
+           #Palettes from colorBrewer
+           selectInput("PaletteChoices", "Choose a color palette", choices =
+                         c("Dark2", "Paired", "Set1"), selected = "Dark2"),
            sliderInput("geneheightslider", "Adjust plot height",
                                    min = 200, max = 1200, value = 600
            ),
            sliderInput("genewidthslider", "Adjust plot width",
                        min = 200, max = 1200, value = 800
            ),
+          
            downloadButton("downloadGenePlot", label = "Download Plot"),
            
             ),
@@ -258,8 +263,16 @@ ui <-
                             sidebarPanel( 
                               radioButtons("sigvaluesbutton", h4("padj Value"), 
                                            choices = list("<= 0.01" = "sigvar0.01", "<= 0.05" = "sigvar0.05", "All" = "allvar2"), selected = "allvar2"),
-                              # 
-                              # hr(),
+                              
+                              hr(),
+                              selectInput("PaletteChoicesDE", "Choose a color palette", choices =
+                                            c("Dark2", "Paired", "Set1"), selected = "Dark2"),
+                              sliderInput("volheightslider", "Adjust plot height",
+                                          min = 200, max = 1000, value = 400
+                              ),
+                              sliderInput("volwidthslider", "Adjust plot width",
+                                          min = 200, max = 1000, value = 600
+                              ),
                               # radioButtons("DiffExpButton", h4("Differential Expression"),
                               #              choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall")
                               downloadButton(
@@ -446,11 +459,21 @@ server <-
   
   output$PCAplot <- renderPlot ({
     colors <-
-      colorRampPalette(c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2"))(2)
+      colorRampPalette(
+        c(
+          "#1B9E77",
+          "#D95F02",
+          "#7570B3",
+          "#E7298A",
+          "#66A61E",
+          "#E6AB02",
+          "#A6761D",
+          "#666666"
+        ))(2)
    ggplot(PCAdata(), aes(x = PC1, y = PC2, fill = batch, shape = condition)) + 
       geom_point(size = 5) + 
       scale_shape_manual(values = c(21, 24), name = '') +
-      scale_fill_manual(values = colors ) +
+      scale_fill_manual(values = colors) +
       theme_cowplot() + 
       theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
       theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
@@ -550,6 +573,18 @@ server <-
        facet_grid(ext_gene ~ class, scales = 'free') 
      } else(NULL)
    })
+colorpalettechoices <- 
+  eventReactive(input$PalletteChoices, {
+    if(input$PaletteChoices == "Dark") {
+      scale_color_brewer(palette = "Dark2")
+    } else if(input$PaletteChoices == "PurpleGreen") {
+      scale_color_brewer(palette = "PRGn")
+    } else if(input$PaletteChoices == "RedBlue") {
+      scale_color_brewer(palette = "RdBu")
+    } else if(input$PaletteChoices == "YellowGreenBlue") {
+      scale_color_brewer(palette = "YlGnBu")
+    }
+  })
  #plot output
   output$VSTCDplot <-
     renderPlot(
@@ -557,8 +592,11 @@ server <-
       height = function() input$geneheightslider,
       {
  #build a color palette
-      colors <-
-        colorRampPalette(c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#FFFFBF", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2"))(10)
+      # colors <-
+      #   colorRampPalette(c("dodgerblue4",
+      #                      "darkolivegreen4",
+      #                      "darkorchid3",
+      #                      "goldenrod1"))(10)
       ggplot(datavst(),
              aes(
                x = .data[[xvar_CDgene()]],
@@ -566,8 +604,8 @@ server <-
                fill = .data[[fillvar_CDgene()]]
              )) +
         geom_boxplot(outlier.shape = NA) +
-        scale_fill_manual(values = colors) +
-        scale_color_manual(values = colors) +
+        scale_fill_brewer(palette = input$PaletteChoices) +
+        scale_color_brewer(palette = input$PaletteChoices) +
         geom_point(alpha = 0.5,
                    position = position_jitterdodge(jitter.width = 0.2),
                    aes(color = ext_gene)) + #this needs to be reactive too
@@ -670,29 +708,32 @@ server <-
         
   
    output$DEVolcanoPlot <-
-     renderPlot({
-       colors <-
-         colorRampPalette(
-           c(
-             "#1B9E77",
-             "#D95F02",
-             "#7570B3",
-             "#E7298A",
-             "#66A61E",
-             "#E6AB02",
-             "#A6761D",
-             "#666666"
-           )
-         )(3)
-       
+     renderPlot( 
+       width = function() input$volwidthslider,
+                 height = function() input$volheightslider,
+                 {
+       # colors <-
+       #   colorRampPalette(
+       #     c(
+       #       "#1B9E77",
+       #       "#D95F02",
+       #       "#7570B3",
+       #       "#E7298A",
+       #       "#66A61E",
+       #       "#E6AB02",
+       #       "#A6761D",
+       #       "#666666"
+       #     )
+       #   )(3)
+       # 
        ggplot(vol_sig_values(), aes(
          x = log2FoldChange,
          y = -log10(padj),
          col = DiffExp
        )) +
-         geom_point() +
+         geom_point(alpha = 0.5) +
          theme_light() +
-         scale_colour_manual(values = colors) +
+         scale_colour_brewer(palette = input$PaletteChoicesDE) +
          ggtitle("DE Volcano Plot") +
          geom_text_repel(
            max.overlaps = 15,
@@ -722,7 +763,8 @@ server <-
        fc = (2 ^ 1),
        size = 1.5,
        alpha = 0.7,
-       palette = colorRampPalette(
+       palette =  
+         colorRampPalette(
          c(
            "#1B9E77",
            "#D95F02",
