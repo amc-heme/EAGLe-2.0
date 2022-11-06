@@ -20,7 +20,8 @@ library(ggrepel)
 library(DESeq2)
 library(shinyWidgets)
 library(shinyjs)
-
+library(fgsea)
+library(WGCNA)
 #options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
@@ -28,8 +29,11 @@ library(shinyjs)
 meta_lut_ven <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/meta_lut_ven.Rds")
 qcdt<-load_multiqc("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
 vst.goi <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
+#DESeq data table
 dds.res <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/DEtable.rds")
+#sample metadata table
 metadata <- read.table(file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/SampleSheetJordanLab.txt")
+#tables for PCA
 nonvsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/nonvsd.pca.rds")
 vsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.pca.rds")
 bcvsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.pca.rds")
@@ -39,10 +43,11 @@ bcvsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvs
 nonvsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/nonvsd2.pca.rds")
 vsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd2.pca.rds")
 bcvsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd2.pca.rds")
-
+#GSEA data table
+fgseaResTidy <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidy.rds")
 #load pathways
 pathways.hallmark <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/h.all.v7.4.symbols.gmt")
-pathways.GOall <- gmtPathways("/Users/stephanie/Library/Mobile Documents/com~apple~CloudDocs/Desktop/InformaticsProjectfiles/gmt_pathway_files/c5.go.v2022.1.Hs.symbols.gmt")
+pathways.GOall <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.v2022.1.Hs.symbols.gmt")
 pathways.GOmolec <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.mf.v7.4.symbols.gmt")
 pathways.GOcellcomp <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.cc.v2022.1.Hs.symbols.gmt") 
 pathways.GObio <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.bp.v7.4.symbols.gmt")
@@ -346,9 +351,78 @@ ui <-
               
                ), 
 #GSEA menu ####
- navbarMenu( 
-   "GSEA"
- ),
+navbarMenu("GSEA", 
+  tabPanel("GSEA", ####GSEAtables
+            fluidPage(
+              theme =
+                shinytheme("flatly"),
+              titlePanel(
+                "GSEA"
+              ),#end title
+              sidebarLayout(
+                sidebarPanel( 
+                 selectInput("filechoice", "choose gmt file to load pathways",
+                             choices = c(Hallmark = "hallmark", GOall = "GOall", GOmolecular = "GOmolec", 
+                                         GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
+                                         allRegular = "allReg", Wiki = "wiki", Reactome = "reactome", KEGG = "KEGG",
+                                         Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg")),
+                             
+                             
+                  
+                  hr(),
+                  selectInput("Table/Plot choice", "Choose a visualization tool",
+                              choices =
+                                c("fgsea Table" = "fgseaTable", "Ranked Pathways" = "rankedplot", "Moustache Plot" = "moustache",
+                                  "Top Up and Down Ranked Pathways" = "topupandown",
+                                  "Top ranked UP pathway" = "topup", "Top ranked DOWN pathway" = "topdown")
+                              )
+                ),
+                              
+
+                mainPanel(
+                  plotOutput(
+                    "GSEAMoustache"
+                  )
+                )
+              )
+            )
+  ),
+  tabPanel("Gene Centric Pathway Analysis",
+           fluidPage(
+             theme =
+               shinytheme("flatly"),
+             titlePanel(
+               "GSEA"
+             ),#end title
+             sidebarLayout(
+               sidebarPanel( 
+                 selectizeInput(
+                   "Pathwaygenechoice",
+                   label=
+                     "Choose a gene",
+                   choices =
+                     NULL,
+                   selected = NULL,
+                   options = list(maxItems = NULL)
+                 ),
+                 hr(),
+                 
+                 selectInput("filechoice", "choose gmt file to load pathways containing the gene or genes of interest",
+                 choices = c(Hallmark = "hallmark", GOall = "GOall", GOmolecular = "GOmolec", 
+                             GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
+                             allRegular = "allReg", Wiki = "wiki", Reactome = "reactome", KEGG = "KEGG",
+                             Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg"))
+                 ),
+               mainPanel(
+                 plotOutput(
+                   "PathwaysGenePlot"
+                 )
+               )
+           )
+             )
+   )
+),
+ 
 #WGCNA menu####
  navbarMenu(
    "WGCNA"
@@ -819,6 +893,11 @@ colorpalettechoices <-
        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
      }
    )
+   
+####GSEA output ####
+   
+   #gene list for gene centric pathway analysis
+   updateSelectizeInput(session,"Pathwaygenechoice", choices = dds.res$Gene, server = TRUE)
   } #end server
 # Run the application 
  shinyApp(ui = ui, server = server)
