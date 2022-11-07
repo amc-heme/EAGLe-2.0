@@ -33,6 +33,8 @@ vst.goi <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds
 dds.res <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/DEtable.rds")
 #sample metadata table
 metadata <- read.table(file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/SampleSheetJordanLab.txt")
+# DE table with singscore
+dds.resscore <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/dds.resscore.rds")
 #tables for PCA
 nonvsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/nonvsd.pca.rds")
 vsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.pca.rds")
@@ -45,6 +47,15 @@ vsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd2.pca.r
 bcvsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd2.pca.rds")
 #GSEA data table
 fgseaResTidy <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidy.rds")
+fgseaResTidyAll <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyAll.rds")
+fgseaResTidyMolec <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyMolec.rds")
+fgseaResTidyCC <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyCC.rds")
+fgseaResTidyBio <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyBio.rds")
+fgseaResTidyTF <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyTF.rds")
+fgseaResTidyReg <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyReg.rds")
+fgseaResTidyWiki <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyWiki.rds")
+fgseaResTidyReactome <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyReactome.rds")
+ranks <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/ranks.rds")
 #load pathways
 pathways.hallmark <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/h.all.v7.4.symbols.gmt")
 pathways.GOall <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.v2022.1.Hs.symbols.gmt")
@@ -60,6 +71,7 @@ pathways.Positional <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/d
 pathways.Biocarta <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.biocarta.v2022.1.Hs.symbols.gmt")
 pathways.lsc <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/lsc_sigs.gmt")
 pathways.aeg <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/aeg_genesets_20220602.gmt")
+
 
 names(pathways.aeg)[10] <- "PM_Primitive_Blast"
 names(pathways.aeg)[9] <- "PM_Monocytic_Blast"
@@ -271,7 +283,21 @@ ui <-
                               hr(),
                               radioButtons("DiffExpButton", h4("Differential Expression"),
                                choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall"),
+                              
                               hr(),
+                              materialSwitch(
+                                inputId =
+                                  "singscorebutton",
+                                label =
+                                  "Singscore Regression",
+                                value =
+                                  FALSE,
+                                right =
+                                  TRUE
+                              ),
+                              
+                              hr(),
+                              
                               downloadButton("downloadDEtable", label = "Download Table"),
                               ),
                             mainPanel(
@@ -361,8 +387,8 @@ navbarMenu("GSEA",
               ),#end title
               sidebarLayout(
                 sidebarPanel( 
-                 selectInput("filechoice", "choose gmt file to load pathways",
-                             choices = c(Hallmark = "hallmark", GOall = "GOall", GOmolecular = "GOmolec", 
+                 selectInput("filechoice", "Choose gmt file to load pathways",
+                             choices = c(Hallmark = "hallmark", GOall = "goall", GOmolecular = "GOmolec", 
                                          GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
                                          allRegular = "allReg", Wiki = "wiki", Reactome = "reactome", KEGG = "KEGG",
                                          Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg")),
@@ -370,16 +396,74 @@ navbarMenu("GSEA",
                              
                   
                   hr(),
-                  selectInput("Table/Plot choice", "Choose a visualization tool",
+                  selectInput("gseachoice", "Choose a visualization tool",
                               choices =
                                 c("fgsea Table" = "fgseaTable", "Ranked Pathways" = "rankedplot", "Moustache Plot" = "moustache",
-                                  "Top Up and Down Ranked Pathways" = "topupandown",
+                                  "Top Up and Down Ranked Pathways" = "topupanddown",
                                   "Top ranked UP pathway" = "topup", "Top ranked DOWN pathway" = "topdown")
-                              )
+                              ),
+                 
+                 conditionalPanel(
+                   condition = "input.gseachoice == 'fgseaTable'",
+                   downloadButton(
+                     "downloadfgsea",
+                     label =
+                       "Download Table"
+                   )
+                 ),
+                 
+                 conditionalPanel(
+                   condition = "input.gseachoice == 'rankedplot'",
+                   downloadButton(
+                     "downloadranks",
+                     label =
+                       "Download Plot"
+                   )
+                 ),
+                 conditionalPanel(
+                   condition = "input.gseachoice == 'moustache'",
+                   selectInput("PaletteChoicesMoustache", "Choose a color palette", choices =
+                                 c("Dark2", "Paired", "Set1"), selected = "Dark2"),
+                   downloadButton(
+                     "downloadmoustache",
+                     label =
+                       "Download Plot"
+                   )
+                   ),
+                 conditionalPanel(
+                   condition = "input.gseachoice == 'topupanddown'",
+                   downloadButton(
+                     "downloadupanddown",
+                     label =
+                       "Download Plot"
+                   )
+                 ),
+                 conditionalPanel(
+                   condition = "input.gseachoice == 'topup'",
+                   downloadButton(
+                     "downloadtopup",
+                     label =
+                       "Download Plot"
+                   )
+                 ),
+                 conditionalPanel(
+                   condition = "input.gseachoice == 'topdown'",
+                   downloadButton(
+                     "downloadtopdown",
+                     label =
+                       "Download Plot"
+                   )
+                 ),
                 ),
                               
 
                 mainPanel(
+                  DTOutput(
+                    "fgseaTable"
+                  ),
+                  plotOutput(
+                    "GSEAranked"
+                  ),
                   plotOutput(
                     "GSEAMoustache"
                   )
@@ -407,7 +491,7 @@ navbarMenu("GSEA",
                  ),
                  hr(),
                  
-                 selectInput("filechoice", "choose gmt file to load pathways containing the gene or genes of interest",
+                 selectInput("filechoice", "Choose gmt file to load pathways containing the gene or genes of interest",
                  choices = c(Hallmark = "hallmark", GOall = "GOall", GOmolecular = "GOmolec", 
                              GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
                              allRegular = "allReg", Wiki = "wiki", Reactome = "reactome", KEGG = "KEGG",
@@ -784,33 +868,100 @@ colorpalettechoices <-
           dplyr::filter(DiffExp == c("up", "down", "no") & padj <= 0.05)
       }
     })
- 
+  
+  CD_DE_DT_sing <- 
+    reactive({
+      if (input$padjbutton == "sigvar1" &
+          input$DiffExpButton == "DEup" & input$singscorebutton == TRUE) {
+        dds.resscore %>%
+          dplyr::filter(DiffExp == "up" & padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5" &
+                 input$DiffExpButton == "DEup" & input$singscorebutton == TRUE) {
+        dds.resscore %>%
+          dplyr::filter(DiffExp == "up" & padj <= 0.05)
+      } else if (input$padjbutton == "sigvar1" &
+                 input$DiffExpButton == "DEdown" & input$singscorebutton == TRUE) {
+        dds.resscore %>%
+          dplyr::filter(DiffExp == "down" & padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5" &
+                 input$DiffExpButton == "DEdown" & input$singscorebutton == TRUE) {
+        dds.resscore %>%
+          dplyr::filter(DiffExp == "down" & padj <= 0.05)
+      } else if (input$padjbutton == "sigvar1" &
+                 input$DiffExpButton == "DEno" & input$singscorebutton == TRUE) {
+        dds.resscore %>%
+          dplyr::filter(DiffExp == "no" & padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5" &
+                 input$DiffExpButton == "DEno" & input$singscorebutton == TRUE) {
+        dds.resscore %>%
+          dplyr::filter(DiffExp == "no" & padj <= 0.05)
+      } else if (input$padjbutton == "allvar" &
+                 input$DiffExpButton == "DEall"& input$singscorebutton == TRUE ) {
+        dds.resscore
+      } else if (input$padjbutton == "allvar" &
+                 input$DiffExpButton == "DEup" & input$singscorebutton == TRUE) {
+        dds.resscore %>%
+          dplyr::filter(DiffExp == "up" & padj >= 0)
+      } else if (input$padjbutton == "allvar" &
+                 input$DiffExpButton == "DEdown" & input$singscorebutton == TRUE) {
+        dds.resscore %>%
+          dplyr::filter(DiffExp == "down" & padj >= 0)
+      } else if (input$padjbutton == "allvar" &
+                 input$DiffExpButton == "DEno" & input$singscorebutton == TRUE) {
+        dds.resscore %>%
+          dplyr::filter(DiffExp == "no" & padj >= 0)
+      } else if (input$padjbutton == "sigvar1" &
+                 input$DiffExpButton == "DEall" & input$singscorebutton == TRUE) {
+        dds.resscore %>%
+          dplyr::filter(DiffExp == c("up", "down", "no") & padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5" &
+                 input$DiffExpButton == "DEall" & input$singscorebutton == TRUE) {
+        dds.resscore %>%
+          dplyr::filter(DiffExp == c("up", "down", "no") & padj <= 0.05)
+      }
+    })
+  #object for volcano plot data using DE and singscore tables
   vol_sig_values <- 
     reactive({
-      if(input$sigvaluesbutton == "sigvar0.05") {
+      if(input$sigvaluesbutton == "sigvar0.05" & input$singscorebutton == FALSE) {
         dds.res %>% 
           dplyr::filter(padj <= 0.05)
-      } else if(input$sigvaluesbutton == "sigvar0.01") {
+      } else if(input$sigvaluesbutton == "sigvar0.01" & input$singscorebutton == FALSE) {
         dds.res %>% 
           dplyr::filter(padj <= 0.01)
-      }else if(input$sigvaluesbutton == "allvar2") {
+      }else if(input$sigvaluesbutton == "allvar2" & input$singscorebutton == FALSE ) {
         dds.res %>% 
+          dplyr::filter(padj > 0)
+      } else if(input$sigvaluesbutton == "sigvar0.05" & input$singscorebutton == TRUE) {
+        dds.resscore %>% 
+          dplyr::filter(padj <= 0.05)
+      } else if(input$sigvaluesbutton == "sigvar0.01" & input$singscorebutton == TRUE) {
+        dds.resscore %>% 
+          dplyr::filter(padj <= 0.01)
+      }else if(input$sigvaluesbutton == "allvar2" & input$singscorebutton == TRUE) {
+        dds.resscore %>% 
           dplyr::filter(padj > 0)
       }
       })
-  
+  #output DE table with adjustment for singscore
    output$DETable <-
      renderDataTable({
-       CD_DE_DT()
+       if(input$singscorebutton == TRUE) {
+         CD_DE_DT_sing()
+       } else if(input$singscorebutton == FALSE) {
+         CD_DE_DT()
+       }
        
      })
-        
+ 
+   # download DE table
    output$downloadDEtable <- downloadHandler(
      filename = function() { paste("DESeqTable", '.csv', sep='') },
      content = function(file) {
        write.csv(CD_DE_DT(),file)
      }
    )
+   
    output$DEVolcanoPlot <-
      renderPlot( 
        width = function() input$volwidthslider,
@@ -895,8 +1046,106 @@ colorpalettechoices <-
    )
    
 ####GSEA output ####
+#run GSEA for chosen pathway input
+  
+# gseafile <- eventReactive(input$filechoice, {
+#   if(input$filechoice == "hallmark") {
+#     fgseaRes <- fgsea::fgsea(pathways=pathways.hallmark, stats=ranks)
+#     print(fgseaRes)
+#   } else if(input$filechoice == "GOall") {
+#     fgseaRes <- fgsea::fgsea(pathways=pathways.GOall, stats=ranks)
+#     print(fgseaRes)
+#   }
+# })
+#    
+   gseafile <- 
+     reactive({
+     if(input$filechoice == "hallmark") {
+       # fgseaRes <- fgsea::fgsea(pathways = pathways.hallmark, stats = ranks)
+       print(fgseaResTidy)
+     } else if(input$filechoice == "goall") {
+       # fgseaRes2 <- fgsea::fgsea(pathways = pathways.GOall, stats = ranks)
+       print(fgseaResTidyAll)
+     } else if(input$filechoice == "GOmolec") {
+       # fgseaRes3 <- fgsea::fgsea(pathways = pathways.GOmolec, stats = ranks)
+       print(fgseaResTidyMolec)
+     } else if(input$filechoice == "GOcellcomp") {
+       print(fgseaResTidyCC)
+     } else if(input$filechoice == "GObio") {
+       print(fgseaResTidyBio)
+     } else if(input$filechoice == "TFtargets") {
+       print(fgseaResTidyTF)
+     } else if(input$filechoice == "allReg") {
+       print(fgseaResTidyReg)
+     } else if(input$filechoice == "wiki") {
+       print(fgseaResTidyWiki)
+     }  else if(input$filechoice == "reactome") {
+         print(fgseaResTidyReactome)
+       }
+   })
    
-   #gene list for gene centric pathway analysis
+   output$fgseaTable <- renderDataTable({
+     if (input$gseachoice == "fgseaTable") {
+     gseafile()
+   }
+   })
+   
+   #### GSEA pathway ranks plot ####
+   
+   output$GSEAranked <- renderPlot({
+     if(input$gseachoice == "rankedplot") {
+       ggplot(gseafile(), aes(reorder(pathway, NES), NES)) +
+         geom_col(aes(fill=padj<0.05)) +
+         coord_flip() +
+         labs(x="Pathway", y="Normalized Enrichment Score",
+              title="") + 
+         theme_minimal()
+     }
+   })
+   
+   #### GSEA moustache plot ####
+   #figure out how to make this reactive
+   toplotMoustache <- 
+     reactive({
+       if(input$filechoice == "hallmark") {
+       cbind.data.frame(fgseaResTidy$pathway, fgseaResTidy$NES, fgseaResTidy$padj, fgseaResTidy$pval) 
+           # colnames(toplotMoustache) = c("pathway", "NES", "padj", "pval") %>% 
+           # toplotMoustache %>%
+           #   mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no')) 
+       } else if(input$filechoice == "GOall") {
+         cbind.data.frame(fgseaResTidyAll$pathway, fgseaResTidyAll$NES, fgseaResTidyAll$padj, fgseaResTidyAll$pval) 
+           # colnames(toplotMoustache) = c("pathway", "NES", "padj", "pval") %>% 
+           # toplotMoustache %>%
+           #   mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no')) 
+       }
+     })
+   # colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval")
+   # toplotMoustache <- toplotMoustache %>%
+   #   mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no')) 
+   
+    output$GSEAMoustache <- renderPlot({
+      if(input$gseachoice == "moustache") {
+      ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) + #reactive for each pathway
+        geom_point() + 
+        theme_minimal() +
+        xlab('NES') + 
+        scale_colour_brewer(palette = input$PaletteChoicesMoustache) +
+        ylab('BH adjusted p-value') +
+        ggtitle("") + #reactive
+        geom_text_repel(aes(label=ifelse(padj<0.05,as.character(pathway),"")),hjust=0,vjust=0) 
+        #coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1))
+      }
+    })
+   
+  ####top UP and DOWN ranked pathways ####
+   #  fgseaRes <- fgsea(pathways=pathways.hallmark, stats=ranks)
+   #  topPathwaysUp <- fgseaRes[ES > 0][head(order(pval), n=10), pathway]
+   #  topPathwaysDown <- fgseaRes[ES < 0][head(order(pval), n=10), pathway]
+   #  topPathways <- c(topPathwaysUp, rev(topPathwaysDown))
+   #  # top up and down ranked pathways plotted
+   #  plotGseaTable(pathways.hallmark[topPathways], ranks, fgseaRes, 
+   #                gseaParam=0.5)
+   # #gene list for gene centric pathway analysis
    updateSelectizeInput(session,"Pathwaygenechoice", choices = dds.res$Gene, server = TRUE)
   } #end server
 # Run the application 
