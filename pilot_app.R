@@ -36,13 +36,12 @@ metadata <- read.table(file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/
 # DE table with singscore
 dds.resscore <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/dds.resscore.rds")
 #tables for PCA
-nonvsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/nonvsd.pca.rds")
 vsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.pca.rds")
 bcvsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.pca.rds")
-nonvsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/nonvsd.variance.rds")
+#tables for variance
 vsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.variance.rds")
 bcvsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.variance.rds")
-nonvsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/nonvsd2.pca.rds")
+
 vsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd2.pca.rds")
 bcvsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd2.pca.rds")
 #GSEA data table
@@ -101,9 +100,9 @@ ui <-
                 "Choose PCA plot"
                 ),
               choices =
-                list("counts PCA", "VST PCA", "VST + batch corrected PCA"),
+                list("VST PCA", "VST + batch corrected PCA"),
               selected =
-                "counts PCA"
+                "VST PCA"
             ),
             
             downloadButton("downloadPlotPCA", label = "Download Plot"),
@@ -135,9 +134,9 @@ ui <-
                          "Choose PCA for Scree Plot"
                        ),
                        choices =
-                         list("counts PCA", "VST PCA", "VST + batch corrected PCA"),
+                         list("VST PCA", "VST + batch corrected PCA"),
                        selected =
-                         "counts PCA"
+                         "VST PCA"
                      ),
                      
                      downloadButton(
@@ -430,14 +429,7 @@ navbarMenu("GSEA",
                        "Download Plot"
                    )
                    ),
-                 conditionalPanel(
-                   condition = "input.gseachoice == 'topupanddown'",
-                   downloadButton(
-                     "downloadupanddown",
-                     label =
-                       "Download Plot"
-                   )
-                 ),
+              
                  conditionalPanel(
                    condition = "input.gseachoice == 'topup'",
                    downloadButton(
@@ -549,23 +541,14 @@ server <-
  
   PCAdata <-
     eventReactive(input$PCAvar, {
-      if (input$PCAvar == "counts PCA") {
-        nonvsd.pca
-      } else if (input$PCAvar == "VST PCA") {
+       if (input$PCAvar == "VST PCA") {
         vsd.pca
       } else if (input$PCAvar == "VST + batch corrected PCA") {
         bcvsd.pca
-      # } else if (input$PCAvar == "PCA variance") {
-      #   PCA_variance
        }
     })
   
   # PCA Scree data ####
-  #non VSD PCA variance
-  PC_var <-data.frame(PC =paste0("PC", 1:12),variance = (((nonvsd2.pca$sdev) ^ 2 / sum((nonvsd2.pca$sdev) ^ 2)) * 100))
-  lorder <-as.vector(outer(c("PC"), 1:12, paste, sep = ""))
-  PC_var$PC <-factor(PC_var$PC,levels = lorder)
-  
   # VSD PCA variance
   PC_var_VST <- data.frame(PC =paste0("PC", 1:12),variance =(((vsd2.pca$sdev) ^ 2 / sum((vsd2.pca$sdev) ^ 2)) * 100))
   lorder_VST <- as.vector(outer(c("PC"), 1:12, paste, sep = ""))
@@ -578,9 +561,7 @@ server <-
   
   PC_var_data <-
     eventReactive(input$PCAvarscree, {
-      if (input$PCAvarscree == "counts PCA") {
-        PC_var
-      } else if (input$PCAvarscree == "VST PCA") {
+      if (input$PCAvarscree == "VST PCA") {
         PC_var_VST
       } else if (input$PCAvarscree == "VST + batch corrected PCA") {
         PC_var_bc
@@ -589,9 +570,7 @@ server <-
   # reactive function for plot title
   PCA_title <- 
     reactive({
-        if (input$PCAvar == "counts PCA") {
-          print("counts PCA")
-        } else if (input$PCAvar == "VST PCA") {
+       if (input$PCAvar == "VST PCA") {
           print("VST PCA")
         } else if (input$PCAvar == "VST + batch corrected PCA") {
           print("VST + batch corrected PCA")
@@ -599,29 +578,25 @@ server <-
     })
   
   #define objects for defining x label to include % variance of PC1
-  pc1var <- paste("PC1", (round(nonvsd.variance[3, 1] * 100, 1)), "% variance")
   pc1varvsd <- paste("PC1", (round(vsd.variance[3, 1] * 100, 1)), "% variance")
   pc1varbcvsd <- paste("PC1", (round(bcvsd.variance[3, 1] * 100, 1)), "% variance")
   
   # add reactive expression for x label for PC1 
   variance_PC1 <-
     eventReactive(input$PCAvar, {
-      if (input$PCAvar == "counts PCA") {
-        pc1var
-      } else if (input$PCAvar == "VST PCA") {
+     if (input$PCAvar == "VST PCA") {
         pc1varvsd
       } else if (input$PCAvar == "VST + batch corrected PCA") {
         pc1varbcvsd
       }
     })
   #new objects with calculation only to use in calculation of PC2 % variance
-  pc1 <- round(nonvsd.variance[3, 1] * 100, 1)
+
   pc12 <- round(vsd.variance[3, 1] * 100, 1)
   pc13 <- round(bcvsd.variance[3, 1] * 100, 1)
   
   #create objects for defining Y label of PC2
-  pc2var <-
-    paste("PC2", (round(nonvsd.variance[3, 2] * 100 - pc1, 1)), "% variance")
+
   pc2varvsd <-
     paste("PC2", (round(vsd.variance[3, 2] * 100 - pc12, 1)), "% variance")
   pc2varbcvsd <-
@@ -630,9 +605,7 @@ server <-
     #reactive expression for adding y labels for pc2
   variance_PC2 <-
     reactive({
-      if (input$PCAvar == "counts PCA") {
-        pc2var
-      } else if (input$PCAvar == "VST PCA") {
+     if (input$PCAvar == "VST PCA") {
         pc2varvsd
       } else if (input$PCAvar == "VST + batch corrected PCA") {
         pc2varbcvsd
@@ -923,25 +896,16 @@ colorpalettechoices <-
   #object for volcano plot data using DE and singscore tables
   vol_sig_values <- 
     reactive({
-      if(input$sigvaluesbutton == "sigvar0.05" & input$singscorebutton == FALSE) {
+      if(input$sigvaluesbutton == "sigvar0.05" ) {
         dds.res %>% 
           dplyr::filter(padj <= 0.05)
-      } else if(input$sigvaluesbutton == "sigvar0.01" & input$singscorebutton == FALSE) {
+      } else if(input$sigvaluesbutton == "sigvar0.01") {
         dds.res %>% 
           dplyr::filter(padj <= 0.01)
-      }else if(input$sigvaluesbutton == "allvar2" & input$singscorebutton == FALSE ) {
+      }else if(input$sigvaluesbutton == "allvar2") {
         dds.res %>% 
           dplyr::filter(padj > 0)
-      } else if(input$sigvaluesbutton == "sigvar0.05" & input$singscorebutton == TRUE) {
-        dds.resscore %>% 
-          dplyr::filter(padj <= 0.05)
-      } else if(input$sigvaluesbutton == "sigvar0.01" & input$singscorebutton == TRUE) {
-        dds.resscore %>% 
-          dplyr::filter(padj <= 0.01)
-      }else if(input$sigvaluesbutton == "allvar2" & input$singscorebutton == TRUE) {
-        dds.resscore %>% 
-          dplyr::filter(padj > 0)
-      }
+      } 
       })
   #output DE table with adjustment for singscore
    output$DETable <-
@@ -1109,8 +1073,8 @@ colorpalettechoices <-
      reactive({
        if(input$filechoice == "hallmark") {
        cbind.data.frame(fgseaResTidy$pathway, fgseaResTidy$NES, fgseaResTidy$padj, fgseaResTidy$pval) 
-           # colnames(toplotMoustache) = c("pathway", "NES", "padj", "pval") %>% 
-           # toplotMoustache %>%
+           # colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval") 
+           # toplotmoustache <- toplotMoustache %>%
            #   mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no')) 
        } else if(input$filechoice == "GOall") {
          cbind.data.frame(fgseaResTidyAll$pathway, fgseaResTidyAll$NES, fgseaResTidyAll$padj, fgseaResTidyAll$pval) 
@@ -1119,9 +1083,7 @@ colorpalettechoices <-
            #   mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no')) 
        }
      })
-   # colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval")
-   # toplotMoustache <- toplotMoustache %>%
-   #   mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no')) 
+
    
     output$GSEAMoustache <- renderPlot({
       if(input$gseachoice == "moustache") {
