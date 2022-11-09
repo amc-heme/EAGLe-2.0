@@ -322,12 +322,12 @@ ui <-
                               hr(),
                               selectInput("PaletteChoicesDE", "Choose a color palette", choices =
                                             c("Dark2", "Paired", "Set1"), selected = "Dark2"),
-                              sliderInput("volheightslider", "Adjust plot height",
-                                          min = 200, max = 1000, value = 400
-                              ),
-                              sliderInput("volwidthslider", "Adjust plot width",
-                                          min = 200, max = 1000, value = 600
-                              ),
+                              # sliderInput("volheightslider", "Adjust plot height",
+                              #             min = 200, max = 1000, value = 400
+                              # ),
+                              # sliderInput("volwidthslider", "Adjust plot width",
+                              #             min = 200, max = 1000, value = 600
+                              # ),
                               # radioButtons("DiffExpButton", h4("Differential Expression"),
                               #              choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall")
                               downloadButton(
@@ -337,9 +337,12 @@ ui <-
                                         )
                             ),
                             mainPanel(
-                              plotOutput(
+                              plotlyOutput(
                                 "DEVolcanoPlot"
-                              )
+                              ),
+                              # textOutput(
+                              #   "gene_name"
+                              # )
                             )
                           )
                         )
@@ -397,9 +400,8 @@ navbarMenu("GSEA",
                   hr(),
                   selectInput("gseachoice", "Choose a visualization tool",
                               choices =
-                                c("fgsea Table" = "fgseaTable", "Ranked Pathways" = "rankedplot", "Moustache Plot" = "moustache",
-                                  "Top Up and Down Ranked Pathways" = "topupanddown",
-                                  "Top ranked UP pathway" = "topup", "Top ranked DOWN pathway" = "topdown")
+                                c("fgsea Table" = "fgseaTable", "Waterfall Plot" = "rankedplot", "Moustache Plot" = "moustache",
+                                 "Enrichment Plot" = "eplot", "Volcano Plot" = "volcanoplot", "Heatmap" = "heatmap")
                               ),
                  
                  conditionalPanel(
@@ -417,6 +419,16 @@ navbarMenu("GSEA",
                      "downloadranks",
                      label =
                        "Download Plot"
+                   ),
+                  hr(),
+                   
+                   sliderInput("rankedheightslider", "Adjust plot height",
+                               min = 200, max = 1000, value = 400
+                   ),
+                   hr(),
+                   
+                   sliderInput("rankedwidthslider", "Adjust plot width",
+                               min = 200, max = 1000, value = 600
                    )
                  ),
                  conditionalPanel(
@@ -431,7 +443,7 @@ navbarMenu("GSEA",
                    ),
               
                  conditionalPanel(
-                   condition = "input.gseachoice == 'topup'",
+                   condition = "input.gseachoice == 'eplot'",
                    downloadButton(
                      "downloadtopup",
                      label =
@@ -439,7 +451,7 @@ navbarMenu("GSEA",
                    )
                  ),
                  conditionalPanel(
-                   condition = "input.gseachoice == 'topdown'",
+                   condition = "input.gseachoice == 'heatmap'",
                    downloadButton(
                      "downloadtopdown",
                      label =
@@ -927,9 +939,9 @@ colorpalettechoices <-
    )
    
    output$DEVolcanoPlot <-
-     renderPlot( 
-       width = function() input$volwidthslider,
-                 height = function() input$volheightslider,
+     renderPlotly( 
+       # width = function() input$volwidthslider,
+       #           height = function() input$volheightslider,
                  {
        # colors <-
        #   colorRampPalette(
@@ -945,29 +957,35 @@ colorpalettechoices <-
        #     )
        #   )(3)
        # 
-       ggplot(vol_sig_values(), aes(
+      p <- ggplot(vol_sig_values(), aes(
          x = log2FoldChange,
          y = -log10(padj),
-         col = DiffExp
+         col = DiffExp,
+         text = Gene
        )) +
-         geom_point(alpha = 0.5) +
+         geom_point(size = 1, alpha = 0.5) +
          theme_light() +
          scale_colour_brewer(palette = input$PaletteChoicesDE) +
          ggtitle("DE Volcano Plot") +
-         geom_text_repel(
-           max.overlaps = 15,
-           aes(label = ifelse(
-             padj < 5e-20 &
-               abs(log2FoldChange) >= 0.5,
-             as.character(Gene),
-             ""
-           )),
-           hjust = 0,
-           vjust = 0
-         ) +
+         # geom_text_repel(
+         #   max.overlaps = 15,
+         #   aes(label = ifelse(
+         #     padj < 5e-20 &
+         #       abs(log2FoldChange) >= 0.5,
+         #     as.character(Gene),
+         #     ""
+         #   )),
+         #   hjust = 0,
+         #   vjust = 0
+         # ) +
          coord_cartesian(xlim = c(-10, 7))
+      ggplotly(p)
      })
-   
+   # output$gene_name <- renderText({
+   #   if(input$point_hover) {
+   #     print(dds.res$Gene)
+   #   }
+   # })
    output$downloadDEVolcano <- downloadHandler(
      filename = function() { paste(input$sigvaluesbutton, '.png', sep='') },
      content = function(file) {
@@ -1029,21 +1047,61 @@ colorpalettechoices <-
        print(fgseaResTidy)
      } else if(input$filechoice == "goall") {
        # fgseaRes2 <- fgsea::fgsea(pathways = pathways.GOall, stats = ranks)
+       top15 <- fgseaResTidyAll %>% 
+         top_n(n = 25, wt = NES) 
+       bottom15 <- fgseaResTidyAll %>% 
+         top_n(n = -25, wt = NES)
+       fgseaResTidyAll <- rbind.data.frame(top15, bottom15)
        print(fgseaResTidyAll)
      } else if(input$filechoice == "GOmolec") {
        # fgseaRes3 <- fgsea::fgsea(pathways = pathways.GOmolec, stats = ranks)
+       topm15 <- fgseaResTidyMolec %>% 
+         top_n(n = 25, wt = NES) 
+       bottomm15 <- fgseaResTidyMolec %>% 
+         top_n(n = -25, wt = NES)
+       fgseaResTidyMolec <- rbind.data.frame(topm15, bottomm15)
        print(fgseaResTidyMolec)
      } else if(input$filechoice == "GOcellcomp") {
+       topC15 <- fgseaResTidyCC %>% 
+         top_n(n = 25, wt = NES) 
+       bottomC15 <- fgseaResTidyCC %>% 
+         top_n(n = -25, wt = NES)
+       fgseaResTidyCC <- rbind.data.frame(topC15, bottomC15)
        print(fgseaResTidyCC)
      } else if(input$filechoice == "GObio") {
+       topB15 <- fgseaResTidyBio %>% 
+         top_n(n = 25, wt = NES) 
+       bottomB15 <- fgseaResTidyBio %>% 
+         top_n(n = -25, wt = NES)
+       fgseaResTidyBio <- rbind.data.frame(topB15, bottomB15)
        print(fgseaResTidyBio)
      } else if(input$filechoice == "TFtargets") {
+       topT15 <- fgseaResTidyTF %>% 
+         top_n(n = 25, wt = NES) 
+       bottomT15 <- fgseaResTidyTF %>% 
+         top_n(n = -25, wt = NES)
+       fgseaResTidyTF <- rbind.data.frame(topT15, bottomT15)
        print(fgseaResTidyTF)
      } else if(input$filechoice == "allReg") {
+       topR15 <- fgseaResTidyReg %>% 
+         top_n(n = 25, wt = NES) 
+       bottomR15 <- fgseaResTidyReg %>% 
+         top_n(n = -25, wt = NES)
+       fgseaResTidyReg <- rbind.data.frame(topR15, bottomR15)
        print(fgseaResTidyReg)
      } else if(input$filechoice == "wiki") {
+       topW15 <- fgseaResTidyWiki %>% 
+         top_n(n = 25, wt = NES) 
+       bottomW15 <- fgseaResTidyWiki %>% 
+         top_n(n = -25, wt = NES)
+       fgseaResTidyWiki <- rbind.data.frame(topW15, bottomW15)
        print(fgseaResTidyWiki)
      }  else if(input$filechoice == "reactome") {
+       topRE15 <- fgseaResTidyReactome %>% 
+         top_n(n = 25, wt = NES) 
+       bottomRE15 <- fgseaResTidyReactome %>% 
+         top_n(n = -25, wt = NES)
+       fgseaResTidyReactome <- rbind.data.frame(topRE15, bottomRE15)
          print(fgseaResTidyReactome)
        }
    })
@@ -1056,7 +1114,10 @@ colorpalettechoices <-
    
    #### GSEA pathway ranks plot ####
    
-   output$GSEAranked <- renderPlot({
+   output$GSEAranked <- renderPlot(
+     width = function() input$rankedwidthslider,
+     height = function() input$rankedheightslider,
+     {
      if(input$gseachoice == "rankedplot") {
        ggplot(gseafile(), aes(reorder(pathway, NES), NES)) +
          geom_col(aes(fill=padj<0.05)) +
