@@ -22,6 +22,7 @@ library(shinyWidgets)
 library(shinyjs)
 library(fgsea)
 library(WGCNA)
+library(plotly)
 #options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
@@ -369,7 +370,7 @@ ui <-
                               )
                             ),
                             mainPanel(
-                              plotOutput(
+                              plotlyOutput(
                                 "DEMAPlot"
                               )
                             )
@@ -401,7 +402,7 @@ navbarMenu("GSEA",
                   selectInput("gseachoice", "Choose a visualization tool",
                               choices =
                                 c("fgsea Table" = "fgseaTable", "Waterfall Plot" = "rankedplot", "Moustache Plot" = "moustache",
-                                 "Enrichment Plot" = "eplot", "Volcano Plot" = "volcanoplot", "Heatmap" = "heatmap")
+                                 "Enrichment Plot" = "eplot", "Volcano Plot" = "volcanoplot", "Heatmap" = "heatmap", "Pathway" = "pathwaytable")
                               ),
                  
                  conditionalPanel(
@@ -445,7 +446,15 @@ navbarMenu("GSEA",
                  conditionalPanel(
                    condition = "input.gseachoice == 'eplot'",
                    downloadButton(
-                     "downloadtopup",
+                     "downloadeplot",
+                     label =
+                       "Download Plot"
+                   )
+                 ),
+                 conditionalPanel(
+                   condition = "input.gseachoice == 'volcanoplot'",
+                   downloadButton(
+                     "downloadvolcano",
                      label =
                        "Download Plot"
                    )
@@ -453,7 +462,7 @@ navbarMenu("GSEA",
                  conditionalPanel(
                    condition = "input.gseachoice == 'heatmap'",
                    downloadButton(
-                     "downloadtopdown",
+                     "downloadheatmap",
                      label =
                        "Download Plot"
                    )
@@ -470,6 +479,12 @@ navbarMenu("GSEA",
                   ),
                   plotOutput(
                     "GSEAMoustache"
+                  ),
+                  plotOutput(
+                    "GSEAvolcano"
+                  ),
+                  textOutput(
+                    "pathway"
                   )
                 )
               )
@@ -992,9 +1007,9 @@ colorpalettechoices <-
        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
      }
    )
-   output$DEMAPlot <- renderPlot ({
+   output$DEMAPlot <- renderPlotly ({
      
-     ggmaplot(
+     ma <- ggmaplot(
        dds.res,
        fdr = 0.05,
        fc = (2 ^ 1),
@@ -1018,7 +1033,7 @@ colorpalettechoices <-
        title = "DE MA Plot",
        ggtheme = ggplot2::theme_light()
      )
-     
+     ggplotly(ma)
    })
    output$downloadDEMA <- downloadHandler(
      filename = function() { paste('DESeqMAplot', '.png', sep='') },
@@ -1030,23 +1045,38 @@ colorpalettechoices <-
 ####GSEA output ####
 #run GSEA for chosen pathway input
   
-# gseafile <- eventReactive(input$filechoice, {
-#   if(input$filechoice == "hallmark") {
-#     fgseaRes <- fgsea::fgsea(pathways=pathways.hallmark, stats=ranks)
-#     print(fgseaRes)
-#   } else if(input$filechoice == "GOall") {
-#     fgseaRes <- fgsea::fgsea(pathways=pathways.GOall, stats=ranks)
-#     print(fgseaRes)
-#   }
-# })
-#    
-   gseafile <- 
+
+   #alternative way to load gsea tables from files without running function every time it loads
+   gseafile <-
+     reactive({
+       if(input$filechoice == "hallmark") {
+         # fgseaRes <- fgsea::fgsea(pathways = pathways.hallmark, stats = ranks)
+         print(fgseaResTidy)
+       } else if(input$filechoice == "goall") {
+         # fgseaRes2 <- fgsea::fgsea(pathways = pathways.GOall, stats = ranks)
+         print(fgseaResTidyAll)
+       } else if(input$filechoice == "GOmolec") {
+         # fgseaRes3 <- fgsea::fgsea(pathways = pathways.GOmolec, stats = ranks)
+         print(fgseaResTidyMolec)
+       } else if(input$filechoice == "GOcellcomp") {
+         print(fgseaResTidyCC)
+       } else if(input$filechoice == "GObio") {
+         print(fgseaResTidyBio)
+       } else if(input$filechoice == "TFtargets") {
+         print(fgseaResTidyTF)
+       } else if(input$filechoice == "allReg") {
+         print(fgseaResTidyReg)
+       } else if(input$filechoice == "wiki") {
+         print(fgseaResTidyWiki)
+       }  else if(input$filechoice == "reactome") {
+         print(fgseaResTidyReactome)
+       }
+     })
+   gseafile_waterfall <- 
      reactive({
      if(input$filechoice == "hallmark") {
-       # fgseaRes <- fgsea::fgsea(pathways = pathways.hallmark, stats = ranks)
        print(fgseaResTidy)
      } else if(input$filechoice == "goall") {
-       # fgseaRes2 <- fgsea::fgsea(pathways = pathways.GOall, stats = ranks)
        top15 <- fgseaResTidyAll %>% 
          top_n(n = 25, wt = NES) 
        bottom15 <- fgseaResTidyAll %>% 
@@ -1105,6 +1135,65 @@ colorpalettechoices <-
          print(fgseaResTidyReactome)
        }
    })
+   #this only works sometimes to load the tables
+   fgseaResR <- 
+     reactive({
+     if(input$filechoice == "hallmark") {
+       fgseaRes <-fgsea::fgsea(pathways=pathways.hallmark, stats=ranks)
+       fgseaResTidy <- fgseaRes %>%
+         as_tibble() %>%
+         arrange(desc(NES))
+       print(fgseaResTidy)
+     } else if(input$filechoice == "goall") {
+       fgseaRes <-fgsea::fgsea(pathways=pathways.GOall, stats=ranks)
+       fgseaResTidy <- fgseaRes %>%
+         as_tibble() %>%
+         arrange(desc(NES))
+       print(fgseaResTidy)
+     } else if(input$filechoice == "GOmolec") {
+       fgseaRes <-fgsea::fgsea(pathways=pathways.GOmolec, stats=ranks)
+       fgseaResTidy <- fgseaRes %>%
+        as_tibble() %>%
+        arrange(desc(NES))
+       print(fgseaResTidy)
+     } else if(input$filechoice == "GOcellcomp") {
+       fgseaRes <-fgsea::fgsea(pathways=pathways.GOcellcomp, stats=ranks)
+       fgseaResTidy <- fgseaRes %>%
+         as_tibble() %>%
+         arrange(desc(NES))
+       print(fgseaResTidy)
+     } else if(input$filechoice == "GObio") {
+       fgseaRes <-fgsea::fgsea(pathways=pathways.GObio, stats=ranks)
+       fgseaResTidy <- fgseaRes %>%
+         as_tibble() %>%
+         arrange(desc(NES))
+       print(fgseaResTidy)
+     } else if(input$filechoice == "TFtargets") {
+       fgseaRes <-fgsea::fgsea(pathways=pathways.TFtargets, stats=ranks)
+       fgseaResTidy <- fgseaRes %>%
+         as_tibble() %>%
+         arrange(desc(NES))
+       print(fgseaResTidy)
+     } else if(input$filechoice == "allReg") {
+       fgseaRes <-fgsea::fgsea(pathways=pathways.allReg, stats=ranks)
+       fgseaResTidy <- fgseaRes %>%
+         as_tibble() %>%
+         arrange(desc(NES))
+       print(fgseaResTidy)
+     } else if(input$filechoice == "wiki") {
+       fgseaRes <-fgsea::fgsea(pathways=pathways.Wiki, stats=ranks)
+       fgseaResTidy <- fgseaRes %>%
+         as_tibble() %>%
+         arrange(desc(NES))
+       print(fgseaResTidy)
+     } else if(input$filechoice == "reactome") {
+       fgseaRes <-fgsea::fgsea(pathways=pathways.Reactome, stats=ranks)
+       fgseaResTidy <- fgseaRes %>%
+         as_tibble() %>%
+         arrange(desc(NES))
+       print(fgseaResTidy)
+     }
+     })
    
    output$fgseaTable <- renderDataTable({
      if (input$gseachoice == "fgseaTable") {
@@ -1112,14 +1201,14 @@ colorpalettechoices <-
    }
    })
    
-   #### GSEA pathway ranks plot ####
+   #### GSEA pathway ranks waterfall plot ####
    
    output$GSEAranked <- renderPlot(
      width = function() input$rankedwidthslider,
      height = function() input$rankedheightslider,
      {
      if(input$gseachoice == "rankedplot") {
-       ggplot(gseafile(), aes(reorder(pathway, NES), NES)) +
+       ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
          geom_col(aes(fill=padj<0.05)) +
          coord_flip() +
          labs(x="Pathway", y="Normalized Enrichment Score",
@@ -1159,15 +1248,60 @@ colorpalettechoices <-
         #coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1))
       }
     })
-   
-  ####top UP and DOWN ranked pathways ####
-   #  fgseaRes <- fgsea(pathways=pathways.hallmark, stats=ranks)
-   #  topPathwaysUp <- fgseaRes[ES > 0][head(order(pval), n=10), pathway]
-   #  topPathwaysDown <- fgseaRes[ES < 0][head(order(pval), n=10), pathway]
-   #  topPathways <- c(topPathwaysUp, rev(topPathwaysDown))
-   #  # top up and down ranked pathways plotted
-   #  plotGseaTable(pathways.hallmark[topPathways], ranks, fgseaRes, 
-   #                gseaParam=0.5)
+    
+ # GSEA Volcano plot ####
+    #need to figure out how to access the list of lists to get gene names reactively
+    dds.res.pathways <- reactive({
+      dds.res %>%
+        mutate(., react_path = ifelse(Gene %in% c(input$fgseaTable_rows_selected), 'yes', 'no'))
+      dds.res.pathways$react_path <- factor(dds.res.pathways$react_path, levels = c('no','yes'))
+    })
+      
+
+    output$GSEAvolcano <- renderPlot ({
+      if(input$gseachoice == "volcanoplot") {
+      
+        
+        colors <- c("grey", viridis(15)[10])
+        ggplot(
+          data = (dds.res.pathways() %>%
+                    arrange(., (react_path))),
+          aes(
+            x = log2FoldChange,
+            y = -log10(padj),
+            col = react_path
+          )
+        ) +
+          theme_light() +
+          geom_point() +
+          scale_colour_manual(values = colors) +
+          geom_text_repel(
+            max.overlaps = 1500,
+            aes(label = ifelse(
+              Gene %in% c(input$fgseaTable_rows_selected) & log2FoldChange > 2.5,
+              as.character(Gene),
+              ""
+            )),
+            hjust = 0,
+            vjust = 0
+          ) +
+          theme(
+            plot.title = element_text(color = "black", size = 14, face = "bold"),
+            axis.title.x = element_text(color = "black", size = 14, face =
+                                          "bold"),
+            axis.title.y = element_text(color = "black", size = 14, face =
+                                          "bold"),
+            axis.text.x = element_text(size = 14),
+            axis.text.y = element_text(size = 14)
+          ) +
+          ggtitle("") +
+          xlab("log2FoldChange")
+        print("plot loaded")
+      }
+    })
+  
+      
+
    # #gene list for gene centric pathway analysis
    updateSelectizeInput(session,"Pathwaygenechoice", choices = dds.res$Gene, server = TRUE)
   } #end server
