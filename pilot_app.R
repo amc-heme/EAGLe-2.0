@@ -1222,22 +1222,49 @@ colorpalettechoices <-
    toplotMoustache <- 
      reactive({
        if(input$filechoice == "hallmark") {
-       cbind.data.frame(fgseaResTidy$pathway, fgseaResTidy$NES, fgseaResTidy$padj, fgseaResTidy$pval) 
-           # colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval") 
-           # toplotmoustache <- toplotMoustache %>%
-           #   mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no')) 
-       } else if(input$filechoice == "GOall") {
-         cbind.data.frame(fgseaResTidyAll$pathway, fgseaResTidyAll$NES, fgseaResTidyAll$padj, fgseaResTidyAll$pval) 
-           # colnames(toplotMoustache) = c("pathway", "NES", "padj", "pval") %>% 
-           # toplotMoustache %>%
-           #   mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no')) 
+         toplotMoustache <-
+           cbind.data.frame(fgseaResTidy$pathway,
+                            fgseaResTidy$NES,
+                            fgseaResTidy$padj,
+                            fgseaResTidy$pval) 
+         colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval")
+         toplotMoustache <- toplotMoustache %>%
+           mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no')) 
+       } else if(input$filechoice == "goall") {
+         toplotMoustache <-
+           cbind.data.frame(fgseaResTidyAll$pathway,
+                            fgseaResTidyAll$NES,
+                            fgseaResTidyAll$padj,
+                            fgseaResTidyAll$pval)
+         colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval")
+         toplotMoustache <- toplotMoustache %>%
+           mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no')) 
+       } else if(input$filechoice == "GOmolec") {
+         toplotMoustache <-
+           cbind.data.frame(fgseaResTidyMolec$pathway,
+                            fgseaResTidyMolec$NES,
+                            fgseaResTidyMolec$padj,
+                            fgseaResTidyMolec$pval) #
+         colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval")
+         toplotMoustache <- toplotMoustache %>%
+           mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no')) 
+       } else if(input$filechoice == "GOcellcomp") {
+         toplotMoustache <-
+           cbind.data.frame(fgseaResTidyCC$pathway,
+                            fgseaResTidyCC$NES,
+                            fgseaResTidyCC$padj,
+                            fgseaResTidyCC$pval) 
+         colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval")
+         toplotMoustache <- toplotMoustache %>%
+           mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no')) 
        }
      })
 
-   
+   #testing plot, not reeactive yet
     output$GSEAMoustache <- renderPlot({
       if(input$gseachoice == "moustache") {
-      ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) + #reactive for each pathway
+      
+      m <- ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) + #reactive for each pathway
         geom_point() + 
         theme_minimal() +
         xlab('NES') + 
@@ -1245,7 +1272,8 @@ colorpalettechoices <-
         ylab('BH adjusted p-value') +
         ggtitle("") + #reactive
         geom_text_repel(aes(label=ifelse(padj<0.05,as.character(pathway),"")),hjust=0,vjust=0) 
-        #coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1))
+        coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1))
+        print(m)
       }
     })
     
