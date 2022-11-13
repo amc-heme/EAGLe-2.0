@@ -24,6 +24,7 @@ library(fgsea)
 library(WGCNA)
 library(plotly)
 library(BiocParallel)
+library(ComplexHeatmap)
 #options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
@@ -426,7 +427,10 @@ navbarMenu("GSEA",
                        "Download Plot"
                    ),
                   hr(),
-                   
+                  sliderInput("howmanypathways", "Choose How Many Pathways to Rank",
+                              min = 5, max = 60, value = 25
+                  ),
+                  
                    sliderInput("rankedheightslider", "Adjust plot height",
                                min = 200, max = 1000, value = 400
                    ),
@@ -487,7 +491,7 @@ navbarMenu("GSEA",
                   ),
                   conditionalPanel(
                     condition = "input.gseachoice == 'rankedplot'",
-                  plotOutput(
+                    plotOutput(
                     "GSEAranked"
                   )
                   ),
@@ -1083,93 +1087,7 @@ colorpalettechoices <-
           fgseaResTidy
        })
  
-   
-   # fgseaResR <-
-   #   reactive({
-   #       fgseaRes <-
-   #         fgsea::fgsea(pathways = pathwaygsea,
-   #                      stats = ranks,
-   #                      nproc = 1)
-   #       fgseaResTidy <- fgseaRes %>%
-   #         as_tibble() %>%
-   #         arrange(desc(NES))
-   #       fgseaResTidy
-   #   })
-     #   } else if (input$filechoice == "goall") {
-     #     fgseaResAll <-
-     #       fgsea::fgsea(pathways = pathways.GOall,
-     #                    stats = ranks,
-     #                    nproc = 1)
-     #     fgseaResTidyAll <- fgseaRes %>%
-     #       as_tibble() %>%
-     #       arrange(desc(NES))
-     #     fgseaResTidy
-     #   } else if (input$filechoice == "GOmolec") {
-     #     fgseaRes <-
-     #       fgsea::fgsea(pathways = pathways.GOmolec,
-     #                    stats = ranks,
-     #                    nproc = 1)
-     #     fgseaResTidyMolec <- fgseaRes %>%
-     #       as_tibble() %>%
-     #       arrange(desc(NES))
-     #     fgseaResTidyMolec
-     #   } else if (input$filechoice == "GOcellcomp") {
-     #     fgseaRes <-
-     #       fgsea::fgsea(pathways = pathways.GOcellcomp,
-     #                    stats = ranks,
-     #                    nproc = 1)
-     #     fgseaResTidyCC <- fgseaRes %>%
-     #       as_tibble() %>%
-     #       arrange(desc(NES))
-     #     fgseaResTidyCC
-     #   } else if (input$filechoice == "GObio") {
-     #     fgseaRes <-
-     #       fgsea::fgsea(pathways = pathways.GObio,
-     #                    stats = ranks,
-     #                    nproc = 1)
-     #     fgseaResTidyBio <- fgseaRes %>%
-     #       as_tibble() %>%
-     #       arrange(desc(NES))
-     #     fgseaResTidyBio
-     #   } else if (input$filechoice == "TFtargets") {
-     #     fgseaRes <-
-     #       fgsea::fgsea(pathways = pathways.TFtargets,
-     #                    stats = ranks,
-     #                    nproc = 1)
-     #     print(fgseaRes)
-     #     fgseaResTidyTF <- fgseaRes %>%
-     #       as_tibble() %>%
-     #       arrange(desc(NES))
-     #     fgseaResTidyTF
-     #   } else if (input$filechoice == "allReg") {
-     #     fgseaRes <-
-     #       fgsea::fgsea(pathways = pathways.allReg,
-     #                    stats = ranks,
-     #                    nproc = 1)
-     #     fgseaResTidyReg <- fgseaRes %>%
-     #       as_tibble() %>%
-     #       arrange(desc(NES))
-     #     fgseaResTidyReg
-     #   } else if (input$filechoice == "wiki") {
-     #     fgseaRes <-
-     #       fgsea::fgsea(pathways = pathways.Wiki,
-     #                    stats = ranks,
-     #                    nproc = 1)
-     #     fgseaResTidyWiki <- fgseaRes %>%
-     #       as_tibble() %>%
-     #       arrange(desc(NES))
-     #     fgseaResTidyWiki
-     #   } else if (input$filechoice == "reactome") {
-     #     fgseaRes <-
-     #       fgsea::fgsea(pathways = pathways.Reactome,
-     #                    stats = ranks,
-     #                    nproc = 1)
-     #     fgseaResTidyReactome <- fgseaRes %>%
-     #       as_tibble() %>%
-     #       arrange(desc(NES))
-     #     fgseaResTidyReactome
-     #   }
-     # })
+  #filter Res table for chosen pathway to show in a waterfall plot
    gseafile_waterfall <-
      reactive({
        pathwaygsea <- gsea_file_values[[input$filechoice]]
@@ -1181,72 +1099,14 @@ colorpalettechoices <-
            as_tibble() %>%
            arrange(desc(NES))
          top15 <- fgseaResTidy %>% 
-                   top_n(n = 30, wt = NES)
+                   top_n(n = input$howmanypathways, wt = NES)
                  bottom15 <- fgseaResTidy %>%
-                   top_n(n = -30, wt = NES)
+                   top_n(n = -(input$howmanypathways), wt = NES)
                  fgseaResTidy <- rbind.data.frame(top15, bottom15)
                  fgseaResTidy
        })
-   #     } else if(input$filechoice == "goall") {
-   #       top15 <- fgseaResTidyAll %>% 
-   #         top_n(n = 25, wt = NES) 
-   #       bottom15 <- fgseaResTidyAll %>% 
-   #         top_n(n = -25, wt = NES)
-   #       fgseaResTidyAll <- rbind.data.frame(top15, bottom15)
-   #       fgseaResTidyAll
-   #     } else if(input$filechoice == "GOmolec") {
-   #       topm15 <- fgseaResTidyMolec %>% 
-   #         top_n(n = 25, wt = NES) 
-   #       bottomm15 <- fgseaResTidyMolec %>% 
-   #         top_n(n = -25, wt = NES)
-   #       fgseaResTidyMolec <- rbind.data.frame(topm15, bottomm15)
-   #       print(fgseaResTidyMolec)
-   #     } else if(input$filechoice == "GOcellcomp") {
-   #       topC15 <- fgseaResTidyCC %>% 
-   #         top_n(n = 25, wt = NES) 
-   #       bottomC15 <- fgseaResTidyCC %>% 
-   #         top_n(n = -25, wt = NES)
-   #       fgseaResTidyCC <- rbind.data.frame(topC15, bottomC15)
-   #       print(fgseaResTidyCC)
-   #     } else if(input$filechoice == "GObio") {
-   #       topB15 <- fgseaResTidyBio %>% 
-   #         top_n(n = 25, wt = NES) 
-   #       bottomB15 <- fgseaResTidyBio %>% 
-   #         top_n(n = -25, wt = NES)
-   #       fgseaResTidyBio <- rbind.data.frame(topB15, bottomB15)
-   #       print(fgseaResTidyBio)
-   #     } else if(input$filechoice == "TFtargets") {
-   #       topT15 <- fgseaResTidyTF %>% 
-   #         top_n(n = 25, wt = NES) 
-   #       bottomT15 <- fgseaResTidyTF %>% 
-   #         top_n(n = -25, wt = NES)
-   #       fgseaResTidyTF <- rbind.data.frame(topT15, bottomT15)
-   #       print(fgseaResTidyTF)
-   #     } else if(input$filechoice == "allReg") {
-   #       topR15 <- fgseaResTidyReg %>% 
-   #         top_n(n = 25, wt = NES) 
-   #       bottomR15 <- fgseaResTidyReg %>% 
-   #         top_n(n = -25, wt = NES)
-   #       fgseaResTidyReg <- rbind.data.frame(topR15, bottomR15)
-   #       print(fgseaResTidyReg)
-   #     } else if(input$filechoice == "wiki") {
-   #       topW15 <- fgseaResTidyWiki %>% 
-   #         top_n(n = 25, wt = NES) 
-   #       bottomW15 <- fgseaResTidyWiki %>% 
-   #         top_n(n = -25, wt = NES)
-   #       fgseaResTidyWiki <- rbind.data.frame(topW15, bottomW15)
-   #       print(fgseaResTidyWiki)
-   #     }  else if(input$filechoice == "reactome") {
-   #       topRE15 <- fgseaResTidyReactome %>% 
-   #         top_n(n = 25, wt = NES) 
-   #       bottomRE15 <- fgseaResTidyReactome %>% 
-   #         top_n(n = -25, wt = NES)
-   #       fgseaResTidyReactome <- rbind.data.frame(topRE15, bottomRE15)
-   #       print(fgseaResTidyReactome)
-   #     }
-   #   })
-   # 
-
+  
+  #table output for Res tables
    output$fgseaTable <- renderDataTable({
      if (input$gseachoice == "fgseaTable") {
        gseafile()
@@ -1289,36 +1149,8 @@ colorpalettechoices <-
          colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval")
          toplotMoustache <- toplotMoustache %>%
            mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no'))
-       # } else if(input$filechoice == "goall") {
-       #   toplotMoustache <-
-       #     cbind.data.frame(fgseaResTidyAll$pathway,
-       #                      fgseaResTidyAll$NES,
-       #                      fgseaResTidyAll$padj,
-       #                      fgseaResTidyAll$pval)
-       #   colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval")
-       #   toplotMoustache <- toplotMoustache %>%
-       #     mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no'))
-       # } else if(input$filechoice == "GOmolec") {
-       #   toplotMoustache <-
-       #     cbind.data.frame(fgseaResTidyMolec$pathway,
-       #                      fgseaResTidyMolec$NES,
-       #                      fgseaResTidyMolec$padj,
-       #                      fgseaResTidyMolec$pval) #
-       #   colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval")
-       #   toplotMoustache <- toplotMoustache %>%
-       #     mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no'))
-       # } else if(input$filechoice == "GOcellcomp") {
-       #   toplotMoustache <-
-       #     cbind.data.frame(fgseaResTidyCC$pathway,
-       #                      fgseaResTidyCC$NES,
-       #                      fgseaResTidyCC$padj,
-       #                      fgseaResTidyCC$pval)
-       #   colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval")
-       #   toplotMoustache <- toplotMoustache %>%
-       #     mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no'))
-       # }
      })
- # 
+
     output$GSEAMoustache <- renderPlot({
       if(input$gseachoice == "moustache") {
 
@@ -1378,7 +1210,7 @@ colorpalettechoices <-
           geom_text_repel(
             max.overlaps = 1500,
             aes(label = ifelse(
-              Gene %in% c(input$fgseaTable_rows_selected) & log2FoldChange > 2.5,
+              Gene %in% (input$fgseaTable_rows_selected) & log2FoldChange > 2.5,
               as.character(Gene),
               ""
             )),
