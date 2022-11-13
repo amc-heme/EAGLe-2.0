@@ -25,6 +25,7 @@ library(WGCNA)
 library(plotly)
 library(BiocParallel)
 library(ComplexHeatmap)
+library(colourpicker)
 #options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
@@ -107,6 +108,33 @@ ui <-
               selected =
                 "VST PCA"
             ),
+            hr(),
+            
+            colourInput(
+              "PCAcolor1",
+              label = "Choose 1st color",
+              value = "blue",
+              showColour = ("both"),
+              palette = ("square"),
+              allowedCols = NULL,
+              allowTransparent = FALSE,
+              returnName = FALSE,
+              closeOnClick = FALSE
+            ),
+            hr(),
+            
+            colourInput(
+              "PCAcolor2",
+              label = "Choose 2nd color",
+              value = "red",
+              showColour = ("both"),
+              palette = ("square"),
+              allowedCols = NULL,
+              allowTransparent = FALSE,
+              returnName = FALSE,
+              closeOnClick = FALSE
+            ),
+            hr(),
             
             downloadButton("downloadPlotPCA", label = "Download Plot"),
 
@@ -141,6 +169,7 @@ ui <-
                        selected =
                          "VST PCA"
                      ),
+                     hr(),
                      
                      downloadButton(
                        "downloadPlotscree",
@@ -232,8 +261,43 @@ ui <-
             ),
            hr(),
            #Palettes from colorBrewer
-           selectInput("PaletteChoices", "Choose a color palette", choices =
-                         c("Dark2", "Paired", "Set1"), selected = "Dark2"),
+           # selectInput("PaletteChoices", "Choose a color palette", choices =
+           #               c("Dark2", "Paired", "Set1"), selected = "Dark2"),
+           colourInput(
+             "genecolor1",
+             label = "Choose 2nd color",
+             value = "blue",
+             showColour = ("both"),
+             palette = ("square"),
+             allowedCols = NULL,
+             allowTransparent = FALSE,
+             returnName = FALSE,
+             closeOnClick = FALSE
+           ),
+           colourInput(
+             "genecolor2",
+             label = "Choose 2nd color",
+             value = "red",
+             showColour = ("both"),
+             palette = ("square"),
+             allowedCols = NULL,
+             allowTransparent = FALSE,
+             returnName = FALSE,
+             closeOnClick = FALSE
+           ),
+           colourInput(
+             "genecolor3",
+             label = "Choose 3rd color",
+             value = "yellow",
+             showColour = ("both"),
+             palette = ("square"),
+             allowedCols = NULL,
+             allowTransparent = FALSE,
+             returnName = FALSE,
+             closeOnClick = FALSE
+           ),
+           
+           
            hr(),
            sliderInput("geneheightslider", "Adjust plot height",
                                    min = 200, max = 1200, value = 600
@@ -325,8 +389,39 @@ ui <-
                                            choices = list("<= 0.01" = "sigvar0.01", "<= 0.05" = "sigvar0.05", "All" = "allvar2"), selected = "allvar2"),
                               
                               hr(),
-                              selectInput("PaletteChoicesDE", "Choose a color palette", choices =
-                                            c("Dark2", "Paired", "Set1"), selected = "Dark2"),
+                              colourInput(
+                                "volcanocolor1",
+                                label = "Choose 1st color",
+                                value = "blue",
+                                showColour = ("both"),
+                                palette = ("square"),
+                                allowedCols = NULL,
+                                allowTransparent = FALSE,
+                                returnName = FALSE,
+                                closeOnClick = FALSE
+                              ),
+                              colourInput(
+                                "volcanocolor2",
+                                label = "Choose 2nd color",
+                                value = "grey",
+                                showColour = ("both"),
+                                palette = ("square"),
+                                allowedCols = NULL,
+                                allowTransparent = FALSE,
+                                returnName = FALSE,
+                                closeOnClick = FALSE
+                              ),
+                              colourInput(
+                                "volcanocolor3",
+                                label = "Choose 3rd color",
+                                value = "red",
+                                showColour = ("both"),
+                                palette = ("square"),
+                                allowedCols = NULL,
+                                allowTransparent = FALSE,
+                                returnName = FALSE,
+                                closeOnClick = FALSE
+                              ),
                               # sliderInput("volheightslider", "Adjust plot height",
                               #             min = 200, max = 1000, value = 400
                               # ),
@@ -362,6 +457,39 @@ ui <-
                           sidebarLayout(
                             sidebarPanel( 
                               h4("log2FoldChange = Prim/Mono"),
+                              colourInput(
+                                "MAcolor1",
+                                label = "Choose 1st color",
+                                value = "red",
+                                showColour = ("both"),
+                                palette = ("square"),
+                                allowedCols = NULL,
+                                allowTransparent = FALSE,
+                                returnName = FALSE,
+                                closeOnClick = FALSE
+                              ),
+                              colourInput(
+                                "MAcolor2",
+                                label = "Choose 2nd color",
+                                value = "blue",
+                                showColour = ("both"),
+                                palette = ("square"),
+                                allowedCols = NULL,
+                                allowTransparent = FALSE,
+                                returnName = FALSE,
+                                closeOnClick = FALSE
+                              ),
+                              colourInput(
+                                "MAcolor3",
+                                label = "Choose 3rd color",
+                                value = "grey",
+                                showColour = ("both"),
+                                palette = ("square"),
+                                allowedCols = NULL,
+                                allowTransparent = FALSE,
+                                returnName = FALSE,
+                                closeOnClick = FALSE
+                              ),
                               # radioButtons("padjbutton", h4("padj Value"), 
                               #              choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
                               # 
@@ -428,7 +556,7 @@ navbarMenu("GSEA",
                    ),
                   hr(),
                   sliderInput("howmanypathways", "Choose How Many Pathways to Rank",
-                              min = 5, max = 60, value = 25
+                              min = 5, max = 60, value = 15
                   ),
                   
                    sliderInput("rankedheightslider", "Adjust plot height",
@@ -442,8 +570,34 @@ navbarMenu("GSEA",
                  ),
                  conditionalPanel(
                    condition = "input.gseachoice == 'moustache'",
-                   selectInput("PaletteChoicesMoustache", "Choose a color palette", choices =
-                                 c("Dark2", "Paired", "Set1"), selected = "Dark2"),
+        
+                   colourInput(
+                     "choice1color",
+                     label = "Choose 1st color",
+                     value = "#1164B4",
+                     showColour = ("both"),
+                     palette = ("square"),
+                     allowedCols = NULL,
+                     allowTransparent = FALSE,
+                     returnName = FALSE,
+                     closeOnClick = FALSE
+                   ),
+                   hr(),
+                   
+                   colourInput(
+                     "choice2color",
+                     label = "Choose 2nd color",
+                     value = "#000000",
+                     showColour = ("both"),
+                     palette = ("square"),
+                     allowedCols = NULL,
+                     allowTransparent = FALSE,
+                     returnName = FALSE,
+                     closeOnClick = FALSE
+                   ),
+                   
+                   hr(),
+                   
                    downloadButton(
                      "downloadmoustache",
                      label =
@@ -670,17 +824,7 @@ server <-
   
   output$PCAplot <- renderPlot ({
     colors <-
-      colorRampPalette(
-        c(
-          "#1B9E77",
-          "#D95F02",
-          "#7570B3",
-          "#E7298A",
-          "#66A61E",
-          "#E6AB02",
-          "#A6761D",
-          "#666666"
-        ))(2)
+      c(input$PCAcolor1, input$PCAcolor2)
    ggplot(PCAdata(), aes(x = PC1, y = PC2, fill = batch, shape = condition)) + 
       geom_point(size = 5) + 
       scale_shape_manual(values = c(21, 24), name = '') +
@@ -784,18 +928,18 @@ server <-
        facet_grid(ext_gene ~ class, scales = 'free') 
      } else(NULL)
    })
-colorpalettechoices <- 
-  eventReactive(input$PalletteChoices, {
-    if(input$PaletteChoices == "Dark") {
-      scale_color_brewer(palette = "Dark2")
-    } else if(input$PaletteChoices == "PurpleGreen") {
-      scale_color_brewer(palette = "PRGn")
-    } else if(input$PaletteChoices == "RedBlue") {
-      scale_color_brewer(palette = "RdBu")
-    } else if(input$PaletteChoices == "YellowGreenBlue") {
-      scale_color_brewer(palette = "YlGnBu")
-    }
-  })
+# colorpalettechoices <- 
+#   eventReactive(input$PalletteChoices, {
+#     if(input$PaletteChoices == "Dark") {
+#       scale_color_brewer(palette = "Dark2")
+#     } else if(input$PaletteChoices == "PurpleGreen") {
+#       scale_color_brewer(palette = "PRGn")
+#     } else if(input$PaletteChoices == "RedBlue") {
+#       scale_color_brewer(palette = "RdBu")
+#     } else if(input$PaletteChoices == "YellowGreenBlue") {
+#       scale_color_brewer(palette = "YlGnBu")
+#     }
+#   })
  #plot output
   output$VSTCDplot <-
     renderPlot(
@@ -803,11 +947,8 @@ colorpalettechoices <-
       height = function() input$geneheightslider,
       {
  #build a color palette
-      # colors <-
-      #   colorRampPalette(c("dodgerblue4",
-      #                      "darkolivegreen4",
-      #                      "darkorchid3",
-      #                      "goldenrod1"))(10)
+      colors <-
+        colorRampPalette(c(input$genecolor1, input$genecolor2, input$genecolor3))(10)
       ggplot(datavst(),
              aes(
                x = .data[[xvar_CDgene()]],
@@ -815,8 +956,8 @@ colorpalettechoices <-
                fill = .data[[fillvar_CDgene()]]
              )) +
         geom_boxplot(outlier.shape = NA) +
-        scale_fill_brewer(palette = input$PaletteChoices) +
-        scale_color_brewer(palette = input$PaletteChoices) +
+        scale_fill_manual(values = colors) +
+        scale_color_manual(values = colors) +
         geom_point(alpha = 0.5,
                    position = position_jitterdodge(jitter.width = 0.2),
                    aes(color = ext_gene)) + #this needs to be reactive too
@@ -986,7 +1127,7 @@ colorpalettechoices <-
        # width = function() input$volwidthslider,
        #           height = function() input$volheightslider,
                  {
-      colors <- c(magma(15)[9], "grey", viridis(15)[10])
+      colors <- c(input$volcanocolor1, input$volcanocolor2, input$volcanocolor3)
       p <- ggplot(vol_sig_values(), aes(
          x = log2FoldChange,
          y = -log10(padj),
@@ -1031,23 +1172,11 @@ colorpalettechoices <-
        size = 1.5,
        alpha = 0.7,
        palette =  
-         colorRampPalette(
-         c(
-           "#1B9E77",
-           "#D95F02",
-           "#7570B3",
-           "#E7298A",
-           "#66A61E",
-           "#E6AB02",
-           "#A6761D",
-           "#666666"
-         )
-       )(3),
+         c(input$MAcolor1, input$MAcolor2, input$MAcolor3),
        legend = NULL,
        top = TRUE,
        title = "DE MA Plot",
-       ggtheme = ggplot2::theme_light()
-     )
+       ggtheme = ggplot2::theme_light())
      ggplotly(ma)
    })
    output$downloadDEMA <- downloadHandler(
@@ -1063,6 +1192,21 @@ colorpalettechoices <-
 
    #make an object to hold the values of the selectInput for gsea pathway choices
    gsea_file_values <- list("hallmark" = pathways.hallmark,
+                            "goall" = pathways.GOall,
+                            "GOmolec" = pathways.GOmolec, 
+                            "GOcellcomp" = pathways.GOcellcomp,
+                            "GObio" = pathways.GObio,
+                            "TFtargets" = pathways.TFtargets,
+                            "allReg" = pathways.allReg,
+                            "wiki" = pathways.Wiki,
+                            "reactome" = pathways.Reactome,
+                            "KEGG" = pathways.KEGG,
+                            "positional" = pathways.Positional,
+                            "biocarta" = pathways.Positional,
+                            "lsc" = pathways.lsc,
+                            "aeg" = pathways.aeg)
+   
+   gene_gsea_file_values <- list("hallmark" = pathways.hallmark,
                             "goall" = pathways.GOall,
                             "GOmolec" = pathways.GOmolec, 
                             "GOcellcomp" = pathways.GOcellcomp,
@@ -1153,15 +1297,15 @@ colorpalettechoices <-
 
     output$GSEAMoustache <- renderPlot({
       if(input$gseachoice == "moustache") {
-
-      m <- ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) + #reactive for each pathway
+colors <- c(input$choice1color, input$choice2color)
+      m <- ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) + 
         geom_point() +
         theme_minimal() +
         xlab('NES') +
-        scale_colour_brewer(palette = input$PaletteChoicesMoustache) +
+        scale_colour_manual(values = colors) +
         ylab('adjusted p-value') +
         ggtitle("") + #reactive
-        geom_text_repel(aes(label=ifelse(padj<0.05,as.character(pathway),"")),hjust=0,vjust=0)
+        geom_text_repel(aes(label=ifelse(padj<0.05,as.character(fgseaResTidy$pathway),"")),hjust=0,vjust=0)
         coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1))
         print(m)
       }
