@@ -113,7 +113,7 @@ ui <-
             colourInput(
               "PCAcolor1",
               label = "Choose 1st color",
-              value = "blue",
+              value = "#009292",
               showColour = ("both"),
               palette = ("square"),
               allowedCols = NULL,
@@ -126,7 +126,7 @@ ui <-
             colourInput(
               "PCAcolor2",
               label = "Choose 2nd color",
-              value = "red",
+              value = "#490092",
               showColour = ("both"),
               palette = ("square"),
               allowedCols = NULL,
@@ -265,8 +265,8 @@ ui <-
            #               c("Dark2", "Paired", "Set1"), selected = "Dark2"),
            colourInput(
              "genecolor1",
-             label = "Choose 2nd color",
-             value = "blue",
+             label = "Choose 1st color",
+             value = "#009292",
              showColour = ("both"),
              palette = ("square"),
              allowedCols = NULL,
@@ -277,7 +277,7 @@ ui <-
            colourInput(
              "genecolor2",
              label = "Choose 2nd color",
-             value = "red",
+             value = "#ffff6d",
              showColour = ("both"),
              palette = ("square"),
              allowedCols = NULL,
@@ -288,7 +288,7 @@ ui <-
            colourInput(
              "genecolor3",
              label = "Choose 3rd color",
-             value = "yellow",
+             value = "#490092",
              showColour = ("both"),
              palette = ("square"),
              allowedCols = NULL,
@@ -392,7 +392,7 @@ ui <-
                               colourInput(
                                 "volcanocolor1",
                                 label = "Choose 1st color",
-                                value = "blue",
+                                value = "#009292",
                                 showColour = ("both"),
                                 palette = ("square"),
                                 allowedCols = NULL,
@@ -414,7 +414,7 @@ ui <-
                               colourInput(
                                 "volcanocolor3",
                                 label = "Choose 3rd color",
-                                value = "red",
+                                value = "#490092",
                                 showColour = ("both"),
                                 palette = ("square"),
                                 allowedCols = NULL,
@@ -460,7 +460,7 @@ ui <-
                               colourInput(
                                 "MAcolor1",
                                 label = "Choose 1st color",
-                                value = "red",
+                                value = "#009292",
                                 showColour = ("both"),
                                 palette = ("square"),
                                 allowedCols = NULL,
@@ -471,7 +471,7 @@ ui <-
                               colourInput(
                                 "MAcolor2",
                                 label = "Choose 2nd color",
-                                value = "blue",
+                                value = "#490092",
                                 showColour = ("both"),
                                 palette = ("square"),
                                 allowedCols = NULL,
@@ -566,7 +566,29 @@ navbarMenu("GSEA",
                    
                    sliderInput("rankedwidthslider", "Adjust plot width",
                                min = 200, max = 1000, value = 600
-                   )
+                   ),
+                  colourInput(
+                    "waterfallcolor1",
+                    label = "Choose 1st color",
+                    value = "#009292",
+                    showColour = ("both"),
+                    palette = ("square"),
+                    allowedCols = NULL,
+                    allowTransparent = FALSE,
+                    returnName = FALSE,
+                    closeOnClick = FALSE
+                  ),
+                  colourInput(
+                    "waterfallcolor2",
+                    label = "Choose 2nd color",
+                    value = "#490092",
+                    showColour = ("both"),
+                    palette = ("square"),
+                    allowedCols = NULL,
+                    allowTransparent = FALSE,
+                    returnName = FALSE,
+                    closeOnClick = FALSE
+                  ),
                  ),
                  conditionalPanel(
                    condition = "input.gseachoice == 'moustache'",
@@ -574,7 +596,7 @@ navbarMenu("GSEA",
                    colourInput(
                      "choice1color",
                      label = "Choose 1st color",
-                     value = "#1164B4",
+                     value = "#009292",
                      showColour = ("both"),
                      palette = ("square"),
                      allowedCols = NULL,
@@ -582,7 +604,6 @@ navbarMenu("GSEA",
                      returnName = FALSE,
                      closeOnClick = FALSE
                    ),
-                   hr(),
                    
                    colourInput(
                      "choice2color",
@@ -597,6 +618,14 @@ navbarMenu("GSEA",
                    ),
                    
                    hr(),
+                   sliderInput("mheightslider", "Adjust plot height",
+                               min = 200, max = 1000, value = 400
+                   ),
+                   hr(),
+                   
+                   sliderInput("mwidthslider", "Adjust plot width",
+                               min = 200, max = 1000, value = 600
+                   ),
                    
                    downloadButton(
                      "downloadmoustache",
@@ -619,6 +648,40 @@ navbarMenu("GSEA",
                  ),
                  conditionalPanel(
                    condition = "input.gseachoice == 'volcanoplot'",
+                   colourInput(
+                     "gseavolcolor1",
+                     label = "Choose 1st color",
+                     value = "#009292",
+                     showColour = ("both"),
+                     palette = ("square"),
+                     allowedCols = NULL,
+                     allowTransparent = FALSE,
+                     returnName = FALSE,
+                     closeOnClick = FALSE
+                   ),
+                   colourInput(
+                     "gseavolcolor2",
+                     label = "Choose 2nd color",
+                     value = "#490092",
+                     showColour = ("both"),
+                     palette = ("square"),
+                     allowedCols = NULL,
+                     allowTransparent = FALSE,
+                     returnName = FALSE,
+                     closeOnClick = FALSE
+                   ),
+                   colourInput(
+                     "gseavolcolor3",
+                     label = "Choose 3rd color",
+                     value = "grey",
+                     showColour = ("both"),
+                     palette = ("square"),
+                     allowedCols = NULL,
+                     allowTransparent = FALSE,
+                     returnName = FALSE,
+                     closeOnClick = FALSE
+                   ),
+                   hr(),
                    downloadButton(
                      "downloadvolcano",
                      label =
@@ -677,27 +740,38 @@ navbarMenu("GSEA",
              theme =
                shinytheme("flatly"),
              titlePanel(
-               "GSEA"
+               "GSEA: Gene Centric Pathway Analysis"
              ),#end title
-             sidebarLayout(
+             h4("Positive NES is upregulated in Primitive cells and negative NES is upregulated in Monocytic cells"),
+             sidebarLayout( 
                sidebarPanel( 
                  selectizeInput(
                    "Pathwaygenechoice",
                    label=
-                     "Choose a gene or group of genes",
+                     "Choose a gene of interest",
                    choices =
                      NULL,
                    selected = NULL,
-                   options = list(maxItems = NULL)
+                   options = list(maxItems = 1)
                  ),
                  hr(),
                  
-                 selectInput("genefilechoice", "Choose gmt file to load pathways containing the gene or genes of interest",
+                 selectInput("genefilechoice", "Choose gmt file to load pathways containing the gene of interest",
                  choices = c(Hallmark = "hallmark", GOall = "GOall", GOmolecular = "GOmolec", 
                              GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
                              allRegular = "allReg", Wiki = "wiki", Reactome = "reactome", KEGG = "KEGG",
-                             Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg"))
-                 ),
+                             Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg")),
+          
+               hr(),
+               sliderInput("goiheightslider", "Adjust plot height",
+                           min = 200, max = 1000, value = 400
+               ),
+               hr(),
+               
+               sliderInput("goiwidthslider", "Adjust plot width",
+                           min = 200, max = 1000, value = 600
+               )
+               ),
                mainPanel(
                  plotOutput(
                    "PathwaysGenePlot"
@@ -847,6 +921,14 @@ server <-
       ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
     }
   )
+  PCA_var_title <- 
+    reactive({
+      if (input$PCAvarscree == "VST PCA") {
+        print("VST PC variance")
+      } else if (input$PCAvarscree == "VST + batch corrected PCA") {
+        print("VST + batch corrected PC variance")
+      }
+    })
   # PCA scree plot ####
   output$PCAvarplot <- renderPlot ({
     ggplot(PC_var_data(),
@@ -859,7 +941,7 @@ server <-
       labs(x = "PC",
            y = "% Variance") +
       labs(title =
-             "")
+             PCA_var_title())
   })
   #PCA Scree download ####
   output$downloadPlotscree <- downloadHandler(
@@ -1264,11 +1346,14 @@ server <-
      height = function() input$rankedheightslider,
      {
      if(input$gseachoice == "rankedplot") {
+       colors <- c(input$waterfallcolor1, input$waterfallcolor2)
        ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
-         geom_col(aes(fill=padj<0.05)) +
+         geom_col(aes(fill= padj < 0.05)) +
+         scale_fill_manual(values = colors) +
          coord_flip() +
-         labs(x="Pathway", y="Normalized Enrichment Score",
-              title="") +
+         labs(x="Pathway", y="Normalized Enrichment Score (Positive NES = Upregulated in Primitive
+Negative NES = Upregulated in Monocytic)",
+              title="Pathway NES from GSEA") +
          theme_minimal()
      }
    })
@@ -1295,7 +1380,10 @@ server <-
            mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no'))
      })
 
-    output$GSEAMoustache <- renderPlot({
+    output$GSEAMoustache <- renderPlot(
+      width = function() input$mwidthslider,
+      height = function() input$mheightslider,
+      {
       if(input$gseachoice == "moustache") {
 colors <- c(input$choice1color, input$choice2color)
       m <- ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) + 
@@ -1304,8 +1392,10 @@ colors <- c(input$choice1color, input$choice2color)
         xlab('NES') +
         scale_colour_manual(values = colors) +
         ylab('adjusted p-value') +
-        ggtitle("") + #reactive
-        geom_text_repel(aes(label=ifelse(padj<0.05,as.character(fgseaResTidy$pathway),"")),hjust=0,vjust=0)
+        ggtitle("Pathways from GSEA") + #reactive
+        geom_text_repel(max.overlaps = 50,
+                        aes(label=ifelse(padj<0.05,as.character(fgseaResTidy$pathway),"")),
+                        hjust=0,vjust=0)
         coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1))
         print(m)
       }
@@ -1323,23 +1413,26 @@ colors <- c(input$choice1color, input$choice2color)
                      ranks) + labs(title=top.DOWN.path)
       }
     })
-   
+  
     
  # GSEA Volcano plot ####
     #need to figure out how to access the list of lists to get gene names reactively
+
     dds.res.pathways <- reactive({
+      pathwaygsea <- gsea_file_values[[input$filechoice]]
+      pathwaychoice <- pathwaygsea$pathway
       dds.res %>%
-        mutate(., react_path = ifelse(Gene %in% c(input$fgseaTable_rows_selected), 'yes', 'no'))
+        mutate(., react_path = ifelse(Gene %in% pathwaychoice, 'yes', 'no'))
+      
       dds.res.pathways$react_path <- factor(dds.res.pathways$react_path, levels = c('no','yes'))
     })
-
+    
 
     output$GSEAvolcano <- renderPlot ({
-      if(input$gseachoice == "volcanoplot") {
       
-        
-        colors <- c("grey", viridis(15)[10])
-        ggplot(
+      if(input$gseachoice == "volcanoplot") {
+        colors <- c(input$gseavolcolor1, input$gseavolcolor2, input$gseavolcolor3)
+        v <- ggplot(
           data = (dds.res.pathways() %>%
                     arrange(., (react_path))),
           aes(
@@ -1354,29 +1447,66 @@ colors <- c(input$choice1color, input$choice2color)
           geom_text_repel(
             max.overlaps = 1500,
             aes(label = ifelse(
-              Gene %in% (input$fgseaTable_rows_selected) & log2FoldChange > 2.5,
+              Gene %in% pathwaychoice & log2FoldChange > 1.5,
               as.character(Gene),
               ""
             )),
             hjust = 0,
             vjust = 0
           ) +
-          theme(
-            plot.title = element_text(color = "black", size = 14, face = "bold"),
-            axis.title.x = element_text(color = "black", size = 14, face =
-                                          "bold"),
-            axis.title.y = element_text(color = "black", size = 14, face =
-                                          "bold"),
-            axis.text.x = element_text(size = 14),
-            axis.text.y = element_text(size = 14)
-          ) +
+          # theme(
+          #   plot.title = element_text(color = "black", size = 14, face = "bold"),
+          #   axis.title.x = element_text(color = "black", size = 14, face =
+          #                                 "bold"),
+          #   axis.title.y = element_text(color = "black", size = 14, face =
+          #                                 "bold"),
+          #   axis.text.x = element_text(size = 14),
+          #   axis.text.y = element_text(size = 14)
+          # ) +
           ggtitle("") +
           xlab("log2FoldChange")
-        print("plot loaded")
+        print(v)
       }
     })
   
-      
+ #Gene Centeric pathways analysis plots ####
+    genecentricgseaplot <- reactive({
+      genepathwaygsea <- gene_gsea_file_values[[input$genefilechoice]]
+      fgseaRes <-
+        fgsea::fgsea(pathways = genepathwaygsea,
+                     stats = ranks,
+                     nproc = 1)
+      fgseaResTidy <- fgseaRes %>%
+        as_tibble() %>%
+        arrange(desc(NES))
+      goi_paths <- genepathwaygsea %>% keep(grepl(input$Pathwaygenechoice, genepathwaygsea))
+      goi_paths <- list(grep(input$Pathwaygenechoice, genepathwaygsea))
+      goi_paths <- fgseaResTidy %>%
+        dplyr::filter(grepl(input$Pathwaygenechoice, leadingEdge))
+      GOI <- input$Pathwaygenechoice
+      goi_paths$GOI <- "yes"
+      nongoi_paths <- fgseaResTidy %>%
+        dplyr::filter(!grepl(input$Pathwaygenechoice, leadingEdge))
+      nongoi_paths$GOI <- "no"
+      allgoi_paths <- rbind.data.frame(goi_paths, nongoi_paths)
+    })
+    
+    
+    output$PathwaysGenePlot <- renderPlot(
+      width = function() input$goiwidthslider,
+      height = function() input$goiheightslider,
+      {
+
+      ggplot(genecentricgseaplot(), aes(
+        x = NES,
+        y = pathway,
+        color = (padj < 0.05)
+      )) +
+        geom_boxplot()  +
+        facet_wrap( ~ GOI, scales = "free") +
+        theme_light() +
+        geom_hline(yintercept = 0, linetype = "dashed")
+    })
 
    # #gene list for gene centric pathway analysis
    updateSelectizeInput(session,"Pathwaygenechoice", choices = dds.res$Gene, server = TRUE)
