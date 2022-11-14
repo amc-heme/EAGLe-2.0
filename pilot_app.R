@@ -763,6 +763,10 @@ navbarMenu("GSEA",
                              Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg")),
           
                hr(),
+               sliderInput("howmanypathwaysgene", "Choose How Many Pathways to Plot",
+                           min = 5, max = 60, value = 20
+               ),
+               hr(),
                sliderInput("goiheightslider", "Adjust plot height",
                            min = 200, max = 1000, value = 400
                ),
@@ -1471,7 +1475,7 @@ colors <- c(input$choice1color, input$choice2color)
   
  #Gene Centeric pathways analysis plots ####
     genecentricgseaplot <- reactive({
-      genepathwaygsea <- gene_gsea_file_values[[input$genefilechoice]]
+      genepathwaygsea <- (gene_gsea_file_values[[input$genefilechoice]])
       fgseaRes <-
         fgsea::fgsea(pathways = genepathwaygsea,
                      stats = ranks,
@@ -1482,11 +1486,13 @@ colors <- c(input$choice1color, input$choice2color)
       goi_paths <- genepathwaygsea %>% keep(grepl(input$Pathwaygenechoice, genepathwaygsea))
       goi_paths <- list(grep(input$Pathwaygenechoice, genepathwaygsea))
       goi_paths <- fgseaResTidy %>%
-        dplyr::filter(grepl(input$Pathwaygenechoice, leadingEdge))
+        dplyr::filter(grepl(input$Pathwaygenechoice, leadingEdge)) %>% 
+        top_n(n = input$howmanypathwaysgene, wt = NES)
       GOI <- input$Pathwaygenechoice
       goi_paths$GOI <- "yes"
       nongoi_paths <- fgseaResTidy %>%
-        dplyr::filter(!grepl(input$Pathwaygenechoice, leadingEdge))
+        dplyr::filter(!grepl(input$Pathwaygenechoice, leadingEdge)) %>% 
+        top_n(n = input$howmanypathwaysgene, wt = NES)
       nongoi_paths$GOI <- "no"
       allgoi_paths <- rbind.data.frame(goi_paths, nongoi_paths)
     })
