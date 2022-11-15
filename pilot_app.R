@@ -49,15 +49,6 @@ bcvsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvs
 vsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd2.pca.rds")
 bcvsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd2.pca.rds")
 #GSEA data table
-fgseaResTidy <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidy.rds")
-fgseaResTidyAll <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyAll.rds")
-fgseaResTidyMolec <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyMolec.rds")
-fgseaResTidyCC <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyCC.rds")
-fgseaResTidyBio <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyBio.rds")
-fgseaResTidyTF <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyTF.rds")
-fgseaResTidyReg <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyReg.rds")
-fgseaResTidyWiki <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyWiki.rds")
-fgseaResTidyReactome <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyReactome.rds")
 ranks <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/ranks.rds")
 #load pathways
 pathways.hallmark <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/h.all.v7.4.symbols.gmt")
@@ -126,7 +117,7 @@ ui <-
             colourInput(
               "PCAcolor2",
               label = "Choose 2nd color",
-              value = "#490092",
+              value = "#FFFF6D",
               showColour = ("both"),
               palette = ("square"),
               allowedCols = NULL,
@@ -1371,9 +1362,10 @@ Negative NES = Upregulated in Monocytic)",
          fgsea::fgsea(pathways = pathwaygsea,
                       stats = ranks,
                       nproc = 1)
-       fgseaResTidy <- fgseaRes %>%
+       fgseaResTidy <-
+         fgseaRes %>%
          as_tibble() %>%
-       arrange(desc(NES))
+         arrange(desc(NES))
          toplotMoustache <-
            cbind.data.frame(fgseaResTidy$pathway,
                             fgseaResTidy$NES,
@@ -1384,29 +1376,46 @@ Negative NES = Upregulated in Monocytic)",
            mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no'))
      })
 
-    output$GSEAMoustache <- renderPlot(
-      width = function() input$mwidthslider,
-      height = function() input$mheightslider,
-      {
-      if(input$gseachoice == "moustache") {
-colors <- c(input$choice1color, input$choice2color)
-      m <- ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) + 
-        geom_point() +
-        theme_minimal() +
-        xlab('NES') +
-        scale_colour_manual(values = colors) +
-        ylab('adjusted p-value') +
-        ggtitle("Pathways from GSEA") + #reactive
-        geom_text_repel(max.overlaps = 50,
-                        aes(label=ifelse(padj<0.05,as.character(fgseaResTidy$pathway),"")),
-                        hjust=0,vjust=0)
-        coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1))
-        print(m)
-      }
-    })
+   output$GSEAMoustache <- renderPlot(
+     width = function()
+       input$mwidthslider,
+     height = function()
+       input$mheightslider,
+     {
+       if (input$gseachoice == "moustache") {
+         colors <- c(input$choice1color, input$choice2color)
+         m <-
+           ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) +
+           geom_point() +
+           theme_minimal() +
+           xlab('NES') +
+           scale_colour_manual(values = colors) +
+           ylab('adjusted p-value') +
+           ggtitle("Pathways from GSEA") + #reactive
+           # geom_text_repel(
+           #   max.overlaps = 10,
+           #   aes(label = ifelse(
+           #     padj < 0.05, as.character(fgseaRes$pathway), ""
+           #   )),
+           #   hjust = 0,
+           #   vjust = 0
+           # )
+         coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1))
+         print(m)
+       }
+     }
+   )
+   
   #GSEA Enrichment Plots ####
     output$GSEAenrichment <- renderPlot ({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
+      fgseaRes <-
+        fgsea::fgsea(pathways = pathwaygsea,
+                     stats = ranks,
+                     nproc = 1)
+      fgseaResTidy <- fgseaRes %>%
+        as_tibble() %>%
+        arrange(desc(NES))
       if(input$topupordownbutton == "topup") {
       top.UP.path <- as.character(fgseaResTidy[1,1])
       plotEnrichment(pathwaygsea[[top.UP.path]],
@@ -1486,14 +1495,12 @@ colors <- c(input$choice1color, input$choice2color)
       goi_paths <- genepathwaygsea %>% keep(grepl(input$Pathwaygenechoice, genepathwaygsea))
       goi_paths <- list(grep(input$Pathwaygenechoice, genepathwaygsea))
       goi_paths <- fgseaResTidy %>%
-        dplyr::filter(grepl(input$Pathwaygenechoice, leadingEdge)) %>% 
-        top_n(n = input$howmanypathwaysgene, wt = NES)
+        dplyr::filter(grepl(input$Pathwaygenechoice, leadingEdge)) 
       GOI <- input$Pathwaygenechoice
-      goi_paths$GOI <- "yes"
+      goi_paths$GOI <- "Yes"
       nongoi_paths <- fgseaResTidy %>%
-        dplyr::filter(!grepl(input$Pathwaygenechoice, leadingEdge)) %>% 
-        top_n(n = input$howmanypathwaysgene, wt = NES)
-      nongoi_paths$GOI <- "no"
+        dplyr::filter(!grepl(input$Pathwaygenechoice, leadingEdge))  
+      nongoi_paths$GOI <- "No"
       allgoi_paths <- rbind.data.frame(goi_paths, nongoi_paths)
     })
     
@@ -1505,7 +1512,7 @@ colors <- c(input$choice1color, input$choice2color)
 
       ggplot(genecentricgseaplot(), aes(
         x = NES,
-        y = pathway,
+        y = NES,
         color = (padj < 0.05)
       )) +
         geom_boxplot()  +
