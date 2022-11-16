@@ -74,21 +74,40 @@ pathways.aegGOBP <- c(pathways.aeg, pathways.GObio)
 ui <-
   navbarPage(
   "EAGLe: Cancer Discovery",
-  navbarMenu( #QC Menu ####
+  tabPanel( #QC Menu ####
     "QC",
-    tabPanel(  # PCA plots ####
-      "PCA Plots",
       fluidPage(
         theme =
           shinytheme(
             "flatly"
             ),
         titlePanel(
-          "QC Analysis: PCA Plots"
+          "QC Analysis Plots"
         ), 
         sidebarLayout(
           sidebarPanel(
+            materialSwitch(
+              inputId =
+                "PCAplots",
+              label =
+                "PCA",
+              value =
+                FALSE,
+              right =
+                TRUE
+            ),
+            materialSwitch(
+              inputId =
+                "PCAscreeplots",
+              label =
+                "Scree",
+              value =
+                FALSE,
+              right =
+                TRUE
+            ),
             
+              condition = "input.PCAplots == true",
             radioButtons(
               "PCAvar",
               h4(
@@ -128,90 +147,62 @@ ui <-
             hr(),
             
             downloadButton("downloadPlotPCA", label = "Download Plot"),
-
-          ), #end sidebarPanel
-          mainPanel(
-            plotOutput(
-              "PCAplot"
-              )
-              )
-            ) 
-            )
+            
+            conditionalPanel(
+              condition = "input.PCAscreeplots == true",
+  
+              downloadButton("downloadPlotscree",
+                             label =
+                               "Download Plot")
+            ) #end conditional
           ),
-    tabPanel(  # PCA Scree Plots ####
-               "PCA Scree Plots",
-               fluidPage(
-                 theme =
-                   shinytheme(
-                     "flatly"
-                   ),
-                 titlePanel(
-                   "QC Analysis: PCA Scree Plots"
-                 ), 
-                 sidebarLayout(
-                   sidebarPanel(
-                     radioButtons(
-                       "PCAvarscree",
-                       h4(
-                         "Choose PCA for Scree Plot"
-                       ),
-                       choices =
-                         list("VST PCA", "VST + batch corrected PCA"),
-                       selected =
-                         "VST PCA"
-                     ),
-                     hr(),
-                     
-                     downloadButton(
-                       "downloadPlotscree",
-                       label =
-                         "Download Plot"
-                     )
-                   ), #end sidebarPanel
-                   mainPanel(
-                         plotOutput(
-                           "PCAvarplot"
-                         )
-                       )
-                   )
-                 )
-               ), 
-    tabPanel( #MultiQC Plots ####
-      "MultiQC",
-      fluidPage(
-        theme = 
-          shinytheme("flatly"),
-        titlePanel(
-          "QC Analysis: MultiQC Plots"
-        ),
-        sidebarLayout(
-          sidebarPanel(
-            selectInput(
-            "QCvar",
-            label=
-              "Choose MultiQC test",
-            choices =
-              c("% mapped reads", "# mapped reads", "% uniquely mapped reads", "# uniquely mapped reads"),
-            selected =
-              "% mapped reads"
-          ) #end selectInput
-        ), #end sidebar panel
-        mainPanel(
-            plotOutput(
-              "QCplot"
-              )
-            )
+          mainPanel(
+            conditionalPanel(condition = "input.PCAplots == true",
+                             plotOutput("PCAplot")),
+            conditionalPanel(condition = "input.PCAscreeplots == true",
+                             plotOutput("PCAvarplot"))
           )
         )
-        )
-      ),
+      )
+  ), 
+  
+  
+    # tabPanel( #MultiQC Plots ####
+    #   "MultiQC",
+    #   fluidPage(
+    #     theme = 
+    #       shinytheme("flatly"),
+    #     titlePanel(
+    #       "QC Analysis: MultiQC Plots"
+    #     ),
+    #     sidebarLayout(
+    #       sidebarPanel(
+    #         selectInput(
+    #         "QCvar",
+    #         label=
+    #           "Choose MultiQC test",
+    #         choices =
+    #           c("% mapped reads", "# mapped reads", "% uniquely mapped reads", "# uniquely mapped reads"),
+    #         selected =
+    #           "% mapped reads"
+    #       ) #end selectInput
+    #     ), #end sidebar panel
+    #     mainPanel(
+    #         plotOutput(
+    #           "QCplot"
+    #           )
+    #         )
+    #       )
+    #     )
+    #     )
+    #   ),
     tabPanel( #Gene centric analysis ####
-      "Gene Centric Analysis",
+      "Gene Expression",
       fluidPage(
         theme=
           shinytheme("flatly"),
         titlePanel(
-            "Gene Centric Analysis"
+            "Gene Expression Plot"
             ),
           sidebarLayout(
             sidebarPanel(
@@ -304,208 +295,147 @@ ui <-
             ),
             
             mainPanel(
-              tabsetPanel(
-                type =
-                  "tabs",
-                tabPanel(
-                  "Gene Centric Plot",
                   plotOutput(
                     "VSTCDplot"
                     )
-                  ),
-                tabPanel(
-                  "VST Summary",
-                  textOutput(
-                    "VSTCDsummary"
-                    )
+                  )
                   )
                 )
-              )
-            )
-        )
-      ), #end Genecentric tabPanel
-    navbarMenu("DESeq Analysis",# DESeq Menu ####
-               tabPanel("DESeq Analysis: Table", #DESeq table ####
+              ),
+
+    tabPanel("DESeq Analysis",# DESeq Menu ####
                         fluidPage(
                           theme =
                             shinytheme("flatly"),
                           titlePanel(
-                            "DESeq Table"
+                            "DESeq Table and Plots"
                             ),#end title
                           sidebarLayout(
                             sidebarPanel( 
-                              h4("log2FoldChange = Prim/Mono"),
-                              radioButtons("padjbutton", h4("padj Value"), 
-                               choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
-                              
-                              hr(),
-                              radioButtons("DiffExpButton", h4("Differential Expression"),
-                               choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall"),
-                              
-                              hr(),
                               materialSwitch(
                                 inputId =
-                                  "singscorebutton",
+                                  "DESeqtable",
                                 label =
-                                  "Singscore Regression",
+                                  "DE Table",
                                 value =
                                   FALSE,
                                 right =
                                   TRUE
                               ),
-                              
-                              hr(),
-                              
-                              downloadButton("downloadDEtable", label = "Download Table"),
+                              materialSwitch(
+                                inputId =
+                                  "singscorebutton",
+                                label =
+                                  "DE Table w/ Monocytic Contribution",
+                                value =
+                                  FALSE,
+                                right =
+                                  TRUE
                               ),
+                              materialSwitch(
+                                inputId =
+                                  "DESeqvolcano",
+                                label =
+                                  "Volcano Plot",
+                                value =
+                                  FALSE,
+                                right =
+                                  TRUE
+                              ),
+                              materialSwitch(
+                                inputId =
+                                  "DESeqMA",
+                                label =
+                                  "MA Plot",
+                                value =
+                                  FALSE,
+                                right =
+                                  TRUE
+                              ),
+                              hr(),
+
+                               radioButtons("padjbutton", label = "Filter DE tables by padj", 
+                                            choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"), 
+                              hr(),
+                   
+                              h4("Aesthetics"),
+
+                               colourInput(
+                                 "volcanocolor1",
+                                 label = "Choose 1st color",
+                                 value = "#009292",
+                                 showColour = ("both"),
+                                 palette = ("square"),
+                                 allowedCols = NULL,
+                                 allowTransparent = FALSE,
+                                 returnName = FALSE,
+                                 closeOnClick = FALSE
+                               ),
+                               colourInput(
+                                 "volcanocolor2",
+                                 label = "Choose 2nd color",
+                                 value = "grey",
+                                 showColour = ("both"),
+                                 palette = ("square"),
+                                 allowedCols = NULL,
+                                 allowTransparent = FALSE,
+                                 returnName = FALSE,
+                                 closeOnClick = FALSE
+                               ),
+                               colourInput(
+                                 "volcanocolor3",
+                                 label = "Choose 3rd color",
+                                 value = "#490092",
+                                 showColour = ("both"),
+                                 palette = ("square"),
+                                 allowedCols = NULL,
+                                 allowTransparent = FALSE,
+                                 returnName = FALSE,
+                                 closeOnClick = FALSE
+                               ),
+                              hr(),
+                              h4("Table and Plot Downloads"),
+                               downloadButton("downloadDEtable", label = "Download DE Table"),
+                               hr(),
+                               
+                               downloadButton(
+                                 "downloadDEVolcano",
+                                 label =
+                                   "Download Volcano Plot"
+                               ),
+                              hr(),
+                               downloadButton(
+                                 "downloadDEMA",
+                                 label =
+                                   "Download MA Plot"
+                               )
+                             
+                             ),
                             mainPanel(
-                              DTOutput(
-                                "DETable"
+                              conditionalPanel(
+                                condition = "input.DESeqtable == true",
+                                DTOutput(
+                                  "DETable"
+                                )
+                              ),
+                              conditionalPanel(
+                                condition = "input.DESeqvolcano == true",
+                                plotlyOutput(
+                                  "DEVolcanoPlot"
+                                )
+                              ),
+                              conditionalPanel(
+                                condition = "input.DESeqMA == true",
+                                plotlyOutput(
+                                  "DEMAPlot"
                                 )
                               )
                           )
                         )
-               ),
-               tabPanel("DESeq Volcano Plot", #DESeq volcano plot ####
-                        fluidPage(
-                          theme =
-                            shinytheme("flatly"),
-                          titlePanel(
-                            "DESeq Analysis: Volcano Plot"
-                          ),#end title
-                          sidebarLayout(
-                            sidebarPanel( 
-                              h4("log2FoldChange = Prim/Mono"),
-                              radioButtons("sigvaluesbutton", h4("padj Value"), 
-                                           choices = list("<= 0.01" = "sigvar0.01", "<= 0.05" = "sigvar0.05", "All" = "allvar2"), selected = "allvar2"),
-                              
-                              hr(),
-                              colourInput(
-                                "volcanocolor1",
-                                label = "Choose 1st color",
-                                value = "#009292",
-                                showColour = ("both"),
-                                palette = ("square"),
-                                allowedCols = NULL,
-                                allowTransparent = FALSE,
-                                returnName = FALSE,
-                                closeOnClick = FALSE
-                              ),
-                              colourInput(
-                                "volcanocolor2",
-                                label = "Choose 2nd color",
-                                value = "grey",
-                                showColour = ("both"),
-                                palette = ("square"),
-                                allowedCols = NULL,
-                                allowTransparent = FALSE,
-                                returnName = FALSE,
-                                closeOnClick = FALSE
-                              ),
-                              colourInput(
-                                "volcanocolor3",
-                                label = "Choose 3rd color",
-                                value = "#490092",
-                                showColour = ("both"),
-                                palette = ("square"),
-                                allowedCols = NULL,
-                                allowTransparent = FALSE,
-                                returnName = FALSE,
-                                closeOnClick = FALSE
-                              ),
-                              # sliderInput("volheightslider", "Adjust plot height",
-                              #             min = 200, max = 1000, value = 400
-                              # ),
-                              # sliderInput("volwidthslider", "Adjust plot width",
-                              #             min = 200, max = 1000, value = 600
-                              # ),
-                              # radioButtons("DiffExpButton", h4("Differential Expression"),
-                              #              choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall")
-                              downloadButton(
-                                          "downloadDEVolcano",
-                                          label =
-                                            "Download Plot"
-                                        )
-                            ),
-                            mainPanel(
-                              plotlyOutput(
-                                "DEVolcanoPlot"
-                              ),
-                              # textOutput(
-                              #   "gene_name"
-                              # )
-                            )
-                          )
                         )
                ),
-               tabPanel("DESeq MA Plot", #DESeq MA Plot####
-                        fluidPage(
-                          theme =
-                            shinytheme("flatly"),
-                          titlePanel(
-                            "DESeq Analysis: MA Plot"
-                          ),#end title
-                          sidebarLayout(
-                            sidebarPanel( 
-                              h4("log2FoldChange = Prim/Mono"),
-                              colourInput(
-                                "MAcolor1",
-                                label = "Choose 1st color",
-                                value = "#009292",
-                                showColour = ("both"),
-                                palette = ("square"),
-                                allowedCols = NULL,
-                                allowTransparent = FALSE,
-                                returnName = FALSE,
-                                closeOnClick = FALSE
-                              ),
-                              colourInput(
-                                "MAcolor2",
-                                label = "Choose 2nd color",
-                                value = "#490092",
-                                showColour = ("both"),
-                                palette = ("square"),
-                                allowedCols = NULL,
-                                allowTransparent = FALSE,
-                                returnName = FALSE,
-                                closeOnClick = FALSE
-                              ),
-                              colourInput(
-                                "MAcolor3",
-                                label = "Choose 3rd color",
-                                value = "grey",
-                                showColour = ("both"),
-                                palette = ("square"),
-                                allowedCols = NULL,
-                                allowTransparent = FALSE,
-                                returnName = FALSE,
-                                closeOnClick = FALSE
-                              ),
-                              # radioButtons("padjbutton", h4("padj Value"), 
-                              #              choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
-                              # 
-                              # hr(),
-                              # radioButtons("DiffExpButton", h4("Differential Expression"),
-                              #              choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall")
-                              downloadButton(
-                                "downloadDEMA",
-                                label =
-                                  "Download Plot"
-                              )
-                            ),
-                            mainPanel(
-                              plotlyOutput(
-                                "DEMAPlot"
-                              )
-                            )
-                          )
-                        )
-               )
-              
-               ), 
 #GSEA menu ####
-navbarMenu("GSEA", 
-  tabPanel("GSEA", ####GSEAtables
+tabPanel("GSEA",  ####GSEAtables
             fluidPage(
               theme =
                 shinytheme("flatly"),
@@ -514,6 +444,68 @@ navbarMenu("GSEA",
               ),#end title
               sidebarLayout(
                 sidebarPanel( 
+                  materialSwitch(
+                    inputId =
+                      "fgseaTable",
+                    label =
+                      "Table",
+                    value =
+                      FALSE,
+                    right =
+                      TRUE
+                  ),
+                  materialSwitch(
+                    inputId =
+                      "rankedplot",
+                    label =
+                      "Waterfall",
+                    value =
+                      FALSE,
+                    right =
+                      TRUE
+                  ),
+                  materialSwitch(
+                    inputId =
+                      "moustache",
+                    label =
+                      "Moustache",
+                    value =
+                      FALSE,
+                    right =
+                      TRUE
+                  ),
+                  materialSwitch(
+                    inputId =
+                      "eplot",
+                    label =
+                      "Enrichment",
+                    value =
+                      FALSE,
+                    right =
+                      TRUE
+                  ),
+                  materialSwitch(
+                    inputId =
+                      "volcanoplot",
+                    label =
+                      "Volcano",
+                    value =
+                      FALSE,
+                    right =
+                      TRUE
+                  ),
+                  materialSwitch(
+                    inputId =
+                      "heatmap",
+                    label =
+                      "Heatmap",
+                    value =
+                      FALSE,
+                    right =
+                      TRUE
+                  ),
+                  
+                  
                  selectInput("filechoice", label = "Choose gmt file to load pathways",
                              choices = c(Hallmark = "hallmark", GOall = "goall",GOmolecular = "GOmolec", 
                                          GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
@@ -523,29 +515,25 @@ navbarMenu("GSEA",
                              
                   
                   hr(),
-                  selectInput("gseachoice", "Choose a visualization tool",
-                              choices =
-                                c("fgsea Table" = "fgseaTable", "Waterfall Plot" = "rankedplot", "Moustache Plot" = "moustache",
-                                 "Enrichment Plot" = "eplot", "Volcano Plot" = "volcanoplot", "Heatmap" = "heatmap")
-                              ),
-                 
+    
                  conditionalPanel(
-                   condition = "input.gseachoice == 'fgseaTable'",
-                   downloadButton(
-                     "downloadfgsea",
-                     label =
-                       "Download Table"
-                   )
+                   condition = "input.fgseaTable == true",
+                   # downloadButton(
+                   #   "downloadfgsea",
+                   #   label =
+                   #     "Download Table"
+                   # )
                  ),
                  
                  conditionalPanel(
-                   condition = "input.gseachoice == 'rankedplot'",
-                   downloadButton(
-                     "downloadranks",
-                     label =
-                       "Download Plot"
-                   ),
-                  hr(),
+                   condition = "input.rankedplot == true",
+                   # downloadButton(
+                   #   "downloadranks",
+                   #   label =
+                   #     "Download Plot"
+                   # ),
+                   h4("Waterfall Plot Specific Options"),
+                   
                   sliderInput("howmanypathways", "Choose How Many Pathways to Rank",
                               min = 5, max = 60, value = 15
                   ),
@@ -582,7 +570,8 @@ navbarMenu("GSEA",
                   ),
                  ),
                  conditionalPanel(
-                   condition = "input.gseachoice == 'moustache'",
+                   condition = "input.moustache == true",
+                   h4("Moustache Plot Specific Options"),
         
                    colourInput(
                      "choice1color",
@@ -606,117 +595,119 @@ navbarMenu("GSEA",
                      allowTransparent = FALSE,
                      returnName = FALSE,
                      closeOnClick = FALSE
-                   ),
-                   
-                   hr(),
-                   sliderInput("mheightslider", "Adjust plot height",
-                               min = 200, max = 1000, value = 400
-                   ),
-                   hr(),
-                   
-                   sliderInput("mwidthslider", "Adjust plot width",
-                               min = 200, max = 1000, value = 600
-                   ),
-                   
-                   downloadButton(
-                     "downloadmoustache",
-                     label =
-                       "Download Plot"
                    )
+                   
+                   # hr(),
+                   # sliderInput("mheightslider", "Adjust plot height",
+                   #             min = 200, max = 1000, value = 400
+                   # ),
+                   # hr(),
+                   # 
+                   # sliderInput("mwidthslider", "Adjust plot width",
+                   #             min = 200, max = 1000, value = 600
+                   # ),
+                   # 
+                   # downloadButton(
+                   #   "downloadmoustache",
+                   #   label =
+                   #     "Download Plot"
+                   # )
                    ),
               
                  conditionalPanel(
-                   condition = "input.gseachoice == 'eplot'",
+                   condition = "input.eplot == true",
 
-                   
+                   h4("Enrichment Plot Specific Options"),
                    radioButtons("topupordownbutton", h4("Top Ranked Up or Down Pathway"), 
                                 choices = list("Top Ranked Up Pathway" = "topup", "Top Ranked Down Pathway" = "topdown"), selected = "topup"),
-                   downloadButton(
-                     "downloadeplot",
-                     label =
-                       "Download Plot"
-                   )
+                   # downloadButton(
+                   #   "downloadeplot",
+                   #   label =
+                   #     "Download Plot"
+                   # )
                  ),
                  conditionalPanel(
-                   condition = "input.gseachoice == 'volcanoplot'",
-                   colourInput(
-                     "gseavolcolor1",
-                     label = "Choose 1st color",
-                     value = "#009292",
-                     showColour = ("both"),
-                     palette = ("square"),
-                     allowedCols = NULL,
-                     allowTransparent = FALSE,
-                     returnName = FALSE,
-                     closeOnClick = FALSE
-                   ),
-                   colourInput(
-                     "gseavolcolor2",
-                     label = "Choose 2nd color",
-                     value = "#490092",
-                     showColour = ("both"),
-                     palette = ("square"),
-                     allowedCols = NULL,
-                     allowTransparent = FALSE,
-                     returnName = FALSE,
-                     closeOnClick = FALSE
-                   ),
-                   colourInput(
-                     "gseavolcolor3",
-                     label = "Choose 3rd color",
-                     value = "grey",
-                     showColour = ("both"),
-                     palette = ("square"),
-                     allowedCols = NULL,
-                     allowTransparent = FALSE,
-                     returnName = FALSE,
-                     closeOnClick = FALSE
-                   ),
-                   hr(),
-                   downloadButton(
-                     "downloadvolcano",
-                     label =
-                       "Download Plot"
-                   )
+                   condition = "input.volcanoplot == true",
+                   h4("Volcano Plot Specific Options"),
+                   # colourInput(
+                   #   "gseavolcolor1",
+                   #   label = "Choose 1st color",
+                   #   value = "#009292",
+                   #   showColour = ("both"),
+                   #   palette = ("square"),
+                   #   allowedCols = NULL,
+                   #   allowTransparent = FALSE,
+                   #   returnName = FALSE,
+                   #   closeOnClick = FALSE
+                   # ),
+                   # colourInput(
+                   #   "gseavolcolor2",
+                   #   label = "Choose 2nd color",
+                   #   value = "#490092",
+                   #   showColour = ("both"),
+                   #   palette = ("square"),
+                   #   allowedCols = NULL,
+                   #   allowTransparent = FALSE,
+                   #   returnName = FALSE,
+                   #   closeOnClick = FALSE
+                   # ),
+                   # colourInput(
+                   #   "gseavolcolor3",
+                   #   label = "Choose 3rd color",
+                   #   value = "grey",
+                   #   showColour = ("both"),
+                   #   palette = ("square"),
+                   #   allowedCols = NULL,
+                   #   allowTransparent = FALSE,
+                   #   returnName = FALSE,
+                   #   closeOnClick = FALSE
+                   # ),
+                   # hr(),
+                   # downloadButton(
+                   #   "downloadvolcano",
+                   #   label =
+                   #     "Download Plot"
+                   # )
                  ),
                  conditionalPanel(
-                   condition = "input.gseachoice == 'heatmap'",
-                   downloadButton(
-                     "downloadheatmap",
-                     label =
-                       "Download Plot"
-                   )
+                   condition = "input.heatmap == true",
+                   h4("Heatmap Specific Options"),
+                   # downloadButton(
+                   #   "downloadheatmap",
+                   #   label =
+                   #     "Download Plot"
+                   # )
                  ),
                 ),
                               
 
                 mainPanel(
                   conditionalPanel(
-                    condition = "input.gseachoice == 'fgseaTable'",
+                    condition = "input.fgseaTable == true",
                   DTOutput(
                     "fgseaTable"
                   )
                   ),
                   conditionalPanel(
-                    condition = "input.gseachoice == 'rankedplot'",
+                    condition = "input.rankedplot == true",
                     plotOutput(
                     "GSEAranked"
                   )
                   ),
                   conditionalPanel(
-                    condition = "input.gseachoice == 'moustache'",
+                    condition = "input.moustache == true",
                   plotOutput(
                     "GSEAMoustache"
                   )
                   ),
                   conditionalPanel(
-                    condition = "input.gseachoice == 'eplot'",
+                    condition = "input.eplot == true",
                     plotOutput(
                       "GSEAenrichment"
                     )
                   ),
                   conditionalPanel(
-                    condition = "input.gseachoice == 'volcanoplot'",
+                    condition = "input.volcanoplot == true",
                   plotOutput(
                     "GSEAvolcano"
                   )
@@ -726,12 +717,12 @@ navbarMenu("GSEA",
               )
             
   ),
-  tabPanel("Gene Centric Pathway Analysis",
+  tabPanel("GSEA Pathway/Gene Visualization",
            fluidPage(
              theme =
                shinytheme("flatly"),
              titlePanel(
-               "GSEA: Gene Centric Pathway Analysis"
+               "GSEA:Pathway/Gene Visualization"
              ),#end title
              h4("Positive NES is upregulated in Primitive cells and negative NES is upregulated in Monocytic cells"),
              sidebarLayout( 
@@ -752,11 +743,7 @@ navbarMenu("GSEA",
                              GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
                              allRegular = "allReg", Wiki = "wiki", Reactome = "reactome", KEGG = "KEGG",
                              Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg")),
-          
-               hr(),
-               sliderInput("howmanypathwaysgene", "Choose How Many Pathways to Plot",
-                           min = 5, max = 60, value = 20
-               ),
+
                hr(),
                sliderInput("goiheightslider", "Adjust plot height",
                            min = 200, max = 1000, value = 400
@@ -774,11 +761,11 @@ navbarMenu("GSEA",
                )
            )
              )
-   )
+   
 ),
  
 #WGCNA menu####
- navbarMenu(
+tabPanel(
    "WGCNA"
  )
 )
@@ -838,10 +825,10 @@ server <-
   PC_var_bc$PC <-factor(PC_var_bc$PC,levels = lorder_bc)
   
   PC_var_data <-
-    eventReactive(input$PCAvarscree, {
-      if (input$PCAvarscree == "VST PCA") {
+    eventReactive(input$PCAvar, {
+      if (input$PCAvar == "VST PCA") {
         PC_var_VST
-      } else if (input$PCAvarscree == "VST + batch corrected PCA") {
+      } else if (input$PCAvar == "VST + batch corrected PCA") {
         PC_var_bc
       }
     })
@@ -918,9 +905,9 @@ server <-
   )
   PCA_var_title <- 
     reactive({
-      if (input$PCAvarscree == "VST PCA") {
+      if (input$PCAvar == "VST PCA") {
         print("VST PC variance")
-      } else if (input$PCAvarscree == "VST + batch corrected PCA") {
+      } else if (input$PCAvar == "VST + batch corrected PCA") {
         print("VST + batch corrected PC variance")
       }
     })
@@ -1065,121 +1052,79 @@ server <-
   #function for sidebar input to create filtered DE table and associated volcano plot
   CD_DE_DT <- 
     reactive({
-      if (input$padjbutton == "sigvar1" &
-          input$DiffExpButton == "DEup") {
+      if (input$padjbutton == "sigvar1") {
         dds.res %>%
-          dplyr::filter(DiffExp == "up" & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEup") {
+          dplyr::filter(padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5") {
         dds.res %>%
-          dplyr::filter(DiffExp == "up" & padj <= 0.05)
-      } else if (input$padjbutton == "sigvar1" &
-                 input$DiffExpButton == "DEdown") {
+          dplyr::filter(padj <= 0.05)
+      } else if (input$padjbutton == "sigvar1") {
         dds.res %>%
-          dplyr::filter(DiffExp == "down" & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEdown") {
+          dplyr::filter(padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5") {
         dds.res %>%
-          dplyr::filter(DiffExp == "down" & padj <= 0.05)
-      } else if (input$padjbutton == "sigvar1" &
-                 input$DiffExpButton == "DEno") {
+          dplyr::filter(padj <= 0.05)
+      } else if (input$padjbutton == "sigvar1") {
         dds.res %>%
-          dplyr::filter(DiffExp == "no" & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEno") {
+          dplyr::filter(padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5") {
         dds.res %>%
-          dplyr::filter(DiffExp == "no" & padj <= 0.05)
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEall") {
+          dplyr::filter(padj <= 0.05)
+      } else if (input$padjbutton == "allvar") {
         dds.res
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEup") {
+      } else if (input$padjbutton == "sigvar1") {
         dds.res %>%
-          dplyr::filter(DiffExp == "up" & padj >= 0)
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEdown") {
+          dplyr::filter(padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5") {
         dds.res %>%
-          dplyr::filter(DiffExp == "down" & padj >= 0)
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEno") {
-        dds.res %>%
-          dplyr::filter(DiffExp == "no" & padj >= 0)
-      } else if (input$padjbutton == "sigvar1" &
-                 input$DiffExpButton == "DEall") {
-        dds.res %>%
-          dplyr::filter(DiffExp == c("up", "down", "no") & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEall") {
-        dds.res %>%
-          dplyr::filter(DiffExp == c("up", "down", "no") & padj <= 0.05)
+          dplyr::filter(padj <= 0.05)
       } 
     })
   
   CD_DE_DT_sing <- 
     reactive({
-      if (input$padjbutton == "sigvar1" &
-          input$DiffExpButton == "DEup" & input$singscorebutton == TRUE) {
+      if (input$padjbutton == "sigvar1" & input$singscorebutton == TRUE) {
         dds.resscore %>%
-          dplyr::filter(DiffExp == "up" & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEup" & input$singscorebutton == TRUE) {
+          dplyr::filter(padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5" & input$singscorebutton == TRUE) {
         dds.resscore %>%
-          dplyr::filter(DiffExp == "up" & padj <= 0.05)
-      } else if (input$padjbutton == "sigvar1" &
-                 input$DiffExpButton == "DEdown" & input$singscorebutton == TRUE) {
+          dplyr::filter(padj <= 0.05)
+      } else if (input$padjbutton == "sigvar1" & input$singscorebutton == TRUE) {
         dds.resscore %>%
-          dplyr::filter(DiffExp == "down" & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEdown" & input$singscorebutton == TRUE) {
+          dplyr::filter(padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5" & input$singscorebutton == TRUE) {
         dds.resscore %>%
-          dplyr::filter(DiffExp == "down" & padj <= 0.05)
-      } else if (input$padjbutton == "sigvar1" &
-                 input$DiffExpButton == "DEno" & input$singscorebutton == TRUE) {
+          dplyr::filter(padj <= 0.05)
+      } else if (input$padjbutton == "sigvar1" & input$singscorebutton == TRUE) {
         dds.resscore %>%
-          dplyr::filter(DiffExp == "no" & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEno" & input$singscorebutton == TRUE) {
+          dplyr::filter(padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5" & input$singscorebutton == TRUE) {
         dds.resscore %>%
-          dplyr::filter(DiffExp == "no" & padj <= 0.05)
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEall"& input$singscorebutton == TRUE ) {
+          dplyr::filter(padj <= 0.05)
+      } else if (input$padjbutton == "allvar" & input$singscorebutton == TRUE ) {
         dds.resscore
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEup" & input$singscorebutton == TRUE) {
+      } else if (input$padjbutton == "sigvar1" & input$singscorebutton == TRUE) {
         dds.resscore %>%
-          dplyr::filter(DiffExp == "up" & padj >= 0)
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEdown" & input$singscorebutton == TRUE) {
+          dplyr::filter(padj <= 0.01)
+      } else if (input$padjbutton == "sigvar5" & input$singscorebutton == TRUE) {
         dds.resscore %>%
-          dplyr::filter(DiffExp == "down" & padj >= 0)
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEno" & input$singscorebutton == TRUE) {
-        dds.resscore %>%
-          dplyr::filter(DiffExp == "no" & padj >= 0)
-      } else if (input$padjbutton == "sigvar1" &
-                 input$DiffExpButton == "DEall" & input$singscorebutton == TRUE) {
-        dds.resscore %>%
-          dplyr::filter(DiffExp == c("up", "down", "no") & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEall" & input$singscorebutton == TRUE) {
-        dds.resscore %>%
-          dplyr::filter(DiffExp == c("up", "down", "no") & padj <= 0.05)
+          dplyr::filter(padj <= 0.05)
       }
     })
   #object for volcano plot data using DE and singscore tables
-  vol_sig_values <- 
-    reactive({
-      if(input$sigvaluesbutton == "sigvar0.05" ) {
-        dds.res %>% 
-          dplyr::filter(padj <= 0.05)
-      } else if(input$sigvaluesbutton == "sigvar0.01") {
-        dds.res %>% 
-          dplyr::filter(padj <= 0.01)
-      }else if(input$sigvaluesbutton == "allvar2") {
-        dds.res %>% 
-          dplyr::filter(padj > 0)
-      } 
-      })
+  # vol_sig_values <- 
+  #   reactive({
+  #     if(input$sigvaluesbutton == "sigvar0.05" ) {
+  #       dds.res %>% 
+  #         dplyr::filter(padj <= 0.05)
+  #     } else if(input$sigvaluesbutton == "sigvar0.01") {
+  #       dds.res %>% 
+  #         dplyr::filter(padj <= 0.01)
+  #     }else if(input$sigvaluesbutton == "allvar2") {
+  #       dds.res %>% 
+  #         dplyr::filter(padj > 0)
+  #     } 
+  #     })
   #output DE table with adjustment for singscore
    output$DETable <-
      renderDataTable({
@@ -1198,15 +1143,13 @@ server <-
        write.csv(CD_DE_DT(),file)
      }
    )
+   #DE Volcano Plot ####
    
    output$DEVolcanoPlot <-
-     renderPlotly( 
-       # width = function() input$volwidthslider,
-       #           height = function() input$volheightslider,
-                 {
+     renderPlotly({
       colors <- c(input$volcanocolor1, input$volcanocolor2, input$volcanocolor3)
-      p <- ggplot(vol_sig_values(), aes(
-         x = log2FoldChange,
+      p <- ggplot(dds.res, aes(
+         x = .data[['log2FoldChange(Prim/Mono)']],
          y = -log10(padj),
          col = DiffExp,
          text = Gene
@@ -1215,47 +1158,35 @@ server <-
          theme_light() +
          scale_colour_manual(values = colors) +
          ggtitle("DE Volcano Plot") +
-         # geom_text_repel(
-         #   max.overlaps = 15,
-         #   aes(label = ifelse(
-         #     padj < 5e-20 &
-         #       abs(log2FoldChange) >= 0.5,
-         #     as.character(Gene),
-         #     ""
-         #   )),
-         #   hjust = 0,
-         #   vjust = 0
-         # ) +
          coord_cartesian(xlim = c(-10, 7))
       ggplotly(p)
      })
-   # output$gene_name <- renderText({
-   #   if(input$point_hover) {
-   #     print(dds.res$Gene)
-   #   }
-   # })
+
    output$downloadDEVolcano <- downloadHandler(
      filename = function() { paste(input$sigvaluesbutton, '.png', sep='') },
      content = function(file) {
        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
      }
    )
+   
+   #DE MA Plot ####
    output$DEMAPlot <- renderPlotly ({
      
      ma <- ggmaplot(
        dds.res,
        fdr = 0.05,
-       fc = (2 ^ 1),
+       fc = 2 ^ 1,
        size = 1.5,
        alpha = 0.7,
        palette =  
-         c(input$MAcolor1, input$MAcolor2, input$MAcolor3),
+         c(input$volcanocolor1, input$volcanocolor2, input$volcanocolor3),
        legend = NULL,
        top = TRUE,
        title = "DE MA Plot",
        ggtheme = ggplot2::theme_light())
      ggplotly(ma)
    })
+   
    output$downloadDEMA <- downloadHandler(
      filename = function() { paste('DESeqMAplot', '.png', sep='') },
      content = function(file) {
@@ -1329,7 +1260,7 @@ server <-
   
   #table output for Res tables
    output$fgseaTable <- renderDataTable({
-     if (input$gseachoice == "fgseaTable") {
+     if (input$fgseaTable == TRUE) {
        gseafile()
    }
    })
@@ -1340,7 +1271,7 @@ server <-
      width = function() input$rankedwidthslider,
      height = function() input$rankedheightslider,
      {
-     if(input$gseachoice == "rankedplot") {
+     if(input$rankedplot == TRUE) {
        colors <- c(input$waterfallcolor1, input$waterfallcolor2)
        ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
          geom_col(aes(fill= padj < 0.05)) +
@@ -1377,12 +1308,12 @@ Negative NES = Upregulated in Monocytic)",
      })
 
    output$GSEAMoustache <- renderPlot(
-     width = function()
-       input$mwidthslider,
-     height = function()
-       input$mheightslider,
+     # width = function()
+     #   input$mwidthslider,
+     # height = function()
+     #   input$mheightslider,
      {
-       if (input$gseachoice == "moustache") {
+       if (input$moustache == TRUE) {
          colors <- c(input$choice1color, input$choice2color)
          m <-
            ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) +
@@ -1443,7 +1374,7 @@ Negative NES = Upregulated in Monocytic)",
 
     output$GSEAvolcano <- renderPlot ({
       
-      if(input$gseachoice == "volcanoplot") {
+      if(input$volcanoplot == TRUE) {
         colors <- c(input$gseavolcolor1, input$gseavolcolor2, input$gseavolcolor3)
         v <- ggplot(
           data = (dds.res.pathways() %>%
