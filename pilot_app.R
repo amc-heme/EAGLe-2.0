@@ -1245,8 +1245,12 @@ server <-
      col = f1,
      row_names_gp = gpar(fontsize = 4),
      row_km = 2,
-     column_km = 2,
-     column_title = c("prim", "mono")
+     top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("darkorange1", "blueviolet")),
+                                                           labels = c("prim", "mono"), 
+                                                           labels_gp = gpar(col = "white", fontsize = 10))),
+     column_km = 2, 
+     column_title = NULL,
+     row_title = NULL
    ))
    makeInteractiveComplexHeatmap(input, output, session, ht, "ht")
  
@@ -1496,10 +1500,13 @@ Negative NES = Upregulated in Monocytic)",
       vstgsea.mat,
       name = "HALLMARK_MYC_TARGETS_V2",
       col = f1,
-      row_names_gp = 
-      gpar(fontsize = 6),
-      column_km = 2,
-      column_title = c("prim", "mono")))
+      row_names_gp = gpar(fontsize = 6),
+      # top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("darkorange1", "purple")),
+      #                                                       labels = c("prim", "mono"), 
+      #                                                       labels_gp = gpar(col = "white", fontsize = 10))),
+      column_title = NULL,
+      row_title = NULL))
+      
     makeInteractiveComplexHeatmap(input, output, session, htgsea, "htgsea")
     
  #Gene Centeric pathways analysis plots ####
