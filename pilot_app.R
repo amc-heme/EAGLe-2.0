@@ -25,6 +25,8 @@ library(WGCNA)
 library(plotly)
 library(BiocParallel)
 library(ComplexHeatmap)
+library(InteractiveComplexHeatmap)
+library(circlize)
 library(colourpicker)
 #options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
@@ -65,7 +67,7 @@ pathways.Positional <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/d
 pathways.Biocarta <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.biocarta.v2022.1.Hs.symbols.gmt")
 pathways.lsc <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/lsc_sigs.gmt")
 pathways.aeg <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/aeg_genesets_20220602.gmt")
-
+vstlimma <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vstlimma.rds")
 
 names(pathways.aeg)[10] <- "PM_Primitive_Blast"
 names(pathways.aeg)[9] <- "PM_Monocytic_Blast"
@@ -352,6 +354,16 @@ ui <-
                                 right =
                                   TRUE
                               ),
+                              materialSwitch(
+                                inputId =
+                                  "DESeqHeat",
+                                label =
+                                  "Heatmap",
+                                value =
+                                  FALSE,
+                                right =
+                                  TRUE
+                              ),
                               hr(),
 
                                radioButtons("padjbutton", label = "Filter DE tables by padj", 
@@ -428,6 +440,12 @@ ui <-
                                 condition = "input.DESeqMA == true",
                                 plotlyOutput(
                                   "DEMAPlot"
+                                )
+                              ),
+                              conditionalPanel(
+                                condition = "input.DESeqHeat == true",
+                                InteractiveComplexHeatmapOutput(heatmap_id = 
+                                  "ht"
                                 )
                               )
                           )
@@ -506,7 +524,7 @@ tabPanel("GSEA",  ####GSEAtables
                   ),
                   
                   
-                 selectInput("filechoice", label = "Choose gmt file to load pathways",
+                 selectInput("filechoice", label = "Choose gmt file to load pathway sets",
                              choices = c(Hallmark = "hallmark", GOall = "goall",GOmolecular = "GOmolec", 
                                          GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
                                          allRegular = "allReg", Wiki = "wiki", Reactome = "reactome", KEGG = "KEGG",
@@ -515,6 +533,16 @@ tabPanel("GSEA",  ####GSEAtables
                              
                   
                   hr(),
+             
+                 selectizeInput(
+                   "pathwaylist",
+                   label=
+                     "Choose a pathway",
+                   choices =
+                     NULL,
+                   selected = NULL,
+                   options = list(maxItems = NULL)
+                 ),
     
                  conditionalPanel(
                    condition = "input.fgseaTable == true",
@@ -711,6 +739,10 @@ tabPanel("GSEA",  ####GSEAtables
                   plotOutput(
                     "GSEAvolcano"
                   )
+                  ),
+                  conditionalPanel(
+                    condition = "input.heatmap == true",
+                    InteractiveComplexHeatmapOutput(heatmap_id = "htgsea")
                   )
                   )
                 )
@@ -1149,7 +1181,7 @@ server <-
      renderPlotly({
       colors <- c(input$volcanocolor1, input$volcanocolor2, input$volcanocolor3)
       p <- ggplot(dds.res, aes(
-         x = .data[['log2FoldChange(Prim/Mono)']],
+         x = `log2FoldChange(Prim/Mono)`,
          y = -log10(padj),
          col = DiffExp,
          text = Gene
@@ -1193,11 +1225,35 @@ server <-
        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
      }
    )
+   #DE Heatmap ####
+   dds.mat <- dds.res %>%
+     dplyr::filter(padj < 0.05 & abs(`log2FoldChange(Prim/Mono)`) >= 2)
+
+   vst.mat <- vstlimma %>%
+     dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
+     column_to_rownames(., var = "ensembl_gene_id") %>%
+     dplyr::select(.,-ext_gene) %>%
+     as.matrix()
+   rownames(vst.mat) = dds.mat$Gene
+   vst.mat <- t(scale(t(vst.mat)))
+
+   vst.mat <- head(vst.mat, n = 100)
+   f1 = colorRamp2(seq(min(vst.mat), max(vst.mat), length = 3), c("blue", "#EEEEEE", "red"))
+   ht = draw(ComplexHeatmap::Heatmap(
+     vst.mat,
+     name = "z scaled expression",
+     col = f1,
+     row_names_gp = gpar(fontsize = 4),
+     row_km = 2,
+     column_km = 2,
+     column_title = c("prim", "mono")
+   ))
+   makeInteractiveComplexHeatmap(input, output, session, ht, "ht")
+ 
    
 ####GSEA output ####
 #run GSEA for chosen pathway input
   
-
    #make an object to hold the values of the selectInput for gsea pathway choices
    gsea_file_values <- list("hallmark" = pathways.hallmark,
                             "goall" = pathways.GOall,
@@ -1228,6 +1284,7 @@ server <-
                             "biocarta" = pathways.Positional,
                             "lsc" = pathways.lsc,
                             "aeg" = pathways.aeg)
+ 
    #reactive expression to run fgsea and load results table for each chosen pathway
    gseafile <-
      reactive({
@@ -1235,10 +1292,13 @@ server <-
           fgseaRes <- fgsea::fgsea(pathways = pathwaygsea, stats = ranks, nproc = 1)
           fgseaResTidy <- fgseaRes %>%
             as_tibble() %>%
+            dplyr::select(., -pval,-log2err, -ES) %>% 
             arrange(desc(NES))
           fgseaResTidy
        })
- 
+
+       updateSelectizeInput(session,"pathwaylist", choices = pathways.hallmark$pathway, server = TRUE)
+   
   #filter Res table for chosen pathway to show in a waterfall plot
    gseafile_waterfall <-
      reactive({
@@ -1249,6 +1309,7 @@ server <-
                         nproc = 1)
          fgseaResTidy <- fgseaRes %>%
            as_tibble() %>%
+           dplyr::select(., -pval,-log2err, -ES) %>% 
            arrange(desc(NES))
          top15 <- fgseaResTidy %>% 
                    top_n(n = input$howmanypathways, wt = NES)
@@ -1296,6 +1357,7 @@ Negative NES = Upregulated in Monocytic)",
        fgseaResTidy <-
          fgseaRes %>%
          as_tibble() %>%
+         dplyr::select(., -pval,-log2err, -ES) %>% 
          arrange(desc(NES))
          toplotMoustache <-
            cbind.data.frame(fgseaResTidy$pathway,
@@ -1346,6 +1408,7 @@ Negative NES = Upregulated in Monocytic)",
                      nproc = 1)
       fgseaResTidy <- fgseaRes %>%
         as_tibble() %>%
+        dplyr::select(., -pval,-log2err, -ES) %>% 
         arrange(desc(NES))
       if(input$topupordownbutton == "topup") {
       top.UP.path <- as.character(fgseaResTidy[1,1])
@@ -1380,7 +1443,7 @@ Negative NES = Upregulated in Monocytic)",
           data = (dds.res.pathways() %>%
                     arrange(., (react_path))),
           aes(
-            x = log2FoldChange,
+            x = `log2FoldChange(Prim/Mono)`,
             y = -log10(padj),
             col = react_path
           )
@@ -1412,7 +1475,33 @@ Negative NES = Upregulated in Monocytic)",
         print(v)
       }
     })
-  
+  #GSEA heatmap ####
+    dds.sig <- dds.res %>%
+      dplyr::filter(padj < 0.05 & abs(`log2FoldChange(Prim/Mono)`) >= 0.5)
+    
+    vst.myc <- vstlimma %>% 
+      mutate(., Hallmark_myc = ifelse(ext_gene %in% pathways.hallmark$HALLMARK_MYC_TARGETS_V2, 'yes', 'no')) %>% 
+      dplyr::filter(Hallmark_myc == "yes")
+    
+    vstgsea.mat <- vst.myc %>%
+      dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
+      column_to_rownames(., var = "ext_gene") %>%
+      dplyr::select(.,-ensembl_gene_id, -Hallmark_myc) %>%
+      as.matrix()
+    
+    vstgsea.mat <- t(scale(t(vstgsea.mat)))
+    
+    f1 = colorRamp2(seq(min(vstgsea.mat), max(vstgsea.mat), length = 3), c("blue", "#EEEEEE", "red"))
+    htgsea = draw(ComplexHeatmap::Heatmap(
+      vstgsea.mat,
+      name = "HALLMARK_MYC_TARGETS_V2",
+      col = f1,
+      row_names_gp = 
+      gpar(fontsize = 6),
+      column_km = 2,
+      column_title = c("prim", "mono")))
+    makeInteractiveComplexHeatmap(input, output, session, htgsea, "htgsea")
+    
  #Gene Centeric pathways analysis plots ####
     genecentricgseaplot <- reactive({
       genepathwaygsea <- (gene_gsea_file_values[[input$genefilechoice]])
