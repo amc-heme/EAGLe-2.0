@@ -28,7 +28,7 @@ library(ComplexHeatmap)
 library(InteractiveComplexHeatmap)
 library(circlize)
 library(colourpicker)
-#options(shiny.reactlog = TRUE)
+options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
 #Data ####
@@ -813,29 +813,29 @@ server <-
   
   
 ##QC-MultiQC plots####
-  output$QCplot <- renderPlot({
-    QCdata <- switch(
-      input$QCvar,
-      "% mapped reads" = qcdt$raw.salmon.percent_mapped,
-      "# mapped reads" = qcdt$raw.salmon.num_mapped,
-      "% uniquely mapped reads" = qcdt$raw.star.uniquely_mapped_percent,
-      "# uniquely mapped reads" = qcdt$raw.star.uniquely_mapped,
-      "Sample_ID" = qcdt$metadata.sample_id
-    )
- 
- Sample_ID <-qcdt$metadata.sample_id 
-  
-  ggplot(
-    qcdt,
-    aes(
-      x = Sample_ID,
-      y = QCdata
-      )) +
-    geom_point(alpha = 0.5) +
-    theme_cowplot (12) +
-    theme(axis.text.x =
-            element_text(angle = 60, hjust = 1))
-  }) #end renderPlot
+ #  output$QCplot <- renderPlot({
+ #    QCdata <- switch(
+ #      input$QCvar,
+ #      "% mapped reads" = qcdt$raw.salmon.percent_mapped,
+ #      "# mapped reads" = qcdt$raw.salmon.num_mapped,
+ #      "% uniquely mapped reads" = qcdt$raw.star.uniquely_mapped_percent,
+ #      "# uniquely mapped reads" = qcdt$raw.star.uniquely_mapped,
+ #      "Sample_ID" = qcdt$metadata.sample_id
+ #    )
+ # 
+ # Sample_ID <-qcdt$metadata.sample_id 
+ #  
+ #  ggplot(
+ #    qcdt,
+ #    aes(
+ #      x = Sample_ID,
+ #      y = QCdata
+ #      )) +
+ #    geom_point(alpha = 0.5) +
+ #    theme_cowplot (12) +
+ #    theme(axis.text.x =
+ #            element_text(angle = 60, hjust = 1))
+ #  }) #end renderPlot
   
   # PCA plots ####
  
@@ -1199,22 +1199,22 @@ server <-
    )
    
    #DE MA Plot ####
-   output$DEMAPlot <- renderPlotly ({
-     
-     ma <- ggmaplot(
-       dds.res,
-       fdr = 0.05,
-       fc = 2 ^ 1,
-       size = 1.5,
-       alpha = 0.7,
-       palette =  
-         c(input$volcanocolor1, input$volcanocolor2, input$volcanocolor3),
-       legend = NULL,
-       top = TRUE,
-       title = "DE MA Plot",
-       ggtheme = ggplot2::theme_light())
-     ggplotly(ma)
-   })
+   # output$DEMAPlot <- renderPlotly ({
+   #   
+   #   ma <- ggmaplot(
+   #     dds.res,
+   #     fdr = 0.05,
+   #     fc = 2 ^ 1,
+   #     size = 1.5,
+   #     alpha = 0.7,
+   #     palette =  
+   #       c(input$volcanocolor1, input$volcanocolor2, input$volcanocolor3),
+   #     legend = NULL,
+   #     top = TRUE,
+   #     title = "DE MA Plot",
+   #     ggtheme = ggplot2::theme_light())
+   #   ggplotly(ma)
+   # })
    
    output$downloadDEMA <- downloadHandler(
      filename = function() { paste('DESeqMAplot', '.png', sep='') },
@@ -1234,7 +1234,7 @@ server <-
    rownames(vst.mat) = dds.mat$Gene
    vst.mat <- t(scale(t(vst.mat)))
 
-   #vst.mat <- head(vst.mat, n = 100)
+   vst.mat <- head(vst.mat, n = 100)
    f1 = colorRamp2(seq(min(vst.mat), max(vst.mat), length = 3), c("blue", "#EEEEEE", "red"))
    ht = draw(ComplexHeatmap::Heatmap(
      vst.mat,
