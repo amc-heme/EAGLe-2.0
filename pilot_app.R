@@ -710,6 +710,9 @@ tabPanel("GSEA",  ####GSEAtables
                               
 
                 mainPanel(
+                  textOutput(
+                    "genelist"
+                  ),
                   conditionalPanel(
                     condition = "input.fgseaTable == true",
                   DTOutput(
@@ -1300,9 +1303,16 @@ server <-
             arrange(desc(NES))
           fgseaResTidy
        })
-
-       updateSelectizeInput(session,"pathwaylist", choices = pathways.hallmark$pathway, server = TRUE)
+ pathwaygenelist <- 
+   reactive({
+     pathwaygsea <- gsea_file_values[[input$filechoice]]
+   })
+ 
+   observe({updateSelectizeInput(session,"pathwaylist", choices = gseafile()$pathway, server = TRUE)})
    
+  output$genelist <- renderText({
+    print(pathwaygenelist())
+  })
   #filter Res table for chosen pathway to show in a waterfall plot
    gseafile_waterfall <-
      reactive({
