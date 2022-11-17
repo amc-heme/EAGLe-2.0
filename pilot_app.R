@@ -219,13 +219,13 @@ ui <-
                 options = list(maxItems = NULL)
                 ),
               radioButtons("XaxisVar_CDgene", h4("X axis variable"),
-                           choices = list("Value" = "xvalue", "Class" = "xclass",
-                                          "Gene" = "xgene"),selected = "xgene"),
+                           choices = list("Value" = "xvalue",
+                                          "Gene" = "xgene"), selected = "xgene"),
               radioButtons("YaxisVar_CDgene", h4("Y axis variable"),
-                           choices = list("Value" = "yvalue", "Class" = "yclass",
-                                          "Gene" = "ygene"),selected = "yvalue"),
-              radioButtons("FillVar_CDgene", h4("Fill variable"),
-                           choices = list("Class" = "fillclass", "Gene" = "fillgene"), selected = "fillclass"),
+                           choices = list("Value" = "yvalue",
+                                          "Gene" = "ygene"), selected = "yvalue"),
+              # radioButtons("FillVar_CDgene", h4("Fill variable"),
+              #              choices = list("Class" = "fillclass", "Gene" = "fillgene"), selected = "fillclass"),
               
             hr(),
             
@@ -546,20 +546,20 @@ tabPanel("GSEA",  ####GSEAtables
     
                  conditionalPanel(
                    condition = "input.fgseaTable == true",
-                   # downloadButton(
-                   #   "downloadfgsea",
-                   #   label =
-                   #     "Download Table"
-                   # )
+                   downloadButton(
+                     "downloadfgsea",
+                     label =
+                       "Download GSEA Table"
+                   )
                  ),
                  
                  conditionalPanel(
                    condition = "input.rankedplot == true",
-                   # downloadButton(
-                   #   "downloadranks",
-                   #   label =
-                   #     "Download Plot"
-                   # ),
+                   downloadButton(
+                     "downloadranks",
+                     label =
+                       "Download Waterfall Plot"
+                   ),
                    h4("Waterfall Plot Specific Options"),
                    
                   sliderInput("howmanypathways", "Choose How Many Pathways to Rank",
@@ -596,6 +596,10 @@ tabPanel("GSEA",  ####GSEAtables
                     returnName = FALSE,
                     closeOnClick = FALSE
                   ),
+                  downloadButton(
+                    "downloadranks",
+                    label =
+                      "Download Waterfall Plot")
                  ),
                  conditionalPanel(
                    condition = "input.moustache == true",
@@ -648,11 +652,11 @@ tabPanel("GSEA",  ####GSEAtables
                    h4("Enrichment Plot Specific Options"),
                    radioButtons("topupordownbutton", h4("Top Ranked Up or Down Pathway"), 
                                 choices = list("Top Ranked Up Pathway" = "topup", "Top Ranked Down Pathway" = "topdown"), selected = "topup"),
-                   # downloadButton(
-                   #   "downloadeplot",
-                   #   label =
-                   #     "Download Plot"
-                   # )
+                   downloadButton(
+                     "downloadeplot",
+                     label =
+                       "Download Enrichment Plot"
+                   )
                  ),
                  conditionalPanel(
                    condition = "input.volcanoplot == true",
@@ -691,11 +695,11 @@ tabPanel("GSEA",  ####GSEAtables
                    #   closeOnClick = FALSE
                    # ),
                    # hr(),
-                   # downloadButton(
-                   #   "downloadvolcano",
-                   #   label =
-                   #     "Download Plot"
-                   # )
+                   downloadButton(
+                     "downloadvolcano",
+                     label =
+                       "Download Volcano Plot"
+                   )
                  ),
                  conditionalPanel(
                    condition = "input.heatmap == true",
@@ -707,12 +711,8 @@ tabPanel("GSEA",  ####GSEAtables
                    # )
                  ),
                 ),
-                              
-
+                            
                 mainPanel(
-                  textOutput(
-                    "genelist"
-                  ),
                   conditionalPanel(
                     condition = "input.fgseaTable == true",
                   DTOutput(
@@ -980,11 +980,9 @@ server <-
 #make sure duplicate selections are not allowed with radio buttons
  observeEvent(input$XaxisVar_CDgene, {
    if(input$XaxisVar_CDgene == "xvalue") {
-     mychoices <- c("Class" = "yclass", "Gene" = "ygene")
-      }else if(input$XaxisVar_CDgene=="xclass") {
-     mychoices <- c("Value"="yvalue", "Gene"="ygene")
+     mychoices <- c("Gene" = "ygene")
      } else if(input$XaxisVar_CDgene=="xgene") {
-     mychoices <- c("Value" = "yvalue", "Class" = "yclass")
+     mychoices <- c("Value" = "yvalue")
      }
    updateRadioButtons(session, "YaxisVar_CDgene", choices = mychoices)
  })
@@ -995,8 +993,6 @@ server <-
    eventReactive(input$XaxisVar_CDgene, {
      if (input$XaxisVar_CDgene == "xvalue") {
        "value"
-     } else if (input$XaxisVar_CDgene == "xclass") {
-       "class"
      } else if (input$XaxisVar_CDgene == "xgene") {
        "ext_gene"
      }
@@ -1006,21 +1002,19 @@ server <-
    eventReactive(input$YaxisVar_CDgene, {
      if (input$YaxisVar_CDgene == "yvalue") {
        "value"
-     } else if (input$YaxisVar_CDgene == "yclass") {
-       "class"
      } else if (input$YaxisVar_CDgene == "ygene") {
        "ext_gene"
      }
    })
   #fill output
- fillvar_CDgene <-
-   eventReactive(input$FillVar_CDgene, {
-     if (input$FillVar_CDgene == "fillclass") {
-       "class"
-     } else if (input$FillVar_CDgene == "fillgene") {
-       "ext_gene"
-     }
-   })
+ # fillvar_CDgene <-
+ #   eventReactive(input$FillVar_CDgene, {
+ #     if (input$FillVar_CDgene == "fillclass") {
+ #       "class"
+ #     } else if (input$FillVar_CDgene == "fillgene") {
+ #       "ext_gene"
+ #     }
+ #   })
  Gene_facet <- 
    eventReactive(input$genefacetbutton, {
      if(input$genefacetbutton == TRUE) {
@@ -1052,7 +1046,7 @@ server <-
              aes(
                x = .data[[xvar_CDgene()]],
                y =  .data[[yvar_CDgene()]],
-               fill = .data[[fillvar_CDgene()]]
+               fill = class
              )) +
         geom_boxplot(outlier.shape = NA) +
         scale_fill_manual(values = colors) +
@@ -1240,7 +1234,7 @@ server <-
    rownames(vst.mat) = dds.mat$Gene
    vst.mat <- t(scale(t(vst.mat)))
 
-   vst.mat <- head(vst.mat, n = 100)
+   #vst.mat <- head(vst.mat, n = 100)
    f1 = colorRamp2(seq(min(vst.mat), max(vst.mat), length = 3), c("blue", "#EEEEEE", "red"))
    ht = draw(ComplexHeatmap::Heatmap(
      vst.mat,
@@ -1248,10 +1242,10 @@ server <-
      col = f1,
      row_names_gp = gpar(fontsize = 4),
      row_km = 2,
-     top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("darkorange1", "blueviolet")),
-                                                           labels = c("prim", "mono"), 
+     top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("red", "blueviolet")),
+                                                           labels = c("prim", "mono"),
                                                            labels_gp = gpar(col = "white", fontsize = 10))),
-     column_km = 2, 
+     column_km = 2,
      column_title = NULL,
      row_title = NULL
    ))
@@ -1303,16 +1297,18 @@ server <-
             arrange(desc(NES))
           fgseaResTidy
        })
- pathwaygenelist <- 
+ pathwaygenelist <-
    reactive({
      pathwaygsea <- gsea_file_values[[input$filechoice]]
+     genelist <- input$pathwaylist
+     p<- pathwaygsea[names(pathwaygsea) %in% input$pathwaylist]
    })
  
-   observe({updateSelectizeInput(session,"pathwaylist", choices = gseafile()$pathway, server = TRUE)})
-   
-  output$genelist <- renderText({
-    print(pathwaygenelist())
-  })
+   observe({
+     pathwaygsea <- gsea_file_values[[input$filechoice]]
+     updateSelectizeInput(session,"pathwaylist", choices = names(pathwaygsea), server = TRUE)})
+
+
   #filter Res table for chosen pathway to show in a waterfall plot
    gseafile_waterfall <-
      reactive({
@@ -1376,9 +1372,8 @@ Negative NES = Upregulated in Monocytic)",
          toplotMoustache <-
            cbind.data.frame(fgseaResTidy$pathway,
                             fgseaResTidy$NES,
-                            fgseaResTidy$padj,
-                            fgseaResTidy$pval)
-         colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval")
+                            fgseaResTidy$padj)
+         colnames(toplotMoustache) <- c("pathway", "NES", "padj")
          toplotMoustache <- toplotMoustache %>%
            mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no'))
      })
@@ -1439,86 +1434,85 @@ Negative NES = Upregulated in Monocytic)",
  # GSEA Volcano plot ####
     #need to figure out how to access the list of lists to get gene names reactively
 
-    dds.res.pathways <- reactive({
-      pathwaygsea <- gsea_file_values[[input$filechoice]]
-      pathwaychoice <- pathwaygsea$pathway
-      dds.res %>%
-        mutate(., react_path = ifelse(Gene %in% pathwaychoice, 'yes', 'no'))
-      
-      dds.res.pathways$react_path <- factor(dds.res.pathways$react_path, levels = c('no','yes'))
-    })
-    
+   dds.res.pathways <- reactive({
+     pathwaygsea <- gsea_file_values[[input$filechoice]]
+     p <-
+       unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylist]))
+     dds.res.pathways <- dds.res %>%
+       mutate(., react_path = ifelse(Gene %in% p, 'yes', 'no'))
+     # labelgene <- dds.res.pathways %>% 
+     #   dplyr::filter(react_path == "yes")
+   })
+   
 
-    output$GSEAvolcano <- renderPlot ({
-      
-      if(input$volcanoplot == TRUE) {
-        colors <- c(input$gseavolcolor1, input$gseavolcolor2, input$gseavolcolor3)
-        v <- ggplot(
-          data = (dds.res.pathways() %>%
-                    arrange(., (react_path))),
-          aes(
-            x = `log2FoldChange(Prim/Mono)`,
-            y = -log10(padj),
-            col = react_path
-          )
-        ) +
-          theme_light() +
-          geom_point() +
-          scale_colour_manual(values = colors) +
-          geom_text_repel(
-            max.overlaps = 1500,
-            aes(label = ifelse(
-              Gene %in% pathwaychoice & log2FoldChange > 1.5,
-              as.character(Gene),
-              ""
-            )),
-            hjust = 0,
-            vjust = 0
-          ) +
-          # theme(
-          #   plot.title = element_text(color = "black", size = 14, face = "bold"),
-          #   axis.title.x = element_text(color = "black", size = 14, face =
-          #                                 "bold"),
-          #   axis.title.y = element_text(color = "black", size = 14, face =
-          #                                 "bold"),
-          #   axis.text.x = element_text(size = 14),
-          #   axis.text.y = element_text(size = 14)
-          # ) +
-          ggtitle("") +
-          xlab("log2FoldChange")
-        print(v)
-      }
-    })
+   output$GSEAvolcano <- renderPlot ({
+     if (input$volcanoplot == TRUE) {
+       ggplot(
+         data = (dds.res.pathways() %>% arrange(., (react_path))),
+         aes(
+           x = `log2FoldChange(Prim/Mono)`,
+           y = -log10(padj),
+           col = react_path
+         )
+       ) +
+         theme_light() +
+         geom_point() +
+         scale_colour_brewer(palette = 'Dark2') +
+         # geom_text_repel(
+         #   max.overlaps = 1500,
+         #   aes(
+         #     label = ifelse(
+         #       Gene %in% p & `log2FoldChange(Prim/Mono)` > 1.5,
+         #       as.character(Gene),
+         #       ""
+         #     )
+         #   ),
+         #   hjust = 0,
+         #   vjust = 0
+         # ) +
+         ggtitle("") +
+         xlab("log2foldchange")
+     }
+   })
   #GSEA heatmap ####
-    dds.sig <- dds.res %>%
-      dplyr::filter(padj < 0.05 & abs(`log2FoldChange(Prim/Mono)`) >= 0.5)
-    
-    vst.myc <- vstlimma %>% 
-      mutate(., Hallmark_myc = ifelse(ext_gene %in% pathways.hallmark$HALLMARK_MYC_TARGETS_V2, 'yes', 'no')) %>% 
-      dplyr::filter(Hallmark_myc == "yes")
-    
-    vstgsea.mat <- vst.myc %>%
-      dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
-      column_to_rownames(., var = "ext_gene") %>%
-      dplyr::select(.,-ensembl_gene_id, -Hallmark_myc) %>%
-      as.matrix()
-    
-    vstgsea.mat <- t(scale(t(vstgsea.mat)))
-    
-    f1 = colorRamp2(seq(min(vstgsea.mat), max(vstgsea.mat), length = 3), c("blue", "#EEEEEE", "red"))
-    htgsea = draw(ComplexHeatmap::Heatmap(
-      vstgsea.mat,
-      name = "HALLMARK_MYC_TARGETS_V2",
-      col = f1,
-      row_names_gp = gpar(fontsize = 6),
-      # top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("darkorange1", "purple")),
-      #                                                       labels = c("prim", "mono"), 
-      #                                                       labels_gp = gpar(col = "white", fontsize = 10))),
-      column_title = NULL,
-      row_title = NULL))
-      
-    makeInteractiveComplexHeatmap(input, output, session, htgsea, "htgsea")
-    
+   # gseaht_title <- 
+   #   eventReactive(input$pathwaylist, {
+   #    print(input$pathwaylist)
+   #   })
+   
+   
+   
+   observeEvent(input$pathwaylist, {
+     pathwaygsea <- gsea_file_values[[input$filechoice]]
+     
+     p <- unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylist]))
+     
+     dds.sig <- dds.res %>%
+       dplyr::filter(padj < 0.05 & abs(`log2FoldChange(Prim/Mono)`) >= 0.5)
+     
+     vst.myc <- vstlimma %>% 
+       mutate(., Hallmark_myc = ifelse(ext_gene %in% p, 'yes', 'no')) %>% 
+       dplyr::filter(Hallmark_myc == "yes")
+     
+     vstgsea.mat <- vst.myc %>%
+       dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
+       column_to_rownames(., var = "ext_gene") %>%
+       dplyr::select(.,-ensembl_gene_id, -Hallmark_myc) %>%
+       as.matrix()
+     
+     vstgsea.mat <- t(scale(t(vstgsea.mat)))
+     
+     htgsea = draw(ComplexHeatmap::Heatmap(
+       vstgsea.mat,
+       name = "gseaht_title()",
+       row_names_gp = gpar(fontsize = 6),
+       column_title = NULL,
+       row_title = NULL))
+     
+     makeInteractiveComplexHeatmap(input, output, session, htgsea, "htgsea")
+   })
+  
+  
  #Gene Centeric pathways analysis plots ####
     genecentricgseaplot <- reactive({
       genepathwaygsea <- (gene_gsea_file_values[[input$genefilechoice]])
