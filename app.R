@@ -148,14 +148,16 @@ ui <-
                     ),
                     hr(),
                     
-                    downloadButton("downloadPlotPCA", label = "Download Plot"),
+                    downloadButton("downloadPlotPCA", label = "Download PCA Plot"),
+                    
+                    hr(),
                     
                     conditionalPanel(
                       condition = "input.PCAscreeplots == true",
                       
                       downloadButton("downloadPlotscree",
                                      label =
-                                       "Download Plot")
+                                       "Download Scree Plot")
                     ) #end conditional
                   ),
                   mainPanel(
@@ -523,20 +525,7 @@ ui <-
                                            GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
                                            allRegular = "allReg", Wiki = "wiki", Reactome = "reactome", KEGG = "KEGG",
                                            Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg")),
-                   
-                   
-                   
-                   hr(),
-                   
-                   selectizeInput(
-                     "pathwaylist",
-                     label=
-                       "Choose a pathway",
-                     choices =
-                       NULL,
-                     selected = NULL,
-                     options = list(maxItems = NULL)
-                   ),
+        
                    
                    conditionalPanel(
                      condition = "input.fgseaTable == true",
@@ -546,7 +535,8 @@ ui <-
                          "Download GSEA Table"
                      )
                    ),
-                   
+                   hr(),
+                   #GSEA Waterfall####
                    conditionalPanel(
                      condition = "input.rankedplot == true",
                   
@@ -592,6 +582,8 @@ ui <-
                          "Download Waterfall Plot"
                      ),
                    ),
+                   hr(),
+                   #GSEA Moustache ####
                    conditionalPanel(
                      condition = "input.moustache == true",
                      h4("Moustache Plot Specific Options"),
@@ -627,21 +619,48 @@ ui <-
                      )
                    ),
                    
+                   hr(),
+                   #GSEA Enrichment plot ####
                    conditionalPanel(
                      condition = "input.eplot == true",
                      
                      h4("Enrichment Plot Specific Options"),
-                     radioButtons("topupordownbutton", h4("Top Ranked Up or Down Pathway"), 
-                                  choices = list("Top Ranked Up Pathway" = "topup", "Top Ranked Down Pathway" = "topdown"), selected = "topup"),
+      
+                     radioButtons("topupordownbutton", h5("Enrichment Plot Choices"), 
+                                  choices = list("Top Ranked Up Pathway" = "topup", "Top Ranked Down Pathway" = "topdown", "Pathway of Choice:" = "eplotpath"), selected = "topup"),
+                     h5("Choose a specific pathway"),
+                     selectizeInput(
+                       "pathwaylisteplot",
+                       label=
+                         NULL,
+                       choices =
+                         NULL,
+                       selected = NULL ,
+                       options = list(maxItems = 1)
+                     ),
+                     hr(),
                      downloadButton(
                        "downloadeplot",
                        label =
                          "Download Enrichment Plot"
                      )
                    ),
+                   hr(),
+                   #GSEA Volcano ####
                    conditionalPanel(
                      condition = "input.volcanoplot == true",
+                     
                      h4("Volcano Plot Specific Options"),
+                     selectizeInput(
+                       "pathwaylist",
+                       label=
+                         "Choose a specific pathway(s) to view on volcano plot",
+                       choices =
+                         NULL,
+                       selected = NULL,
+                       options = list(maxItems = 5)
+                     ),
+                     
                      colourInput(
                        "gseavolcolor1",
                        label = "Choose 1st color",
@@ -675,15 +694,26 @@ ui <-
                        returnName = FALSE,
                        closeOnClick = FALSE
                      ),
-                     hr(),
                      downloadButton(
                        "downloadvolcano",
                        label =
                          "Download Volcano Plot"
                      )
                    ),
+                   hr(),
+                   #GSEA Heatmap ####
                    conditionalPanel(
                      condition = "input.heatmap == true",
+                     h4("Heatmap Specific Options"),
+                     selectizeInput(
+                       "pathwaylistht",
+                       label=
+                         "Choose a specific pathway to view genes on heatmap",
+                       choices =
+                         NULL,
+                       selected = NULL ,
+                       options = list(maxItems = 1)
+                     ),
                      
                      downloadButton(
                        "downloadheatmap",
@@ -1283,11 +1313,6 @@ server <-
         fgseaResTidy
       })
  
-    
-    observe({
-      pathwaygsea <- gsea_file_values[[input$filechoice]]
-      updateSelectizeInput(session,"pathwaylist", choices = names(pathwaygsea), server = TRUE)})
-    
   
     #filter Res table for chosen pathway to show in a waterfall plot
     gseafile_waterfall <-
@@ -1389,6 +1414,15 @@ Negative NES = Upregulated in Monocytic)",
     )
     
     #GSEA Enrichment Plots ####
+    observe({
+      pathwaygsea <- gsea_file_values[[input$filechoice]]
+      updateSelectizeInput(session,"pathwaylisteplot", choices = names(pathwaygsea), server = TRUE)})
+    
+    gseaeplot_title <-
+      eventReactive(input$pathwaylisteplot, {
+        print(input$pathwaylisteplot)
+      })
+    
     output$GSEAenrichment <- renderPlot ({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
       fgseaRes <-
@@ -1407,12 +1441,26 @@ Negative NES = Upregulated in Monocytic)",
         top.DOWN.path <- as.character(fgseaResTidy[nrow(fgseaResTidy), 1])
         plotEnrichment(pathwaygsea[[top.DOWN.path]],
                        ranks) + labs(title=top.DOWN.path)
+      } else if(input$topupordownbutton == "eplotpath") {
+        plotEnrichment(pathwaygsea[[input$pathwaylisteplot]],
+                       ranks) + labs(title= input$pathwaylisteplot)
       }
     })
-    
+    # output$GSEAenrichmentpath <- renderPlot ({
+    #   if(input$eplot == TRUE) {
+    #   pathwaygsea <- gsea_file_values[[input$filechoice]]
+    #   p <-
+    #     unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylisteplot]))
+    #   plotEnrichment(pathwaygsea[[input$pathwaylisteplot]],
+    #                  ranks) + labs(title= input$pathwaylisteplot)
+    #   }
+    # })
     
     # GSEA Volcano plot ####
-    #need to figure out how to access the list of lists to get gene names reactively
+    observe({
+      pathwaygsea <- gsea_file_values[[input$filechoice]]
+      updateSelectizeInput(session,"pathwaylist", choices = names(pathwaygsea), server = TRUE)})
+    
     dds.res.pathways <- reactive({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
       p <-
@@ -1454,11 +1502,20 @@ Negative NES = Upregulated in Monocytic)",
     })
    
     #GSEA heatmap ####
-   
-    observeEvent(input$pathwaylist, {
+    observe({
+      pathwaygsea <- gsea_file_values[[input$filechoice]]
+      updateSelectizeInput(session,"pathwaylistht", choices = names(pathwaygsea), server = TRUE)})
+    
+    gseaht_title <-
+      eventReactive(input$pathwaylistht, {
+       print(input$pathwaylistht)
+      })
+    
+    observeEvent(input$pathwaylistht, {
+      if(input$heatmap == TRUE) {
       pathwaygsea <- gsea_file_values[[input$filechoice]]
       
-      p <- unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylist]))
+      p <- unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylistht]))
       
       dds.sig <- dds.res %>%
         dplyr::filter(padj < 0.05 & abs(`log2FoldChange(Prim/Mono)`) >= 0.5)
@@ -1477,12 +1534,14 @@ Negative NES = Upregulated in Monocytic)",
       
       htgsea = draw(ComplexHeatmap::Heatmap(
         vstgsea.mat,
-        name = "gseaht_title()",
+        name = paste(gseaht_title(), fontsize = 6),
+          #"paste(input$pathwaylist, sep = ",")",
         row_names_gp = gpar(fontsize = 6),
         column_title = NULL,
         row_title = NULL))
       
       makeInteractiveComplexHeatmap(input, output, session, htgsea, "htgsea")
+      }
     })
     #Gene Centeric pathways analysis plots ####
     genecentricgseaplot <- reactive({
