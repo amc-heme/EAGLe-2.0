@@ -658,7 +658,7 @@ ui <-
                        choices =
                          NULL,
                        selected = NULL,
-                       options = list(maxItems = 5)
+                       options = list(maxItems = 1)
                      ),
                      
                      colourInput(
@@ -683,17 +683,7 @@ ui <-
                        returnName = FALSE,
                        closeOnClick = FALSE
                      ),
-                     colourInput(
-                       "gseavolcolor3",
-                       label = "Choose 3rd color",
-                       value = "#009292",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     ),
+                     
                      downloadButton(
                        "downloadvolcano",
                        label =
@@ -1465,38 +1455,45 @@ Negative NES = Upregulated in Monocytic)",
       pathwaygsea <- gsea_file_values[[input$filechoice]]
       p <-
         unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylist]))
+
       dds.res.pathways <- dds.res %>%
-        mutate(., react_path = ifelse(Gene %in% p, 'yes', 'no'))
+        mutate(., genes_in_pathway = ifelse(Gene %in% p, 'yes', 'no'))
+
     })
     
-    
+    gseavol_title <-
+      eventReactive(input$pathwaylist, {
+        paste(input$pathwaylist)
+      })
+   
     output$GSEAvolcano <- renderPlot ({
-      colors <- c(input$gseavolcolor1, input$gseavolcolor2, input$gseavolcolor3)
+      colors <- 
+        c(input$gseavolcolor1, input$gseavolcolor2, input$gseavolcolor3)
       if (input$volcanoplot == TRUE) {
         ggplot(
-          data = (dds.res.pathways() %>% arrange(., (react_path))),
+          data = (dds.res.pathways() %>% arrange(., (genes_in_pathway))),
           aes(
             x = `log2FoldChange(Prim/Mono)`,
             y = -log10(padj),
-            col = react_path
+            col = genes_in_pathway
           )
         ) +
           theme_light() +
           geom_point() +
           scale_colour_manual(values = colors) +
-          # geom_text_repel(
-          #   max.overlaps = 1500,
-          #   aes(
-          #     label = ifelse(
-          #       Gene %in% p & `log2FoldChange(Prim/Mono)` > 1.5,
-          #       as.character(Gene),
-          #       ""
-          #     )
-          #   ),
-          #   hjust = 0,
-          #   vjust = 0
-        # ) +
-        ggtitle("") +
+        geom_text_repel(
+          max.overlaps = 1500,
+          aes(
+            label = ifelse(
+              genes_in_pathway == 'yes' & `log2FoldChange(Prim/Mono)` > 1.5,
+              as.character(Gene),
+              ""
+            )
+          ),
+          hjust = 0,
+          vjust = 0
+        ) +
+        ggtitle(gseavol_title()) +
           xlab("log2foldchange")
       }
     })
