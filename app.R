@@ -200,7 +200,7 @@ ui <-
     #     )
     #     )
     #   ),
-    tabPanel( #Gene centric analysis ####
+    tabPanel( #Gene expression analysis ####
               "Gene Expression",
               fluidPage(
                 theme=
@@ -226,20 +226,21 @@ ui <-
                     radioButtons("YaxisVar_CDgene", h4("Y axis variable"),
                                  choices = list("Value" = "yvalue",
                                                 "Gene" = "ygene"),selected = "yvalue"),
-                    
+                    radioButton("PrimMonobutton"), h4("Show only prim or mono gene expression"),
+                                choices = list("Prim" = "prim", "Mono" = "mono", selected = NULL),
         
                     hr(),
-                    materialSwitch(
-                      inputId =
-                        "genefacetbutton",
-                      label =
-                        "Facet Grid",
-                      value =
-                        FALSE,
-                      right =
-                        TRUE
-                    ),
-                    hr(),
+                    # materialSwitch(
+                    #   inputId =
+                    #     "genefacetbutton",
+                    #   label =
+                    #     "Facet Grid",
+                    #   value =
+                    #     FALSE,
+                    #   right =
+                    #     TRUE
+                    # ),
+                
                     #Palettes from colorBrewer
                     # selectInput("PaletteChoices", "Choose a color palette", choices =
                     #               c("Dark2", "Paired", "Set1"), selected = "Dark2"),
@@ -587,7 +588,17 @@ ui <-
                    conditionalPanel(
                      condition = "input.moustache == true",
                      h4("Moustache Plot Specific Options"),
-                     
+                     h5("Choose pathway(s) to label on plot"),
+                     # selectizeInput(
+                     #   "pathwaylistmoustache",
+                     #   label=
+                     #     NULL,
+                     #   choices =
+                     #     NULL,
+                     #   selected = NULL ,
+                     #   options = list(maxItems = NULL)
+                     # ),
+                     hr(),
                      colourInput(
                        "choice1color",
                        label = "Choose 1st color",
@@ -1205,19 +1216,27 @@ server <-
     
     #DE MA Plot ####
     output$DEMAPlot <- renderPlotly ({
-      
-      ma <- ggmaplot(
-        dds.res,
-        fdr = 0.05,
-        fc = 2 ^ 1,
-        size = 1.5,
-        alpha = 0.7,
-        palette =  
-          c(input$volcanocolor1, input$volcanocolor2, input$volcanocolor3),
-        legend = NULL,
-        top = TRUE,
-        title = "DE MA Plot",
-        ggtheme = ggplot2::theme_light())
+      ma <- 
+        ggplot(dds.res, aes(x=log2(baseMean), y=`log2FoldChange(Prim/Mono)`, col = DiffExp)) + 
+        geom_point(alpha=0.5, size=1) + 
+        geom_hline(aes(yintercept = 0)) +
+        scale_color_manual(values = c(viridis(15)[10], "grey", magma(15)[9])) +
+        theme_light() +
+        ylim(c(min(dds.res$`log2FoldChange(Prim/Mono)`), max(dds.res$`log2FoldChange(Prim/Mono)`))) + 
+        xlab("log2 Mean Expression") + 
+        ylab("Log2 Fold Change")
+      # ma <- ggmaplot(
+      #   dds.res,
+      #   fdr = 0.05,
+      #   fc = 2 ^ 1,
+      #   size = 1.5,
+      #   alpha = 0.7,
+      #   palette =  
+      #     c(input$volcanocolor1, input$volcanocolor2, input$volcanocolor3),
+      #   legend = NULL,
+      #   top = TRUE,
+      #   title = "DE MA Plot",
+      #   ggtheme = ggplot2::theme_light())
       ggplotly(ma)
     })
     
@@ -1351,6 +1370,11 @@ Negative NES = Upregulated in Monocytic)",
       })
     
     #### GSEA moustache plot ####
+    gseamoustache_title <-
+      eventReactive(input$filechoice, {
+        print(input$filechoice)
+      })
+    
     
     toplotMoustache <-
       reactive({
@@ -1371,8 +1395,9 @@ Negative NES = Upregulated in Monocytic)",
         colnames(toplotMoustache) <- c("pathway", "NES", "padj")
         toplotMoustache <- toplotMoustache %>%
           mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no'))
+        
       })
-    
+    # updateSelectizeInput(session,"pathwaylistmoustache", choices = fgseaResTidy$pathway, server = TRUE)
     output$GSEAMoustache <- renderPlot(
       # width = function()
       #   input$mwidthslider,
@@ -1388,16 +1413,10 @@ Negative NES = Upregulated in Monocytic)",
             xlab('NES') +
             scale_colour_manual(values = colors) +
             ylab('adjusted p-value') +
-            ggtitle("Pathways from GSEA") + #reactive
-            # geom_text_repel(
-            #   max.overlaps = 10,
-            #   aes(label = ifelse(
-            #     padj < 0.05, as.character(fgseaRes$pathway), ""
-            #   )),
-            #   hjust = 0,
-            #   vjust = 0
-            # )
-            coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1))
+            ggtitle("Pathways from GSEA") + 
+            #geom_text() +
+            geom_text_repel(aes(label= ifelse(padj <0.05, as.character(pathway), ""), hjust=0,vjust=0)) +
+            coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1)) 
           print(m)
         }
       }
