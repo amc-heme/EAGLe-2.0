@@ -28,6 +28,9 @@ library(ComplexHeatmap)
 library(InteractiveComplexHeatmap)
 library(circlize)
 library(colourpicker)
+library(ggsci)
+library(scales)
+library(esquisse)
 #options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
@@ -121,31 +124,54 @@ ui <-
                         "VST PCA"
                     ),
                     hr(),
-                    
-                    colourInput(
-                      "PCAcolor1",
-                      label = "Choose 1st color",
-                      value = "#009292",
-                      showColour = ("both"),
-                      palette = ("square"),
-                      allowedCols = NULL,
-                      allowTransparent = FALSE,
-                      returnName = FALSE,
-                      closeOnClick = FALSE
+                    # palettePicker(
+                    #   inputId = "PaletteChoices", 
+                    #   label = "Choose a color palette", 
+                    #   choices = list(
+                    #     "Viridis" = list(
+                    #       "viridis" = viridis_pal(option = "viridis")(5),
+                    #       "magma" = viridis_pal(option = "magma")(5),
+                    #       "mako" = viridis_pal(option = "mako")(5),
+                    #       "plasma" = viridis_pal(option = "plasma")(5),
+                    #       "cividis" = viridis_pal(option = "cividis")(5))
+                    #   )
+                    # ),
+                    colorPicker(
+                      inputId = "col1QC",
+                      label = "Choose 1st color:",
+                      choices = c(scales::viridis_pal(option = "viridis")(5)[1:5], scales::brewer_pal(palette = "Dark2")(5)[1:5]),
+                      textColor = "white"
                     ),
-                    hr(),
-                    
-                    colourInput(
-                      "PCAcolor2",
-                      label = "Choose 2nd color",
-                      value = "#FFFF6D",
-                      showColour = ("both"),
-                      palette = ("square"),
-                      allowedCols = NULL,
-                      allowTransparent = FALSE,
-                      returnName = FALSE,
-                      closeOnClick = FALSE
+                    colorPicker(
+                      inputId = "col2QC",
+                      label = "Choose 2nd color:",
+                      choices = c(scales::viridis_pal(option = "viridis")(5)[2:5],scales::brewer_pal(palette = "Dark2")(5)[2:5]),
+                      textColor = "white"
                     ),
+                    # colourInput(
+                    #   "PCAcolor1",
+                    #   label = "Choose 1st color",
+                    #   value = "#009292",
+                    #   showColour = ("both"),
+                    #   palette = ("square"),
+                    #   allowedCols = NULL,
+                    #   allowTransparent = FALSE,
+                    #   returnName = FALSE,
+                    #   closeOnClick = FALSE
+                    # ),
+                    # hr(),
+                    # 
+                    # colourInput(
+                    #   "PCAcolor2",
+                    #   label = "Choose 2nd color",
+                    #   value = "#FFFF6D",
+                    #   showColour = ("both"),
+                    #   palette = ("square"),
+                    #   allowedCols = NULL,
+                    #   allowTransparent = FALSE,
+                    #   returnName = FALSE,
+                    #   closeOnClick = FALSE
+                    # ),
                     hr(),
                     
                     downloadButton("downloadPlotPCA", label = "Download PCA Plot"),
@@ -226,58 +252,25 @@ ui <-
                     radioButtons("YaxisVar_CDgene", h4("Y axis variable"),
                                  choices = list("Value" = "yvalue",
                                                 "Gene" = "ygene"),selected = "yvalue"),
-                    radioButton("PrimMonobutton"), h4("Show only prim or mono gene expression"),
-                                choices = list("Prim" = "prim", "Mono" = "mono", selected = NULL),
+                    radioButtons("PrimMonobutton", h4("Show only prim or mono gene expression"),
+                                choices = list("Show Comparison" = "comparison", "Prim" = "prim", "Mono" = "mono"), selected = "comparison"),
+                    materialSwitch("genefacetbutton", label = "Facet", value = FALSE, right = TRUE),
+                    
         
                     hr(),
-                    # materialSwitch(
-                    #   inputId =
-                    #     "genefacetbutton",
-                    #   label =
-                    #     "Facet Grid",
-                    #   value =
-                    #     FALSE,
-                    #   right =
-                    #     TRUE
-                    # ),
-                
-                    #Palettes from colorBrewer
-                    # selectInput("PaletteChoices", "Choose a color palette", choices =
-                    #               c("Dark2", "Paired", "Set1"), selected = "Dark2"),
-                    colourInput(
-                      "genecolor1",
-                      label = "Choose 1st color",
-                      value = "#009292",
-                      showColour = ("both"),
-                      palette = ("square"),
-                      allowedCols = NULL,
-                      allowTransparent = FALSE,
-                      returnName = FALSE,
-                      closeOnClick = FALSE
-                    ),
-                    colourInput(
-                      "genecolor2",
-                      label = "Choose 2nd color",
-                      value = "#ffff6d",
-                      showColour = ("both"),
-                      palette = ("square"),
-                      allowedCols = NULL,
-                      allowTransparent = FALSE,
-                      returnName = FALSE,
-                      closeOnClick = FALSE
-                    ),
-                    colourInput(
-                      "genecolor3",
-                      label = "Choose 3rd color",
-                      value = "#490092",
-                      showColour = ("both"),
-                      palette = ("square"),
-                      allowedCols = NULL,
-                      allowTransparent = FALSE,
-                      returnName = FALSE,
-                      closeOnClick = FALSE
-                    ),
-                    
+                    palettePicker(
+                      inputId = "PaletteChoicesGene", 
+                      label = "Choose a color palette", 
+                      choices = list(
+                        "Viridis" = list(
+                          "viridis" = viridis_pal(option = "viridis")(5),
+                          "magma" = viridis_pal(option = "magma")(5),
+                          "mako" = viridis_pal(option = "mako")(5),
+                          "plasma" = viridis_pal(option = "plasma")(5),
+                          "cividis" = viridis_pal(option = "cividis")(5))
+                      )
+                        ),
+                   
                     
                     hr(),
                     sliderInput("geneheightslider", "Adjust plot height",
@@ -367,41 +360,66 @@ ui <-
                                 choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"), 
                    hr(),
                    
-                   h4("Aesthetics"),
+                 
+                   palettePicker(
+                     inputId = "PaletteChoicesDE",
+                     label = "Choose a color palette",
+                     choices = list(
+                       "Viridis" = list(
+                         "viridis" = viridis_pal(option = "viridis")(5),
+                         "magma" = viridis_pal(option = "magma")(5),
+                         "inferno" = viridis_pal(option = "inferno")(5),
+                         "plasma" = viridis_pal(option = "plasma")(5),
+                         "cividis" = viridis_pal(option = "cividis")(5))
+                     )
+                   ),
+                   colorPicker(
+                     inputId = "col1",
+                     label = "Choose 1st color:",
+                     choices = c(scales::viridis_pal(option = "viridis")(5), scales::brewer_pal(palette = "Dark2")(5)),
+                     textColor = "white"
+                   ),
+                   colorPicker(
+                     inputId = "col2",
+                     label = "Choose 2nd color:",
+                     choices = c(scales::viridis_pal(option = "viridis")(5)[2:5],scales::brewer_pal(palette = "Dark2")(5)),
+                     textColor = "white"
+                   ),
                    
-                   colourInput(
-                     "volcanocolor1",
-                     label = "Choose 1st color",
-                     value = "#009292",
-                     showColour = ("both"),
-                     palette = ("square"),
-                     allowedCols = NULL,
-                     allowTransparent = FALSE,
-                     returnName = FALSE,
-                     closeOnClick = FALSE
-                   ),
-                   colourInput(
-                     "volcanocolor2",
-                     label = "Choose 2nd color",
-                     value = "grey",
-                     showColour = ("both"),
-                     palette = ("square"),
-                     allowedCols = NULL,
-                     allowTransparent = FALSE,
-                     returnName = FALSE,
-                     closeOnClick = FALSE
-                   ),
-                   colourInput(
-                     "volcanocolor3",
-                     label = "Choose 3rd color",
-                     value = "#490092",
-                     showColour = ("both"),
-                     palette = ("square"),
-                     allowedCols = NULL,
-                     allowTransparent = FALSE,
-                     returnName = FALSE,
-                     closeOnClick = FALSE
-                   ),
+                   # 
+                   # colourInput(
+                   #   "volcanocolor1",
+                   #   label = "Choose 1st color",
+                   #   value = "#009292",
+                   #   showColour = ("both"),
+                   #   palette = ("square"),
+                   #   allowedCols = NULL,
+                   #   allowTransparent = FALSE,
+                   #   returnName = FALSE,
+                   #   closeOnClick = FALSE
+                   # ),
+                   # colourInput(
+                   #   "volcanocolor2",
+                   #   label = "Choose 2nd color",
+                   #   value = "grey",
+                   #   showColour = ("both"),
+                   #   palette = ("square"),
+                   #   allowedCols = NULL,
+                   #   allowTransparent = FALSE,
+                   #   returnName = FALSE,
+                   #   closeOnClick = FALSE
+                   # ),
+                   # colourInput(
+                   #   "volcanocolor3",
+                   #   label = "Choose 3rd color",
+                   #   value = "#490092",
+                   #   showColour = ("both"),
+                   #   palette = ("square"),
+                   #   allowedCols = NULL,
+                   #   allowTransparent = FALSE,
+                   #   returnName = FALSE,
+                   #   closeOnClick = FALSE
+                   # ),
                    hr(),
                    h4("Table and Plot Downloads"),
                    downloadButton("downloadDEtable", label = "Download DE Table"),
@@ -526,7 +544,19 @@ ui <-
                                            GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
                                            allRegular = "allReg", Wiki = "wiki", Reactome = "reactome", KEGG = "KEGG",
                                            Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg")),
-        
+                   hr(),
+                   palettePicker(
+                     inputId = "PaletteChoicesGSEA", 
+                     label = "Choose a color palette", 
+                     choices = list(
+                       "Viridis" = list(
+                         "viridis" = viridis_pal(option = "viridis")(5),
+                         "magma" = viridis_pal(option = "magma")(5),
+                         "mako" = viridis_pal(option = "mako")(5),
+                         "plasma" = viridis_pal(option = "plasma")(5),
+                         "cividis" = viridis_pal(option = "cividis")(5))
+                     )
+                   ),
                    
                    conditionalPanel(
                      condition = "input.fgseaTable == true",
@@ -555,28 +585,28 @@ ui <-
                      sliderInput("rankedwidthslider", "Adjust plot width",
                                  min = 200, max = 1000, value = 600
                      ),
-                     colourInput(
-                       "waterfallcolor1",
-                       label = "Choose 1st color",
-                       value = "#009292",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     ),
-                     colourInput(
-                       "waterfallcolor2",
-                       label = "Choose 2nd color",
-                       value = "#490092",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     ),
+                     # colourInput(
+                     #   "waterfallcolor1",
+                     #   label = "Choose 1st color",
+                     #   value = "#009292",
+                     #   showColour = ("both"),
+                     #   palette = ("square"),
+                     #   allowedCols = NULL,
+                     #   allowTransparent = FALSE,
+                     #   returnName = FALSE,
+                     #   closeOnClick = FALSE
+                     # ),
+                     # colourInput(
+                     #   "waterfallcolor2",
+                     #   label = "Choose 2nd color",
+                     #   value = "#490092",
+                     #   showColour = ("both"),
+                     #   palette = ("square"),
+                     #   allowedCols = NULL,
+                     #   allowTransparent = FALSE,
+                     #   returnName = FALSE,
+                     #   closeOnClick = FALSE
+                     # ),
                      downloadButton(
                        "downloadranks",
                        label =
@@ -598,30 +628,30 @@ ui <-
                      #   selected = NULL ,
                      #   options = list(maxItems = NULL)
                      # ),
-                     hr(),
-                     colourInput(
-                       "choice1color",
-                       label = "Choose 1st color",
-                       value = "#009292",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     ),
-                     
-                     colourInput(
-                       "choice2color",
-                       label = "Choose 2nd color",
-                       value = "#000000",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     ),
+                     #hr(),
+                     # colourInput(
+                     #   "choice1color",
+                     #   label = "Choose 1st color",
+                     #   value = "#009292",
+                     #   showColour = ("both"),
+                     #   palette = ("square"),
+                     #   allowedCols = NULL,
+                     #   allowTransparent = FALSE,
+                     #   returnName = FALSE,
+                     #   closeOnClick = FALSE
+                     # ),
+                     # 
+                     # colourInput(
+                     #   "choice2color",
+                     #   label = "Choose 2nd color",
+                     #   value = "#000000",
+                     #   showColour = ("both"),
+                     #   palette = ("square"),
+                     #   allowedCols = NULL,
+                     #   allowTransparent = FALSE,
+                     #   returnName = FALSE,
+                     #   closeOnClick = FALSE
+                     # ),
     
                      downloadButton(
                        "downloadmoustache",
@@ -827,7 +857,22 @@ server <-
     print("Initializing renderPlots")
     options(shiny.reactlog = TRUE)
     
-    
+    #color palette choices ####
+    colorpalettechoices <-
+      eventReactive(input$PaletteChoices, {
+        if(input$PaletteChoices == "viridis") {
+           scale_fill_viridis_d(option = "viridis")
+        } else if(input$PaletteChoices == "cividis") {
+          scale_fill_viridis_d(option = "cividis")
+        } else if(input$PaletteChoices == "magma") {
+          scale_fill_viridis_d(option = "magma")
+        } else if(input$PaletteChoices == "plasma") {
+          scale_fill_viridis_d(option = "plasma")
+        }else if(input$PaletteChoices == "inferno") {
+          scale_fill_viridis_d(option = "inferno")
+        }
+      })
+
     ##QC-MultiQC plots####
     output$QCplot <- renderPlot({
       QCdata <- switch(
@@ -930,8 +975,7 @@ server <-
     
     
     output$PCAplot <- renderPlot ({
-      colors <-
-        c(input$PCAcolor1, input$PCAcolor2)
+      colors <- c(input$col1QC, input$col2QC)
       ggplot(PCAdata(), aes(x = PC1, y = PC2, fill = batch, shape = condition)) + 
         geom_point(size = 5) + 
         scale_shape_manual(values = c(21, 24), name = '') +
@@ -942,7 +986,7 @@ server <-
         xlab(variance_PC1()) + 
         ylab(variance_PC2()) +
         ggtitle(PCA_title()) +
-        guides(fill=guide_legend(override.aes = list(color=colors))) +
+        guides(fill=guide_legend(override.aes = list(color = colors))) +
         geom_text_repel(aes(label=sample_name),hjust=0, vjust=0)
       
     })
@@ -986,10 +1030,20 @@ server <-
     ##Gene Centric output ####
     updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
     
-    datavst<-
+    datavst <-
       reactive({
-        vst.goi %>% 
-          dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
+        if(input$PrimMonobutton == "comparison") {
+          vst.goi %>% 
+            dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
+        } else if(input$PrimMonobutton == "prim") {
+          vst.goi %>%
+            dplyr::filter(ext_gene %in% input$VSTCDgenechoice) %>%
+            dplyr::filter(class == "sensitive")
+        } else if(input$PrimMonobutton == "mono") {
+          vst.goi %>%
+            dplyr::filter(ext_gene %in% input$VSTCDgenechoice) %>%
+            dplyr::filter(class == "resistant")
+        }
       })
     
     
@@ -1022,6 +1076,8 @@ server <-
           "ext_gene"
         }
       })
+
+    
     #fill output
     # fillvar_CDgene <-
     #   eventReactive(input$FillVar_CDgene, {
@@ -1031,10 +1087,10 @@ server <-
     #       "ext_gene"
     #     }
     #   })
-    Gene_facet <- 
+    Gene_facet <-
       eventReactive(input$genefacetbutton, {
         if(input$genefacetbutton == TRUE) {
-          facet_grid(ext_gene ~ class, scales = 'free') 
+          facet_grid(cols = vars(class))
         } else(NULL)
       })
     # colorpalettechoices <- 
@@ -1049,15 +1105,42 @@ server <-
     #       scale_color_brewer(palette = "YlGnBu")
     #     }
     #   })
+    
+    colorpalettechoicesfgene <-
+      eventReactive(input$PaletteChoicesGene, {
+        if(input$PaletteChoicesGene == "viridis") {
+          scale_fill_viridis_d(option = "viridis")
+        } else if(input$PaletteChoicesGene == "cividis") {
+          scale_fill_viridis_d(option = "cividis")
+        } else if(input$PaletteChoicesGene == "magma") {
+          scale_fill_viridis_d(option = "magma")
+        } else if(input$PaletteChoicesGene == "plasma") {
+          scale_fill_viridis_d(option = "plasma")
+        }else if(input$PaletteChoicesGene == "inferno") {
+          scale_fill_viridis_d(option = "inferno")
+        }
+      })
+    colorpalettechoicesgene <-
+      eventReactive(input$PaletteChoicesGene, {
+        if(input$PaletteChoicesGene == "viridis") {
+          scale_color_viridis_d(option = "viridis")
+        } else if(input$PaletteChoicesGene == "cividis") {
+          scale_color_viridis_d(option = "cividis")
+        } else if(input$PaletteChoicesGene == "magma") {
+          scale_color_viridis_d(option = "magma")
+        } else if(input$PaletteChoicesGene == "plasma") {
+          scale_color_viridis_d(option = "plasma")
+        }else if(input$PaletteChoicesGene == "inferno") {
+          scale_fill_viridis_d(option = "inferno")
+        }
+      })
     #plot output
     output$VSTCDplot <-
       renderPlot(
         width = function() input$genewidthslider,
         height = function() input$geneheightslider,
         {
-          #build a color palette
-          colors <-
-            colorRampPalette(c(input$genecolor1, input$genecolor2, input$genecolor3))(10)
+
           ggplot(datavst(),
                  aes(
                    x = .data[[xvar_CDgene()]],
@@ -1065,13 +1148,16 @@ server <-
                    fill = class
                  )) +
             geom_boxplot(outlier.shape = NA) +
-            scale_fill_manual(values = colors) +
-            scale_color_manual(values = colors) +
+            Gene_facet() +
+            stat_compare_means(aes(label=..p.adj..)) +
+            # scale_colour_manual(values = colors) +
+            # scale_fill_manual(values = colors) +
+            colorpalettechoicesfgene() +
+            colorpalettechoicesgene() +
             geom_point(alpha = 0.5,
                        position = position_jitterdodge(jitter.width = 0.2),
                        aes(color = ext_gene)) + #this needs to be reactive too
             theme_light() +
-            Gene_facet() +
             ylab("") +
             xlab("") +
             ggtitle("Gene Expression:Sensitive vs Resistant")
@@ -1188,11 +1274,27 @@ server <-
         write.csv(CD_DE_DT(),file)
       }
     )
+    
+    colorpalettechoicesDE <-
+      eventReactive(input$PaletteChoicesDE, {
+        if(input$PaletteChoicesDE == "viridis") {
+          scale_color_viridis_d(option = "viridis")
+        } else if(input$PaletteChoicesDE == "cividis") {
+          scale_color_viridis_d(option = "cividis")
+        } else if(input$PaletteChoicesDE == "magma") {
+          scale_color_viridis_d(option = "magma")
+        } else if(input$PaletteChoicesDE == "plasma") {
+          scale_color_viridis_d(option = "plasma")
+        } else if(input$PaletteChoicesDE == "inferno") {
+          scale_color_viridis_d(option = "inferno")
+        }
+      })
+
     #DE Volcano Plot ####
     
     output$DEVolcanoPlot <-
       renderPlotly({
-        colors <- c(input$volcanocolor1, input$volcanocolor2, input$volcanocolor3)
+        colors <- c(input$col1, "grey", input$col2)
         p <- ggplot(dds.res, aes(
           x = `log2FoldChange(Prim/Mono)`,
           y = -log10(padj),
@@ -1201,7 +1303,7 @@ server <-
         )) +
           geom_point(size = 1, alpha = 0.5) +
           theme_light() +
-          scale_colour_manual(values = colors) +
+          scale_color_manual(values = colors) +
           ggtitle("DE Volcano Plot") +
           coord_cartesian(xlim = c(-10, 7))
         ggplotly(p)
@@ -1216,27 +1318,25 @@ server <-
     
     #DE MA Plot ####
     output$DEMAPlot <- renderPlotly ({
-      ma <- 
-        ggplot(dds.res, aes(x=log2(baseMean), y=`log2FoldChange(Prim/Mono)`, col = DiffExp)) + 
-        geom_point(alpha=0.5, size=1) + 
+        colors <- c(input$col1, "grey", input$col2)
+      ma <-
+        ggplot(dds.res,
+               aes(
+                 x = log2(baseMean),
+                 y = `log2FoldChange(Prim/Mono)`,
+                 col = DiffExp
+               )) +
+        geom_point(alpha = 0.8, size = 0.5) +
         geom_hline(aes(yintercept = 0)) +
-        scale_color_manual(values = c(viridis(15)[10], "grey", magma(15)[9])) +
+        scale_color_manual(values = colors) +
         theme_light() +
-        ylim(c(min(dds.res$`log2FoldChange(Prim/Mono)`), max(dds.res$`log2FoldChange(Prim/Mono)`))) + 
-        xlab("log2 Mean Expression") + 
+        ylim(c(
+          min(dds.res$`log2FoldChange(Prim/Mono)`),
+          max(dds.res$`log2FoldChange(Prim/Mono)`)
+        )) +
+        xlab("log2 Mean Expression") +
         ylab("Log2 Fold Change")
-      # ma <- ggmaplot(
-      #   dds.res,
-      #   fdr = 0.05,
-      #   fc = 2 ^ 1,
-      #   size = 1.5,
-      #   alpha = 0.7,
-      #   palette =  
-      #     c(input$volcanocolor1, input$volcanocolor2, input$volcanocolor3),
-      #   legend = NULL,
-      #   top = TRUE,
-      #   title = "DE MA Plot",
-      #   ggtheme = ggplot2::theme_light())
+      
       ggplotly(ma)
     })
     
@@ -1247,7 +1347,7 @@ server <-
       }
     )
     #DE Heatmap ####
-    dds.mat <- dds.res %>%
+     dds.mat <- dds.res %>%
       dplyr::filter(padj < 0.05 & abs(`log2FoldChange(Prim/Mono)`) >= 2)
     
     vst.mat <- vstlimma %>%
@@ -1349,7 +1449,35 @@ server <-
         gseafile()
       }
     })
-    # 
+     colorpalettechoicesGSEAfill <-
+    eventReactive(input$PaletteChoicesGSEA, {
+      if(input$PaletteChoicesGSEA == "viridis") {
+        scale_fill_viridis_d(option = "viridis")
+      } else if(input$PaletteChoicesGSEA == "cividis") {
+        scale_fill_viridis_d(option = "cividis")
+      } else if(input$PaletteChoicesGSEA == "magma") {
+        scale_fill_viridis_d(option = "magma")
+      } else if(input$PaletteChoicesGSEA == "plasma") {
+        scale_fill_viridis_d(option = "plasma")
+      }else if(input$PaletteChoicesGSEA == "inferno") {
+        scale_fill_viridis_d(option = "inferno")
+      }
+    })
+    colorpalettechoicesGSEA <-
+      eventReactive(input$PaletteChoicesGSEA, {
+        if(input$PaletteChoicesGSEA == "viridis") {
+          scale_color_viridis_d(option = "viridis")
+        } else if(input$PaletteChoicesGSEA == "cividis") {
+          scale_color_viridis_d(option = "cividis")
+        } else if(input$PaletteChoicesGSEA == "magma") {
+          scale_color_viridis_d(option = "magma")
+        } else if(input$PaletteChoicesGSEA == "plasma") {
+          scale_color_viridis_d(option = "plasma")
+        }else if(input$PaletteChoicesGSEA == "inferno") {
+          scale_fill_viridis_d(option = "inferno")
+        }
+      })
+    
     #### GSEA pathway ranks waterfall plot ####
     
     output$GSEAranked <- renderPlot(
@@ -1357,10 +1485,10 @@ server <-
       height = function() input$rankedheightslider,
       {
         if(input$rankedplot == TRUE) {
-          colors <- c(input$waterfallcolor1, input$waterfallcolor2)
+          #colors <- c(input$waterfallcolor1, input$waterfallcolor2)
           ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
             geom_col(aes(fill= padj < 0.05)) +
-            scale_fill_manual(values = colors) +
+            colorpalettechoicesGSEAfill() +
             coord_flip() +
             labs(x="Pathway", y="Normalized Enrichment Score (Positive NES = Upregulated in Primitive
 Negative NES = Upregulated in Monocytic)",
@@ -1405,17 +1533,17 @@ Negative NES = Upregulated in Monocytic)",
       #   input$mheightslider,
       {
         if (input$moustache == TRUE) {
-          colors <- c(input$choice1color, input$choice2color)
+          colors <- c('grey', 'viridis'(5)[1])
           m <-
             ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) +
             geom_point() +
             theme_minimal() +
             xlab('NES') +
-            scale_colour_manual(values = colors) +
+            scale_color_manual(values = colors) +
             ylab('adjusted p-value') +
             ggtitle("Pathways from GSEA") + 
             #geom_text() +
-            geom_text_repel(aes(label= ifelse(padj <0.05, as.character(pathway), ""), hjust=0,vjust=0)) +
+            geom_text_repel(colour = "black", aes(label= ifelse(padj <0.05, as.character(pathway), ""), hjust=0,vjust=0)) +
             coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1)) 
           print(m)
         }
@@ -1494,14 +1622,15 @@ Negative NES = Upregulated in Monocytic)",
           aes(
             x = `log2FoldChange(Prim/Mono)`,
             y = -log10(padj),
-            col = genes_in_pathway
+            col = genes_in_pathway[]
           )
         ) +
           theme_light() +
           geom_point() +
-          scale_colour_manual(values = colors) +
+          colorpalettechoicesGSEA() +
         geom_text_repel(
           max.overlaps = 1500,
+          colour = "black",
           aes(
             label = ifelse(
               genes_in_pathway == 'yes' & `log2FoldChange(Prim/Mono)` > 1.5,
@@ -1547,10 +1676,11 @@ Negative NES = Upregulated in Monocytic)",
         as.matrix()
       
       vstgsea.mat <- t(scale(t(vstgsea.mat)))
-      
+   
       htgsea = draw(ComplexHeatmap::Heatmap(
         vstgsea.mat,
         name = paste(gseaht_title(), fontsize = 6),
+        #col = viridis_pal(option = "mako")(5),
           #"paste(input$pathwaylist, sep = ",")",
         row_names_gp = gpar(fontsize = 6),
         column_title = NULL,
@@ -1561,23 +1691,33 @@ Negative NES = Upregulated in Monocytic)",
     })
     #Gene Centeric pathways analysis plots ####
     genecentricgseaplot <- reactive({
+      #load chosen pathway file based on reactive input 
       genepathwaygsea <- (gene_gsea_file_values[[input$genefilechoice]])
+      #load fgsea table data for chosen pathway
       fgseaRes <-
         fgsea::fgsea(pathways = genepathwaygsea,
                      stats = ranks,
                      nproc = 1)
+      #create tidy table
       fgseaResTidy <- fgseaRes %>%
         as_tibble() %>%
         arrange(desc(NES))
+      #create object for storing pathways that contain the chosen gene 
       goi_paths <- genepathwaygsea %>% keep(grepl(input$Pathwaygenechoice, genepathwaygsea))
       goi_paths <- list(grep(input$Pathwaygenechoice, genepathwaygsea))
+      #filter gsea table for pathways in which the GOI is in the leading edge
       goi_paths <- fgseaResTidy %>%
         dplyr::filter(grepl(input$Pathwaygenechoice, leadingEdge)) 
+      #create object for gene reactive input
       GOI <- input$Pathwaygenechoice
+      #make a column that says yes if goi in that pathway
       goi_paths$GOI <- "Yes"
+      #filter gsea table to find pathways that do not include the GOI in the leading edge
       nongoi_paths <- fgseaResTidy %>%
         dplyr::filter(!grepl(input$Pathwaygenechoice, leadingEdge))  
+      #put no for pathways that do not contain the goi
       nongoi_paths$GOI <- "No"
+      #bind the two filtered data frames into one for plotting
       allgoi_paths <- rbind.data.frame(goi_paths, nongoi_paths)
     })
     
@@ -1589,7 +1729,7 @@ Negative NES = Upregulated in Monocytic)",
         
         ggplot(genecentricgseaplot(), aes(
           x = NES,
-          y = NES,
+          y = pathway,
           color = (padj < 0.05)
         )) +
           geom_boxplot()  +
