@@ -31,6 +31,8 @@ library(colourpicker)
 library(ggsci)
 library(scales)
 library(esquisse)
+library(ggprism)
+library(shinycssloaders)
 #options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
@@ -291,8 +293,10 @@ ui <-
                   ),
                   
                   mainPanel(
-                    plotOutput(
+                    shinycssloaders::withSpinner(
+                      plotOutput(
                       "VSTCDplot"
+                    )
                     )
                   )
                 )
@@ -456,20 +460,26 @@ ui <-
                  mainPanel(
                    conditionalPanel(
                      condition = "input.DESeqtable == true",
-                     DTOutput(
+                     shinycssloaders::withSpinner(
+                       DTOutput(
                        "DETable"
+                     )
                      )
                    ),
                    conditionalPanel(
                      condition = "input.DESeqvolcano == true",
-                     plotlyOutput(
+                     shinycssloaders::withSpinner(
+                       plotlyOutput(
                        "DEVolcanoPlot"
+                     )
                      )
                    ),
                    conditionalPanel(
                      condition = "input.DESeqMA == true",
-                     plotlyOutput(
+                     shinycssloaders::withSpinner(
+                       plotlyOutput(
                        "DEMAPlot"
+                     )
                      )
                    ),
                    conditionalPanel(
@@ -754,15 +764,8 @@ ui <-
                        allowTransparent = FALSE,
                        returnName = FALSE,
                        closeOnClick = FALSE
-                     ),
-                     
-                     hr(),
-                     
-                     downloadButton(
-                       "downloadheatmap",
-                       label =
-                         "Download Heatmap"
                      )
+                     
                    ),
                  ),
                  
@@ -773,32 +776,42 @@ ui <-
                    ),
                    conditionalPanel(
                      condition = "input.fgseaTable == true",
-                     DTOutput(
+                     shinycssloaders::withSpinner(
+                       DTOutput(
                        "fgseaTable"
+                     )
                      )
                    ),
                    conditionalPanel(
                      condition = "input.rankedplot == true",
-                     plotOutput(
+                     shinycssloaders::withSpinner(
+                       plotOutput(
                        "GSEAranked"
+                     )
                      )
                    ),
                    conditionalPanel(
                      condition = "input.moustache == true",
-                     plotOutput(
+                     shinycssloaders::withSpinner(
+                       plotOutput(
                        "GSEAMoustache"
+                     )
                      )
                    ),
                    conditionalPanel(
                      condition = "input.eplot == true",
-                     plotOutput(
+                     shinycssloaders::withSpinner(
+                       plotOutput(
                        "GSEAenrichment"
+                     )
                      )
                    ),
                    conditionalPanel(
                      condition = "input.volcanoplot == true",
-                     plotOutput(
+                     shinycssloaders::withSpinner(
+                       plotOutput(
                        "GSEAvolcano"
+                     )
                      )
                    ),
                    conditionalPanel(
@@ -848,8 +861,10 @@ ui <-
                    )
                  ),
                  mainPanel(
-                   plotOutput(
+                   shinycssloaders::withSpinner(
+                     plotOutput(
                      "PathwaysGenePlot"
+                   )
                    )
                  )
                )
@@ -1069,7 +1084,7 @@ server <-
       } else if(input$XaxisVar_CDgene=="xgene") {
         mychoices <- c("Value" = "yvalue")
       }else if(input$XaxisVar_CDgene == "xclass") {
-        mychoices <- c("Gene" = "ygene", "Value" = "yvalue")
+        mychoices <- c("Value" = "yvalue")
       }
       updateRadioButtons(session, "YaxisVar_CDgene", choices = mychoices)
     })
@@ -1153,6 +1168,30 @@ server <-
           scale_fill_viridis_d(option = "inferno")
         }
       })
+    # function for adding padj values to plot, position needs to change when x and y variables change for readability
+    sig_label_position <- reactive({
+      value <- vst.goi$value
+      if(input$XaxisVar_CDgene == "xvalue") {
+        geom_text(aes(x = max(value), label = (case_when(
+          padj < 0.001 ~ "***",
+          padj < 0.01 ~ "**",
+          padj < 0.05 ~ "*",
+          padj >= 0.05 ~ "NS"))), check_overlap = TRUE)
+      } else if(input$XaxisVar_CDgene == "xgene") {
+        geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
+          #               (case_when(
+          # padj < 0.001 ~ "***",
+          # padj < 0.01 ~ "**",
+          # padj < 0.05 ~ "*",
+          # padj >= 0.05 ~ "NS"))), check_overlap = TRUE)
+      } else if(input$XaxisVar_CDgene == "xclass") {
+        geom_text(aes(y = max(value), label = (case_when(
+          padj < 0.001 ~ "***",
+          padj < 0.01 ~ "**",
+          padj < 0.05 ~ "*",
+          padj >= 0.05 ~ "NS"))), check_overlap = TRUE)
+      }
+    })
     #plot output
     output$VSTCDplot <-
       renderPlot(
@@ -1160,7 +1199,6 @@ server <-
         height = function() input$geneheightslider,
         res = 120,
         {
-
           ggplot(datavst(),
                  aes(
                    x = .data[[xvar_CDgene()]],
@@ -1169,15 +1207,13 @@ server <-
                  )) +
             geom_boxplot(outlier.shape = NA) +
             Gene_facet() +
-            stat_compare_means(aes(label=..p.adj..)) +
-            # scale_colour_manual(values = colors) +
-            # scale_fill_manual(values = colors) +
             colorpalettechoicesfgene() +
             colorpalettechoicesgene() +
             geom_point(alpha = 0.5,
                        position = position_jitterdodge(jitter.width = 0.2),
                        aes(color = class)) + #this needs to be reactive too
             theme_light() +
+            sig_label_position() +
             ylab("") +
             xlab("") +
             ggtitle("Gene Expression:Sensitive vs Resistant")
@@ -1459,7 +1495,12 @@ server <-
         fgseaResTidy
       })
  
-  
+    output$downloadfgsea <- downloadHandler(
+      filename = function() { paste("GSEATable", '.csv', sep='') },
+      content = function(file) {
+        write.csv(gseafile(),file)
+      }
+    )
     #filter Res table for chosen pathway to show in a waterfall plot
     gseafile_waterfall <-
       reactive({
@@ -1523,8 +1564,10 @@ server <-
       height = function()
         input$rankedheightslider,
       {
-        if (input$rankedplot == TRUE) {
-          colors <- c("grey", input$colWF)
+         if (input$rankedplot == TRUE) {
+           
+            colors <- c("grey", input$colWF)
+        
           ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
             geom_col(aes(fill = padj < 0.05)) +
             scale_fill_manual(values = colors) +
@@ -1541,6 +1584,13 @@ Negative NES = Upregulated in Monocytic)",
       }
     )
     
+    #download button output- waterfall plot
+    output$downloadranks <- downloadHandler(
+      filename = function() { paste("Waterfall Plot", '.png', sep='') },
+      content = function(file) {
+        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+      }
+    )
     #### GSEA moustache plot ####
     gseamoustache_title <-
       eventReactive(input$filechoice, {
@@ -1594,7 +1644,13 @@ Negative NES = Upregulated in Monocytic)",
         }
       }
     )
-    
+    #download button output= moustache plot 
+    output$downloadmoustache <- downloadHandler(
+      filename = function() { paste("Moustache Plot", '.png', sep='') },
+      content = function(file) {
+        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+      }
+    )
     #GSEA Enrichment Plots ####
     observe({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
@@ -1628,16 +1684,13 @@ Negative NES = Upregulated in Monocytic)",
                        ranks) + labs(title= input$pathwaylisteplot)
       }
     })
-    # output$GSEAenrichmentpath <- renderPlot ({
-    #   if(input$eplot == TRUE) {
-    #   pathwaygsea <- gsea_file_values[[input$filechoice]]
-    #   p <-
-    #     unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylisteplot]))
-    #   plotEnrichment(pathwaygsea[[input$pathwaylisteplot]],
-    #                  ranks) + labs(title= input$pathwaylisteplot)
-    #   }
-    # })
-    
+   #download button output- enrichment plot
+    output$downloadeplot <- downloadHandler(
+      filename = function() { paste("Enrichment Plot", '.png', sep='') },
+      content = function(file) {
+        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+      }
+    )
     # GSEA Volcano plot ####
     observe({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
@@ -1691,7 +1744,13 @@ Negative NES = Upregulated in Monocytic)",
           xlab("log2foldchange")
       }
     })
-   
+   #download button output- gsea volcano plot
+    output$downloadvolcano <- downloadHandler(
+      filename = function() { paste("Volcano Plot", '.png', sep='') },
+      content = function(file) {
+        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+      }
+    )
     #GSEA heatmap ####
     observe({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
