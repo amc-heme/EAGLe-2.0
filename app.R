@@ -138,41 +138,7 @@ ui <-
                           "cividis" = viridis_pal(option = "cividis")(5))
                       )
                     ),
-                    # colorPicker(
-                    #   inputId = "col1QC",
-                    #   label = "PCA plot: Choose 1st color:",
-                    #   choices = c(scales::viridis_pal(option = "viridis")(5)[1:5], scales::brewer_pal(palette = "Dark2")(5)[1:5]),
-                    #   textColor = "white"
-                    # ),
-                    # colorPicker(
-                    #   inputId = "col2QC",
-                    #   label = "PCA plot: Choose 2nd color:",
-                    #   choices = c(scales::viridis_pal(option = "viridis")(5)[2:5],scales::brewer_pal(palette = "Dark2")(5)[1:5]),
-                    #   textColor = "white"
-                    # ),
-                    # colourInput(
-                    #   "col1QC",
-                    #   label = "Choose 1st color",
-                    #   value = "#009292",
-                    #   showColour = ("both"),
-                    #   palette = ("square"),
-                    #   allowedCols = NULL,
-                    #   allowTransparent = FALSE,
-                    #   returnName = FALSE,
-                    #   closeOnClick = FALSE
-                    # ),
-                    # 
-                    # colourInput(
-                    #   "col2QC",
-                    #   label = "Choose 2nd color",
-                    #   value = "#FFFF6D",
-                    #   showColour = ("both"),
-                    #   palette = ("square"),
-                    #   allowedCols = NULL,
-                    #   allowTransparent = FALSE,
-                    #   returnName = FALSE,
-                    #   closeOnClick = FALSE
-                    # ),
+                  
                     hr(),
                     
                     downloadButton("downloadPlotPCA", label = "Download PCA Plot"),
@@ -235,6 +201,7 @@ ui <-
                 titlePanel(
                   "Gene Expression Plot"
                 ),
+                h6("*p values are indicated for the comparison of gene expression between prim and mono samples"),
                 sidebarLayout(
                   sidebarPanel(
                     useShinyjs(),
@@ -261,9 +228,9 @@ ui <-
                     hr(),
                     
                     materialSwitch("genefacetbutton", label = "Facet", value = FALSE, right = TRUE),
-                    
-        
                     hr(),
+                   
+        
                     palettePicker(
                       inputId = "PaletteChoicesGene", 
                       label = "Choose a color palette", 
@@ -277,8 +244,10 @@ ui <-
                       )
                         ),
                    
-                    
                     hr(),
+                    materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
+            
+                    
                     sliderInput("geneheightslider", "Adjust plot height",
                                 min = 200, max = 1200, value = 600
                     ),
@@ -617,7 +586,8 @@ ui <-
                                  min = 5, max = 60, value = 15
                      ),
                      hr(),
-                     
+                   materialSwitch("hidedimsWF", "Custom plot dimensions", value = FALSE, right = TRUE),
+                   
                      sliderInput("rankedheightslider", "Adjust plot height",
                                  min = 200, max = 1000, value = 400
                      ),
@@ -829,6 +799,7 @@ ui <-
                h4("Positive NES is upregulated in Primitive cells and negative NES is upregulated in Monocytic cells"),
                sidebarLayout( 
                  sidebarPanel( 
+                   useShinyjs(),
                    selectizeInput(
                      "Pathwaygenechoice",
                      label=
@@ -847,6 +818,23 @@ ui <-
                                            Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg")),
                    
                    hr(),
+                   
+                   palettePicker(
+                     inputId = "PaletteChoicesGP",
+                     label = "Choose a color palette",
+                     choices = list(
+                       "Viridis" = list(
+                         "viridis" = viridis_pal(option = "viridis")(5),
+                         "magma" = viridis_pal(option = "magma")(5),
+                         "mako" = viridis_pal(option = "mako")(5),
+                         "plasma" = viridis_pal(option = "plasma")(5),
+                         "cividis" = viridis_pal(option = "cividis")(5))
+                     )
+                   ),
+                   
+                   hr(),
+                   materialSwitch("hidedimsGP", "Custom plot dimensions", value = FALSE, right = TRUE),
+                   
                    sliderInput("goiheightslider", "Adjust plot height",
                                min = 200, max = 1000, value = 400
                    ),
@@ -910,29 +898,29 @@ server <-
       })
  
     ##QC-MultiQC plots####
-    output$QCplot <- renderPlot({
-      QCdata <- switch(
-        input$QCvar,
-        "% mapped reads" = qcdt$raw.salmon.percent_mapped,
-        "# mapped reads" = qcdt$raw.salmon.num_mapped,
-        "% uniquely mapped reads" = qcdt$raw.star.uniquely_mapped_percent,
-        "# uniquely mapped reads" = qcdt$raw.star.uniquely_mapped,
-        "Sample_ID" = qcdt$metadata.sample_id
-      )
-      
-      Sample_ID <-qcdt$metadata.sample_id 
-      
-      ggplot(
-        qcdt,
-        aes(
-          x = Sample_ID,
-          y = QCdata
-        )) +
-        geom_point(alpha = 0.5) +
-        theme_cowplot (12) +
-        theme(axis.text.x =
-                element_text(angle = 60, hjust = 1))
-    }) #end renderPlot
+    # output$QCplot <- renderPlot({
+    #   QCdata <- switch(
+    #     input$QCvar,
+    #     "% mapped reads" = qcdt$raw.salmon.percent_mapped,
+    #     "# mapped reads" = qcdt$raw.salmon.num_mapped,
+    #     "% uniquely mapped reads" = qcdt$raw.star.uniquely_mapped_percent,
+    #     "# uniquely mapped reads" = qcdt$raw.star.uniquely_mapped,
+    #     "Sample_ID" = qcdt$metadata.sample_id
+    #   )
+    #   
+    #   Sample_ID <-qcdt$metadata.sample_id 
+    #   
+    #   ggplot(
+    #     qcdt,
+    #     aes(
+    #       x = Sample_ID,
+    #       y = QCdata
+    #     )) +
+    #     geom_point(alpha = 0.5) +
+    #     theme_cowplot (12) +
+    #     theme(axis.text.x =
+    #             element_text(angle = 60, hjust = 1))
+    # }) #end renderPlot
     
     # PCA plots ####
     
@@ -1135,18 +1123,7 @@ server <-
           facet_grid(cols = vars(class))
         } else(NULL)
       })
-    # colorpalettechoices <- 
-    #   eventReactive(input$PalletteChoices, {
-    #     if(input$PaletteChoices == "Dark") {
-    #       scale_color_brewer(palette = "Dark2")
-    #     } else if(input$PaletteChoices == "PurpleGreen") {
-    #       scale_color_brewer(palette = "PRGn")
-    #     } else if(input$PaletteChoices == "RedBlue") {
-    #       scale_color_brewer(palette = "RdBu")
-    #     } else if(input$PaletteChoices == "YellowGreenBlue") {
-    #       scale_color_brewer(palette = "YlGnBu")
-    #     }
-    #   })
+  
     
     colorpalettechoicesfgene <-
       eventReactive(input$PaletteChoicesGene, {
@@ -1180,11 +1157,12 @@ server <-
     sig_label_position <- reactive({
       value <- vst.goi$value
       if(input$XaxisVar_CDgene == "xvalue") {
-        geom_text(aes(x = max(value), label = (case_when(
-          padj < 0.001 ~ "***",
-          padj < 0.01 ~ "**",
-          padj < 0.05 ~ "*",
-          padj >= 0.05 ~ "NS"))), check_overlap = TRUE)
+        geom_text(aes(x = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
+          #               (case_when(
+          # padj < 0.001 ~ "***",
+          # padj < 0.01 ~ "**",
+          # padj < 0.05 ~ "*",
+          # padj >= 0.05 ~ "NS"))), check_overlap = TRUE)
       } else if(input$XaxisVar_CDgene == "xgene") {
         geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
           #               (case_when(
@@ -1193,12 +1171,18 @@ server <-
           # padj < 0.05 ~ "*",
           # padj >= 0.05 ~ "NS"))), check_overlap = TRUE)
       } else if(input$XaxisVar_CDgene == "xclass") {
-        geom_text(aes(y = max(value), label = (case_when(
-          padj < 0.001 ~ "***",
-          padj < 0.01 ~ "**",
-          padj < 0.05 ~ "*",
-          padj >= 0.05 ~ "NS"))), check_overlap = TRUE)
+        geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
+          #               (case_when(
+          # padj < 0.001 ~ "***",
+          # padj < 0.01 ~ "**",
+          # padj < 0.05 ~ "*",
+          # padj >= 0.05 ~ "NS"))), check_overlap = TRUE)
       }
+    })
+    
+    observe({
+      toggle(id = "geneheightslider", condition = input$hidedims)
+      toggle(id ="genewidthslider", condition = input$hidedims)
     })
     #plot output
     output$VSTCDplot <-
@@ -1219,12 +1203,12 @@ server <-
             colorpalettechoicesgene() +
             geom_point(alpha = 0.5,
                        position = position_jitterdodge(jitter.width = 0.2),
-                       aes(color = class)) + #this needs to be reactive too
+                       aes(color = class)) + 
             theme_light() +
             sig_label_position() +
             ylab("") +
             xlab("") +
-            ggtitle("Gene Expression:Sensitive vs Resistant")
+            ggtitle("Gene Expression: Prim vs Mono")
         }) #end render plot
     
     output$downloadGenePlot <- downloadHandler(
@@ -1535,35 +1519,35 @@ server <-
         gseafile()
       }
     })
-     colorpalettechoicesGSEAfill <-
-    eventReactive(input$PaletteChoicesGSEA, {
-      if(input$PaletteChoicesGSEA == "viridis") {
-        scale_fill_viridis_d(option = "viridis")
-      } else if(input$PaletteChoicesGSEA == "cividis") {
-        scale_fill_viridis_d(option = "cividis")
-      } else if(input$PaletteChoicesGSEA == "magma") {
-        scale_fill_viridis_d(option = "magma")
-      } else if(input$PaletteChoicesGSEA == "plasma") {
-        scale_fill_viridis_d(option = "plasma")
-      }else if(input$PaletteChoicesGSEA == "inferno") {
-        scale_fill_viridis_d(option = "inferno")
-      }
-    })
-    colorpalettechoicesGSEA <-
-      eventReactive(input$PaletteChoicesGSEA, {
-        if(input$PaletteChoicesGSEA == "viridis") {
-          scale_color_viridis_d(option = "viridis")
-        } else if(input$PaletteChoicesGSEA == "cividis") {
-          scale_color_viridis_d(option = "cividis")
-        } else if(input$PaletteChoicesGSEA == "magma") {
-          scale_color_viridis_d(option = "magma")
-        } else if(input$PaletteChoicesGSEA == "plasma") {
-          scale_color_viridis_d(option = "plasma")
-        }else if(input$PaletteChoicesGSEA == "inferno") {
-          scale_fill_viridis_d(option = "inferno")
-        }
-      })
-    
+    #  colorpalettechoicesGSEAfill <-
+    # eventReactive(input$PaletteChoicesGSEA, {
+    #   if(input$PaletteChoicesGSEA == "viridis") {
+    #     scale_fill_viridis_d(option = "viridis")
+    #   } else if(input$PaletteChoicesGSEA == "cividis") {
+    #     scale_fill_viridis_d(option = "cividis")
+    #   } else if(input$PaletteChoicesGSEA == "magma") {
+    #     scale_fill_viridis_d(option = "magma")
+    #   } else if(input$PaletteChoicesGSEA == "plasma") {
+    #     scale_fill_viridis_d(option = "plasma")
+    #   }else if(input$PaletteChoicesGSEA == "inferno") {
+    #     scale_fill_viridis_d(option = "inferno")
+    #   }
+    # })
+    # colorpalettechoicesGSEA <-
+    #   eventReactive(input$PaletteChoicesGSEA, {
+    #     if(input$PaletteChoicesGSEA == "viridis") {
+    #       scale_color_viridis_d(option = "viridis")
+    #     } else if(input$PaletteChoicesGSEA == "cividis") {
+    #       scale_color_viridis_d(option = "cividis")
+    #     } else if(input$PaletteChoicesGSEA == "magma") {
+    #       scale_color_viridis_d(option = "magma")
+    #     } else if(input$PaletteChoicesGSEA == "plasma") {
+    #       scale_color_viridis_d(option = "plasma")
+    #     }else if(input$PaletteChoicesGSEA == "inferno") {
+    #       scale_fill_viridis_d(option = "inferno")
+    #     }
+    #   })
+    # 
     #### GSEA pathway ranks waterfall plot ####
     
     output$GSEAranked <- renderPlot(
@@ -1605,7 +1589,10 @@ Negative NES = Upregulated in Monocytic)",
         print(input$filechoice)
       })
     
-    
+    observe({
+      toggle(id = "rankedheightslider", condition = input$hidedimsWF)
+      toggle(id ="rankedwidthslider", condition = input$hidedimsWF)
+    })
     toplotMoustache <-
       reactive({
         pathwaygsea <- gsea_file_values[[input$filechoice]]
@@ -1811,6 +1798,25 @@ Negative NES = Upregulated in Monocytic)",
         paste(input$Pathwaygenechoice)
       })
     #Gene Centeric pathways analysis plots ####
+    colorchoicesGP <-
+      eventReactive(input$PaletteChoicesGP, {
+        if(input$PaletteChoicesGP == "viridis") {
+          scale_color_viridis_d(option = "viridis")
+        } else if(input$PaletteChoicesGP == "cividis") {
+          scale_color_viridis_d(option = "cividis")
+        } else if(input$PaletteChoicesGP == "magma") {
+          scale_color_viridis_d(option = "magma")
+        } else if(input$PaletteChoicesGP == "plasma") {
+          scale_color_viridis_d(option = "plasma")
+        }else if(input$PaletteChoicesGP == "inferno") {
+          scale_color_viridis_d(option = "inferno")
+        }
+      })
+    
+    observe({
+      toggle(id = "goiheightslider", condition = input$hidedimsGP)
+      toggle(id ="goiwidthslider", condition = input$hidedimsGP)
+    })
     genecentricgseaplot <- reactive({
       #load chosen pathway file based on reactive input 
       genepathwaygsea <- (gene_gsea_file_values[[input$genefilechoice]])
@@ -1859,6 +1865,7 @@ Negative NES = Upregulated in Monocytic)",
           color = (padj < 0.05)
         )) +
           geom_boxplot()  +
+          colorchoicesGP() +
           facet_wrap( ~ GOI, scales = "free") +
           theme_light(base_size = 18) +
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
