@@ -126,18 +126,18 @@ ui <-
                         "VST PCA"
                     ),
                     hr(),
-                    # palettePicker(
-                    #   inputId = "PaletteChoices", 
-                    #   label = "Choose a color palette", 
-                    #   choices = list(
-                    #     "Viridis" = list(
-                    #       "viridis" = viridis_pal(option = "viridis")(5),
-                    #       "magma" = viridis_pal(option = "magma")(5),
-                    #       "mako" = viridis_pal(option = "mako")(5),
-                    #       "plasma" = viridis_pal(option = "plasma")(5),
-                    #       "cividis" = viridis_pal(option = "cividis")(5))
-                    #   )
-                    # ),
+                    palettePicker(
+                      inputId = "PaletteChoicesQC",
+                      label = "Choose a color palette",
+                      choices = list(
+                        "Viridis" = list(
+                          "viridis" = viridis_pal(option = "viridis")(5),
+                          "magma" = viridis_pal(option = "magma")(5),
+                          "mako" = viridis_pal(option = "mako")(5),
+                          "plasma" = viridis_pal(option = "plasma")(5),
+                          "cividis" = viridis_pal(option = "cividis")(5))
+                      )
+                    ),
                     # colorPicker(
                     #   inputId = "col1QC",
                     #   label = "PCA plot: Choose 1st color:",
@@ -150,29 +150,29 @@ ui <-
                     #   choices = c(scales::viridis_pal(option = "viridis")(5)[2:5],scales::brewer_pal(palette = "Dark2")(5)[1:5]),
                     #   textColor = "white"
                     # ),
-                    colourInput(
-                      "col1QC",
-                      label = "Choose 1st color",
-                      value = "#009292",
-                      showColour = ("both"),
-                      palette = ("square"),
-                      allowedCols = NULL,
-                      allowTransparent = FALSE,
-                      returnName = FALSE,
-                      closeOnClick = FALSE
-                    ),
-
-                    colourInput(
-                      "col2QC",
-                      label = "Choose 2nd color",
-                      value = "#FFFF6D",
-                      showColour = ("both"),
-                      palette = ("square"),
-                      allowedCols = NULL,
-                      allowTransparent = FALSE,
-                      returnName = FALSE,
-                      closeOnClick = FALSE
-                    ),
+                    # colourInput(
+                    #   "col1QC",
+                    #   label = "Choose 1st color",
+                    #   value = "#009292",
+                    #   showColour = ("both"),
+                    #   palette = ("square"),
+                    #   allowedCols = NULL,
+                    #   allowTransparent = FALSE,
+                    #   returnName = FALSE,
+                    #   closeOnClick = FALSE
+                    # ),
+                    # 
+                    # colourInput(
+                    #   "col2QC",
+                    #   label = "Choose 2nd color",
+                    #   value = "#FFFF6D",
+                    #   showColour = ("both"),
+                    #   palette = ("square"),
+                    #   allowedCols = NULL,
+                    #   allowTransparent = FALSE,
+                    #   returnName = FALSE,
+                    #   closeOnClick = FALSE
+                    # ),
                     hr(),
                     
                     downloadButton("downloadPlotPCA", label = "Download PCA Plot"),
@@ -572,7 +572,6 @@ ui <-
                        TRUE
                    ),
                    
-                   hr(),
                    # palettePicker(
                    #   inputId = "PaletteChoicesGSEA", 
                    #   label = "Choose a color palette", 
@@ -771,16 +770,13 @@ ui <-
                  
                  
                  mainPanel(
-                   textOutput(
-                     "genelist"
-                   ),
+          
                    conditionalPanel(
                      condition = "input.fgseaTable == true",
-                     shinycssloaders::withSpinner(
                        DTOutput(
                        "fgseaTable"
                      )
-                     )
+                     
                    ),
                    conditionalPanel(
                      condition = "input.rankedplot == true",
@@ -873,9 +869,7 @@ ui <-
     ),
     
     #WGCNA menu####
-    tabPanel(
-      "WGCNA"
-    )
+    
   )
 #Server ####
 server <- 
@@ -886,20 +880,35 @@ server <-
     
     #color palette choices ####
     colorpalettechoices <-
-      eventReactive(input$PaletteChoices, {
-        if(input$PaletteChoices == "viridis") {
+      eventReactive(input$PaletteChoicesQC, {
+        if(input$PaletteChoicesQC == "viridis") {
            scale_fill_viridis_d(option = "viridis")
-        } else if(input$PaletteChoices == "cividis") {
+        } else if(input$PaletteChoicesQC == "cividis") {
           scale_fill_viridis_d(option = "cividis")
-        } else if(input$PaletteChoices == "magma") {
+        } else if(input$PaletteChoicesQC == "magma") {
           scale_fill_viridis_d(option = "magma")
-        } else if(input$PaletteChoices == "plasma") {
+        } else if(input$PaletteChoicesQC == "plasma") {
           scale_fill_viridis_d(option = "plasma")
-        }else if(input$PaletteChoices == "inferno") {
+        }else if(input$PaletteChoicesQC == "inferno") {
           scale_fill_viridis_d(option = "inferno")
         }
+      }) 
+    
+    colorchoicesQC <-
+      eventReactive(input$PaletteChoicesQC, {
+        if(input$PaletteChoicesQC == "viridis") {
+          scale_color_viridis_d(option = "viridis")
+        } else if(input$PaletteChoicesQC == "cividis") {
+          scale_color_viridis_d(option = "cividis")
+        } else if(input$PaletteChoicesQC == "magma") {
+          scale_color_viridis_d(option = "magma")
+        } else if(input$PaletteChoicesQC == "plasma") {
+          scale_color_viridis_d(option = "plasma")
+        }else if(input$PaletteChoicesQC == "inferno") {
+          scale_color_viridis_d(option = "inferno")
+        }
       })
-
+ 
     ##QC-MultiQC plots####
     output$QCplot <- renderPlot({
       QCdata <- switch(
@@ -1002,11 +1011,11 @@ server <-
     
     
     output$PCAplot <- renderPlot ({
-      colors <- c(input$col1QC, input$col2QC)
-      ggplot(PCAdata(), aes(x = PC1, y = PC2, fill = batch, shape = condition)) + 
+      ggplot(PCAdata(), aes(x = PC1, y = PC2, shape = condition, color = batch, fill = batch)) + 
         geom_point(size = 5) + 
         scale_shape_manual(values = c(21, 24), name = '') +
-        scale_fill_manual(values = colors) +
+        colorpalettechoices() +
+        colorchoicesQC() +
         theme_cowplot(font_size = 18) + 
         theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
         theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
@@ -1014,8 +1023,7 @@ server <-
         xlab(variance_PC1()) + 
         ylab(variance_PC2()) +
         ggtitle(PCA_title()) +
-        guides(fill=guide_legend(override.aes = list(color = colors))) +
-        geom_text_repel(aes(label=sample_name),hjust=0, vjust=0)
+        geom_text_repel(colour = "black", aes(label=sample_name),hjust=0, vjust=0)
       
     })
     
@@ -1487,7 +1495,7 @@ server <-
     gseafile <-
       reactive({
         pathwaygsea <- gsea_file_values[[input$filechoice]]
-        fgseaRes <- fgsea::fgsea(pathways = pathwaygsea, stats = ranks, nproc = 5)
+        fgseaRes <- fgsea::fgsea(pathways = pathwaygsea, stats = ranks, nproc = 10)
         fgseaResTidy <- fgseaRes %>%
           as_tibble() %>%
           dplyr::select(., -pval,-log2err, -ES) %>% 
@@ -1508,7 +1516,7 @@ server <-
         fgseaRes <-
           fgsea::fgsea(pathways = pathwaygsea,
                        stats = ranks,
-                       nproc = 1)
+                       nproc = 10)
         fgseaResTidy <- fgseaRes %>%
           as_tibble() %>%
           dplyr::select(., -pval,-log2err, -ES) %>% 
@@ -1604,7 +1612,7 @@ Negative NES = Upregulated in Monocytic)",
         fgseaRes <-
           fgsea::fgsea(pathways = pathwaygsea,
                        stats = ranks,
-                       nproc = 1)
+                       nproc = 10)
         fgseaResTidy <-
           fgseaRes %>%
           as_tibble() %>%
@@ -1666,7 +1674,7 @@ Negative NES = Upregulated in Monocytic)",
       fgseaRes <-
         fgsea::fgsea(pathways = pathwaygsea,
                      stats = ranks,
-                     nproc = 1)
+                     nproc = 10)
       fgseaResTidy <- fgseaRes %>%
         as_tibble() %>%
         dplyr::select(., -pval,-log2err, -ES) %>% 
@@ -1810,7 +1818,7 @@ Negative NES = Upregulated in Monocytic)",
       fgseaRes <-
         fgsea::fgsea(pathways = genepathwaygsea,
                      stats = ranks,
-                     nproc = 1)
+                     nproc = 10)
       #create tidy table
       fgseaResTidy <- fgseaRes %>%
         as_tibble() %>%
@@ -1828,14 +1836,14 @@ Negative NES = Upregulated in Monocytic)",
       #create object for gene reactive input
       GOI <- input$Pathwaygenechoice
       #make a column that says yes if goi in that pathway
-      goi_paths$GOI <- "Pathways that do include the gene"
+      goi_paths$GOI <- "pathways with GOI"
       #filter gsea table to find pathways that do not include the GOI in the leading edge
       nongoi_paths <- fgseaResTidy %>%
         dplyr::filter(!grepl(input$Pathwaygenechoice, leadingEdge)) %>%
         mutate(., class = ifelse(NES <0, 'Mono', 'Prim'))
 
       #put no for pathways that do not contain the goi
-      nongoi_paths$GOI <- "Pathways that do NOT inlcude the gene"
+      nongoi_paths$GOI <- "pathways NOT with GOI"
       #bind the two filtered data frames into one for plotting
       allgoi_paths <- rbind.data.frame(goi_paths, nongoi_paths)
     })
