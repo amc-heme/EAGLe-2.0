@@ -159,6 +159,7 @@ ui <-
                                      label =
                                        "Download Scree Plot")
                     ),
+                    hr(),
                     conditionalPanel(
                       condition = "input.multiqc == true",
                       selectInput(
@@ -889,6 +890,18 @@ server <-
       })
  
     ##QC-MultiQC plots####
+    QC_title <- 
+      reactive({
+        if (input$QCvar == "% mapped reads") {
+          print("% mapped reads per sample")
+        } else if (input$QCvar == "# mapped reads") {
+          print("# mapped reads per sample")
+        } else if (input$QCvar == "% uniquely mapped reads") {
+          print("% uniquely mapped reads per sample")
+        } else if (input$QCvar == "# uniquely mapped reads") {
+          print("# uniquely mapped reads per sample")
+        }
+      })
     output$QCplot <- renderPlot({
       QCdata <- switch(
         input$QCvar,
@@ -909,6 +922,7 @@ server <-
         )) +
         geom_point() +
         theme_cowplot (font_size = 18) +
+        ggtitle(QC_title()) +
         theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
                 element_text(angle = 60, hjust = 1)) 
     }) #end renderPlot
@@ -1820,7 +1834,21 @@ Negative NES = Upregulated in Monocytic)",
       fgseaResTidy <- fgseaRes %>%
         as_tibble() %>%
         arrange(desc(NES))
-  
+      # plot <-
+      #   plot +
+      #   plot_annotation(
+      #     title = feature,
+      #     theme = 
+      #       theme(
+      #         plot.title = 
+      #           element_text(
+      #             face = "bold",
+      #             hjust = 0.5,
+      #             size = 16
+      #           )
+      #       )
+      #   )
+      
 
       #create object for storing pathways that contain the chosen gene 
       goi_paths <- genepathwaygsea %>% keep(grepl(input$Pathwaygenechoice, genepathwaygsea))
@@ -1868,4 +1896,3 @@ Negative NES = Upregulated in Monocytic)",
   } #end server
 # Run the application 
 shinyApp(ui = ui, server = server)
-
