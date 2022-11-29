@@ -21,7 +21,7 @@ library(DESeq2)
 library(shinyWidgets)
 library(shinyjs)
 library(fgsea)
-library(WGCNA)
+#library(WGCNA)
 library(plotly)
 library(BiocParallel)
 library(ComplexHeatmap)
@@ -37,42 +37,42 @@ library(shinycssloaders)
 #reactlogShow(time = TRUE)
 
 #Data ####
-meta_lut_ven <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/meta_lut_ven.Rds")
-qcdt<-load_multiqc("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
-vst.goi <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
+meta_lut_ven <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/meta_lut_ven.Rds")
+qcdt<-load_multiqc("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
+vst.goi <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
 #DESeq data table
-dds.res <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/DEtable.rds")
+dds.res <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/DEtable.rds")
 #sample metadata table
-metadata <- read.table(file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/SampleSheetJordanLab.txt")
+metadata <- read.table(file = "/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/SampleSheetJordanLab.txt")
 # DE table with singscore
-dds.resscore <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/dds.resscore.rds")
+dds.resscore <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/dds.resscore.rds")
 #tables for PCA
-vsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.pca.rds")
-bcvsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.pca.rds")
+vsd.pca <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/vsd.pca.rds")
+bcvsd.pca <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/bcvsd.pca.rds")
 #tables for variance
-vsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.variance.rds")
-bcvsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.variance.rds")
+vsd.variance <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/vsd.variance.rds")
+bcvsd.variance <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/bcvsd.variance.rds")
 
-vsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd2.pca.rds")
-bcvsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd2.pca.rds")
+vsd2.pca <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/vsd2.pca.rds")
+bcvsd2.pca <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/bcvsd2.pca.rds")
 #GSEA data table
-ranks <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/ranks.rds")
+ranks <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/ranks.rds")
 #load pathways
-pathways.hallmark <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/h.all.v7.4.symbols.gmt")
-pathways.GOall <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.v2022.1.Hs.symbols.gmt")
-pathways.GOmolec <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.mf.v7.4.symbols.gmt")
-pathways.GOcellcomp <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.cc.v2022.1.Hs.symbols.gmt") 
-pathways.GObio <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.bp.v7.4.symbols.gmt")
-pathways.TFtargets <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c3.tft.v2022.1.Hs.symbols.gmt")
-pathways.allReg <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c3.all.v2022.1.Hs.symbols.gmt")
-pathways.Wiki <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.wikipathways.v2022.1.Hs.symbols.gmt")
-pathways.Reactome <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.reactome.v2022.1.Hs.symbols.gmt")
-pathways.KEGG <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.kegg.v2022.1.Hs.symbols.gmt")
-pathways.Positional <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c1.all.v2022.1.Hs.symbols.gmt")
-pathways.Biocarta <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.biocarta.v2022.1.Hs.symbols.gmt")
-pathways.lsc <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/lsc_sigs.gmt")
-pathways.aeg <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/aeg_genesets_20220602.gmt")
-vstlimma <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vstlimma.rds")
+pathways.hallmark <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/h.all.v7.4.symbols.gmt")
+pathways.GOall <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.v2022.1.Hs.symbols.gmt")
+pathways.GOmolec <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.mf.v7.4.symbols.gmt")
+pathways.GOcellcomp <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.cc.v2022.1.Hs.symbols.gmt") 
+pathways.GObio <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.bp.v7.4.symbols.gmt")
+pathways.TFtargets <-gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c3.tft.v2022.1.Hs.symbols.gmt")
+pathways.allReg <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c3.all.v2022.1.Hs.symbols.gmt")
+pathways.Wiki <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.wikipathways.v2022.1.Hs.symbols.gmt")
+pathways.Reactome <-gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.reactome.v2022.1.Hs.symbols.gmt")
+pathways.KEGG <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.kegg.v2022.1.Hs.symbols.gmt")
+pathways.Positional <-gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c1.all.v2022.1.Hs.symbols.gmt")
+pathways.Biocarta <-gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.biocarta.v2022.1.Hs.symbols.gmt")
+pathways.lsc <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/lsc_sigs.gmt")
+pathways.aeg <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/aeg_genesets_20220602.gmt")
+vstlimma <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/vstlimma.rds")
 
 names(pathways.aeg)[10] <- "PM_Primitive_Blast"
 names(pathways.aeg)[9] <- "PM_Monocytic_Blast"
@@ -113,19 +113,16 @@ ui <-
                       right =
                         TRUE
                     ),
-                    
-                    condition = "input.PCAplots == true",
-                    radioButtons(
-                      "PCAvar",
-                      h4(
-                        "Choose PCA plot"
-                      ),
-                      choices =
-                        list("VST PCA", "VST + batch corrected PCA"),
-                      selected =
-                        "VST PCA"
+                    materialSwitch(
+                      inputId =
+                        "multiqc",
+                      label =
+                        "MultiQC",
+                      value =
+                        FALSE,
+                      right =
+                        TRUE
                     ),
-                    hr(),
                     palettePicker(
                       inputId = "PaletteChoicesQC",
                       label = "Choose a color palette",
@@ -138,10 +135,20 @@ ui <-
                           "cividis" = viridis_pal(option = "cividis")(5))
                       )
                     ),
-                  
-                    hr(),
-                    
-                    downloadButton("downloadPlotPCA", label = "Download PCA Plot"),
+                    conditionalPanel(
+                    condition = "input.PCAplots == true",
+                    radioButtons(
+                      "PCAvar",
+                      h4(
+                        "Choose PCA plot"
+                      ),
+                      choices =
+                        list("VST PCA", "VST + batch corrected PCA"),
+                      selected =
+                        "VST PCA"
+                    ),
+                    downloadButton("downloadPlotPCA", label = "Download PCA Plot")
+                    ),
                     
                     hr(),
                     
@@ -151,48 +158,32 @@ ui <-
                       downloadButton("downloadPlotscree",
                                      label =
                                        "Download Scree Plot")
-                    ) #end conditional
+                    ),
+                    conditionalPanel(
+                      condition = "input.multiqc == true",
+                      selectInput(
+                                "QCvar",
+                                label=
+                                  "Choose MultiQC test",
+                                choices =
+                                  c("% mapped reads", "# mapped reads", "% uniquely mapped reads", "# uniquely mapped reads"),
+                                selected =
+                                  "% mapped reads"
+                              ) #end selectInput
+                    )
                   ),
                   mainPanel(
                     conditionalPanel(condition = "input.PCAplots == true",
                                      plotOutput("PCAplot")),
                     conditionalPanel(condition = "input.PCAscreeplots == true",
-                                     plotOutput("PCAvarplot"))
+                                     plotOutput("PCAvarplot")),
+                    conditionalPanel(condition = "input.multiqc == true",
+                                     plotOutput("QCplot"))
                   )
                 )
               )
     ), 
     
-    
-    # tabPanel( #MultiQC Plots ####
-    #   "MultiQC",
-    #   fluidPage(
-    #     theme = 
-    #       shinytheme("flatly"),
-    #     titlePanel(
-    #       "QC Analysis: MultiQC Plots"
-    #     ),
-    #     sidebarLayout(
-    #       sidebarPanel(
-    #         selectInput(
-    #         "QCvar",
-    #         label=
-    #           "Choose MultiQC test",
-    #         choices =
-    #           c("% mapped reads", "# mapped reads", "% uniquely mapped reads", "# uniquely mapped reads"),
-    #         selected =
-    #           "% mapped reads"
-    #       ) #end selectInput
-    #     ), #end sidebar panel
-    #     mainPanel(
-    #         plotOutput(
-    #           "QCplot"
-    #           )
-    #         )
-    #       )
-    #     )
-    #     )
-    #   ),
     tabPanel( #Gene expression analysis ####
               "Gene Expression",
               fluidPage(
@@ -898,32 +889,32 @@ server <-
       })
  
     ##QC-MultiQC plots####
-    # output$QCplot <- renderPlot({
-    #   QCdata <- switch(
-    #     input$QCvar,
-    #     "% mapped reads" = qcdt$raw.salmon.percent_mapped,
-    #     "# mapped reads" = qcdt$raw.salmon.num_mapped,
-    #     "% uniquely mapped reads" = qcdt$raw.star.uniquely_mapped_percent,
-    #     "# uniquely mapped reads" = qcdt$raw.star.uniquely_mapped,
-    #     "Sample_ID" = qcdt$metadata.sample_id
-    #   )
-    #   
-    #   Sample_ID <-qcdt$metadata.sample_id 
-    #   
-    #   ggplot(
-    #     qcdt,
-    #     aes(
-    #       x = Sample_ID,
-    #       y = QCdata
-    #     )) +
-    #     geom_point(alpha = 0.5) +
-    #     theme_cowplot (12) +
-    #     theme(axis.text.x =
-    #             element_text(angle = 60, hjust = 1))
-    # }) #end renderPlot
-    
+    output$QCplot <- renderPlot({
+      QCdata <- switch(
+        input$QCvar,
+        "% mapped reads" = qcdt$raw.salmon.percent_mapped,
+        "# mapped reads" = qcdt$raw.salmon.num_mapped,
+        "% uniquely mapped reads" = qcdt$raw.star.uniquely_mapped_percent,
+        "# uniquely mapped reads" = qcdt$raw.star.uniquely_mapped,
+        "Sample_ID" = qcdt$metadata.sample_id
+      )
+
+      Sample_ID <-qcdt$metadata.sample_id
+
+      ggplot(
+        qcdt,
+        aes(
+          x = Sample_ID,
+          y = QCdata
+        )) +
+        geom_point() +
+        theme_cowplot (font_size = 18) +
+        theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                element_text(angle = 60, hjust = 1)) 
+    }) #end renderPlot
+
     # PCA plots ####
-    
+
     PCAdata <-
       eventReactive(input$PCAvar, {
         if (input$PCAvar == "VST PCA") {
