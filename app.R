@@ -1069,11 +1069,11 @@ server <-
         } else if(input$PrimMonobutton == "prim") {
           vst.goi %>%
             dplyr::filter(ext_gene %in% input$VSTCDgenechoice) %>%
-            dplyr::filter(class == "sensitive")
+            dplyr::filter(class == "prim")
         } else if(input$PrimMonobutton == "mono") {
           vst.goi %>%
             dplyr::filter(ext_gene %in% input$VSTCDgenechoice) %>%
-            dplyr::filter(class == "resistant")
+            dplyr::filter(class == "mono")
         }
       })
     
