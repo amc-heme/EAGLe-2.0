@@ -29,51 +29,53 @@ library(colourpicker)
 #options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
-#Data ####
-meta_lut_ven <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/meta_lut_ven.Rds")
-qcdt<-load_multiqc("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
-vst.goi <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
-#DESeq data table
-dds.res <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/DEtable.rds")
-#sample metadata table
-metadata <- read.table(file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/SampleSheetJordanLab.txt")
-# DE table with singscore
-dds.resscore <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/dds.resscore.rds")
-#tables for PCA
-vsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.pca.rds")
-bcvsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.pca.rds")
-#tables for variance
-vsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.variance.rds")
-bcvsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.variance.rds")
+# install.packages("colourpicker")
 
-vsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd2.pca.rds")
-bcvsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd2.pca.rds")
+#Data ####
+meta_lut_ven <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/meta_lut_ven.rds")
+qcdt<-load_multiqc("~/Documents/JordanLab/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
+vst.goi <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/vst.goi.rds")
+#DESeq data table
+dds.res <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/DEtable.rds")
+#sample metadata table
+metadata <- read.table(file = "~/Documents/JordanLab/EAGLe-2.0/data/SampleSheetJordanLab.txt")
+# DE table with singscore
+dds.resscore <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/dds.resscore.rds")
+#tables for PCA
+vsd.pca <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/vsd.pca.rds")
+bcvsd.pca <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/bcvsd.pca.rds")
+#tables for variance
+vsd.variance <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/vsd.variance.rds")
+bcvsd.variance <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data//bcvsd.variance.rds")
+
+vsd2.pca <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/vsd2.pca.rds")
+bcvsd2.pca <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/bcvsd2.pca.rds")
 #GSEA data table
-fgseaResTidy <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidy.rds")
-fgseaResTidyAll <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyAll.rds")
-fgseaResTidyMolec <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyMolec.rds")
-fgseaResTidyCC <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyCC.rds")
-fgseaResTidyBio <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyBio.rds")
-fgseaResTidyTF <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyTF.rds")
-fgseaResTidyReg <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyReg.rds")
-fgseaResTidyWiki <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyWiki.rds")
-fgseaResTidyReactome <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/fgseaResTidyReactome.rds")
-ranks <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/ranks.rds")
+fgseaResTidy <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/fgseaResTidy.rds")
+fgseaResTidyAll <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/fgseaResTidyAll.rds")
+fgseaResTidyMolec <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/fgseaResTidyMolec.rds")
+fgseaResTidyCC <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/fgseaResTidyCC.rds")
+fgseaResTidyBio <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/fgseaResTidyBio.rds")
+fgseaResTidyTF <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/fgseaResTidyTF.rds")
+fgseaResTidyReg <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/fgseaResTidyReg.rds")
+fgseaResTidyWiki <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/fgseaResTidyWiki.rds")
+fgseaResTidyReactome <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/fgseaResTidyReactome.rds")
+ranks <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/ranks.rds")
 #load pathways
-pathways.hallmark <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/h.all.v7.4.symbols.gmt")
-pathways.GOall <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.v2022.1.Hs.symbols.gmt")
-pathways.GOmolec <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.mf.v7.4.symbols.gmt")
-pathways.GOcellcomp <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.cc.v2022.1.Hs.symbols.gmt") 
-pathways.GObio <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.bp.v7.4.symbols.gmt")
-pathways.TFtargets <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c3.tft.v2022.1.Hs.symbols.gmt")
-pathways.allReg <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c3.all.v2022.1.Hs.symbols.gmt")
-pathways.Wiki <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.wikipathways.v2022.1.Hs.symbols.gmt")
-pathways.Reactome <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.reactome.v2022.1.Hs.symbols.gmt")
-pathways.KEGG <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.kegg.v2022.1.Hs.symbols.gmt")
-pathways.Positional <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c1.all.v2022.1.Hs.symbols.gmt")
-pathways.Biocarta <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.biocarta.v2022.1.Hs.symbols.gmt")
-pathways.lsc <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/lsc_sigs.gmt")
-pathways.aeg <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/aeg_genesets_20220602.gmt")
+pathways.hallmark <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/h.all.v7.4.symbols.gmt")
+pathways.GOall <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c5.go.v2022.1.Hs.symbols.gmt")
+pathways.GOmolec <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c5.go.mf.v7.4.symbols.gmt")
+pathways.GOcellcomp <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c5.go.cc.v2022.1.Hs.symbols.gmt") 
+pathways.GObio <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c5.go.bp.v7.4.symbols.gmt")
+pathways.TFtargets <-gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c3.tft.v2022.1.Hs.symbols.gmt")
+pathways.allReg <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c3.all.v2022.1.Hs.symbols.gmt")
+pathways.Wiki <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c2.cp.wikipathways.v2022.1.Hs.symbols.gmt")
+pathways.Reactome <-gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c2.cp.reactome.v2022.1.Hs.symbols.gmt")
+pathways.KEGG <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c2.cp.kegg.v2022.1.Hs.symbols.gmt")
+pathways.Positional <-gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c1.all.v2022.1.Hs.symbols.gmt")
+pathways.Biocarta <-gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c2.cp.biocarta.v2022.1.Hs.symbols.gmt")
+pathways.lsc <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/lsc_sigs.gmt")
+pathways.aeg <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/aeg_genesets_20220602.gmt")
 
 
 names(pathways.aeg)[10] <- "PM_Primitive_Blast"
