@@ -1,0 +1,13 @@
+AML	htb	Anaghas_ID	DESeq_Sample_Name	CD_paper_ID	SRR	GEO_sampleName	GEO_libtype	Salmon_libtype	batch	sample_type
+AML011114A	A14A	1114A	AML-1	prim-AML-3-ROSlow	SRR9265370	"AML-3, primitive"	stranded	U	A	prim
+AML052214	A522	52214	AML-11	prim-AML-6-ROSlow	SRR9265373	"AML-6, primitive"	stranded	U	A	prim
+AML011114B	A14B	1114B	AML-3	prim-AML-4-ROSlow	SRR9265371	"AML-4, primitive"	stranded	U	A	prim
+AML011514	A115	11514	AML-5	prim-AML-5-ROSlow	SRR9265372	"AML-5, primitive"	stranded	U	A	prim
+AML030514	A305	30514	AML-7	mono-AML-1-ROSlow	SRR9265363	"AML-1, monocytic"	stranded	U	A	mono
+AML041514	A415	41514	AML-9	mono-AML-2-ROSlow	SRR9265364	"AML-2, monocytic"	stranded	U	A	mono
+AML011612	A116	11612	AML011612_Low	mono-AML-4-ROSlow	SRR9265366	"AML-4, monocytic"	stranded	SR	B	mono
+AML020604	unknown	unknown	AML020604_Low	mono-AML-5-ROSlow	SRR9265367	"AML-5, monocytic"	stranded	SR	B	mono
+AML041206	unknown	unknown	AML041206_Low	prim-AML-2-ROSlow	SRR9265369	"AML-2, primitive"	stranded	SR	B	prim
+AML062717	A627	62717	AML062717_Low	mono-AML-3-ROSlow	SRR9265365	"AML-3, monocytic"	stranded	SR	B	mono
+AML100510	unknown	unknown	AML100510_Low	prim-AML-1-ROSlow	SRR9265368	"AML-1, primitive"	stranded	SR	B	prim
+AML100814	A008	100814	AML100814_Low	prim-AML-7-ROSlow	SRR9265374	"AML-7, primitive"	stranded	SR	B	prim
