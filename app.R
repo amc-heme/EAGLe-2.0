@@ -37,7 +37,6 @@ library(shinycssloaders)
 #reactlogShow(time = TRUE)
 
 #Data ####
-<<<<<<< Updated upstream
 meta_lut_ven <- readRDS("~/Documents/JordanLab//EAGLe-2.0/data/meta_lut_ven.Rds")
 qcdt<-load_multiqc("~/Documents/JordanLab//EAGLe-2.0/data/multiqc_data.json", sections="raw") 
 vst.goi <- readRDS("~/Documents/JordanLab//EAGLe-2.0/data/vst.goi.rds")
@@ -74,44 +73,9 @@ pathways.Biocarta <-gmtPathways("~/Documents/JordanLab//EAGLe-2.0/data/gmt_pathw
 pathways.lsc <- gmtPathways("~/Documents/JordanLab//EAGLe-2.0/data/gmt_pathway_files/lsc_sigs.gmt")
 pathways.aeg <- gmtPathways("~/Documents/JordanLab//EAGLe-2.0/data/gmt_pathway_files/aeg_genesets_20220602.gmt")
 vstlimma <- readRDS("~/Documents/JordanLab//EAGLe-2.0/data/vstlimma.rds")
-=======
-meta_lut_ven <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/meta_lut_ven.Rds")
-qcdt<-load_multiqc("~/Documents/JordanLab/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
-vst.goi <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/vst.goi.rds")
-#DESeq data table
-dds.res <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/DEtable.rds")
-#sample metadata table
-metadata <- read.table(file = "~/Documents/JordanLab/EAGLe-2.0/data/SampleSheetJordanLab.txt")
-# DE table with singscore
-dds.resscore <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/dds.resscore.rds")
-#tables for PCA
-vsd.pca <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/vsd.pca.rds")
-bcvsd.pca <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/bcvsd.pca.rds")
-#tables for variance
-vsd.variance <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/vsd.variance.rds")
-bcvsd.variance <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/bcvsd.variance.rds")
 
-vsd2.pca <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/vsd2.pca.rds")
-bcvsd2.pca <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/bcvsd2.pca.rds")
-#GSEA data table
-ranks <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/ranks.rds")
-#load pathways
-pathways.hallmark <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/h.all.v7.4.symbols.gmt")
-pathways.GOall <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c5.go.v2022.1.Hs.symbols.gmt")
-pathways.GOmolec <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c5.go.mf.v7.4.symbols.gmt")
-pathways.GOcellcomp <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c5.go.cc.v2022.1.Hs.symbols.gmt") 
-pathways.GObio <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c5.go.bp.v7.4.symbols.gmt")
-pathways.TFtargets <-gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c3.tft.v2022.1.Hs.symbols.gmt")
-pathways.allReg <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c3.all.v2022.1.Hs.symbols.gmt")
-pathways.Wiki <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c2.cp.wikipathways.v2022.1.Hs.symbols.gmt")
-pathways.Reactome <-gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c2.cp.reactome.v2022.1.Hs.symbols.gmt")
-pathways.KEGG <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c2.cp.kegg.v2022.1.Hs.symbols.gmt")
-pathways.Positional <-gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c1.all.v2022.1.Hs.symbols.gmt")
-pathways.Biocarta <-gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/c2.cp.biocarta.v2022.1.Hs.symbols.gmt")
-pathways.lsc <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/lsc_sigs.gmt")
-pathways.aeg <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/aeg_genesets_20220602.gmt")
-vstlimma <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/vstlimma.rds")
->>>>>>> Stashed changes
+
+
 
 names(pathways.aeg)[10] <- "PM_Primitive_Blast"
 names(pathways.aeg)[9] <- "PM_Monocytic_Blast"
