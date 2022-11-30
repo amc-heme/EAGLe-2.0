@@ -25,11 +25,12 @@ library(WGCNA)
 library(plotly)
 library(BiocParallel)
 library(ComplexHeatmap)
+library(InteractiveComplexHeatmap)
+library(circlize)
 library(colourpicker)
-#options(shiny.reactlog = TRUE)
+options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
-# install.packages("colourpicker")
 
 #Data ####
 meta_lut_ven <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/meta_lut_ven.rds")
@@ -77,581 +78,311 @@ pathways.Biocarta <-gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathwa
 pathways.lsc <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/lsc_sigs.gmt")
 pathways.aeg <- gmtPathways("~/Documents/JordanLab/EAGLe-2.0/data/gmt_pathway_files/aeg_genesets_20220602.gmt")
 
-
 names(pathways.aeg)[10] <- "PM_Primitive_Blast"
 names(pathways.aeg)[9] <- "PM_Monocytic_Blast"
 pathways.aegGOBP <- c(pathways.aeg, pathways.GObio)
 # UI ####
 ui <-
   navbarPage(
-  "EAGLe: Cancer Discovery",
-  navbarMenu( #QC Menu ####
-    "QC",
-    tabPanel(  # PCA plots ####
-      "PCA Plots",
-      fluidPage(
-        theme =
-          shinytheme(
-            "flatly"
-            ),
-        titlePanel(
-          "QC Analysis: PCA Plots"
-        ), 
-        sidebarLayout(
-          sidebarPanel(
-            
-            radioButtons(
-              "PCAvar",
-              h4(
-                "Choose PCA plot"
-                ),
-              choices =
-                list("VST PCA", "VST + batch corrected PCA"),
-              selected =
-                "VST PCA"
-            ),
-            hr(),
-            
-            colourInput(
-              "PCAcolor1",
-              label = "Choose 1st color",
-              value = "#009292",
-              showColour = ("both"),
-              palette = ("square"),
-              allowedCols = NULL,
-              allowTransparent = FALSE,
-              returnName = FALSE,
-              closeOnClick = FALSE
-            ),
-            hr(),
-            
-            colourInput(
-              "PCAcolor2",
-              label = "Choose 2nd color",
-              value = "#490092",
-              showColour = ("both"),
-              palette = ("square"),
-              allowedCols = NULL,
-              allowTransparent = FALSE,
-              returnName = FALSE,
-              closeOnClick = FALSE
-            ),
-            hr(),
-            
-            downloadButton("downloadPlotPCA", label = "Download Plot"),
-
-          ), #end sidebarPanel
-          mainPanel(
-            plotOutput(
-              "PCAplot"
-              )
-              )
-            ) 
-            )
-          ),
-    tabPanel(  # PCA Scree Plots ####
-               "PCA Scree Plots",
-               fluidPage(
-                 theme =
-                   shinytheme(
-                     "flatly"
-                   ),
-                 titlePanel(
-                   "QC Analysis: PCA Scree Plots"
-                 ), 
-                 sidebarLayout(
-                   sidebarPanel(
-                     radioButtons(
-                       "PCAvarscree",
-                       h4(
-                         "Choose PCA for Scree Plot"
-                       ),
-                       choices =
-                         list("VST PCA", "VST + batch corrected PCA"),
-                       selected =
-                         "VST PCA"
-                     ),
-                     hr(),
-                     
-                     downloadButton(
-                       "downloadPlotscree",
-                       label =
-                         "Download Plot"
-                     )
-                   ), #end sidebarPanel
-                   mainPanel(
-                         plotOutput(
-                           "PCAvarplot"
-                         )
-                       )
-                   )
-                 )
-               ), 
-    tabPanel( #MultiQC Plots ####
-      "MultiQC",
-      fluidPage(
-        theme = 
-          shinytheme("flatly"),
-        titlePanel(
-          "QC Analysis: MultiQC Plots"
-        ),
-        sidebarLayout(
-          sidebarPanel(
-            selectInput(
-            "QCvar",
-            label=
-              "Choose MultiQC test",
-            choices =
-              c("% mapped reads", "# mapped reads", "% uniquely mapped reads", "# uniquely mapped reads"),
-            selected =
-              "% mapped reads"
-          ) #end selectInput
-        ), #end sidebar panel
-        mainPanel(
-            plotOutput(
-              "QCplot"
-              )
-            )
-          )
-        )
-        )
-      ),
-    tabPanel( #Gene centric analysis ####
-      "Gene Centric Analysis",
-      fluidPage(
-        theme=
-          shinytheme("flatly"),
-        titlePanel(
-            "Gene Centric Analysis"
-            ),
-          sidebarLayout(
-            sidebarPanel(
-              useShinyjs(),
-              selectizeInput(
-                "VSTCDgenechoice",
-                label=
-                  "Choose a gene for analysis",
-                choices =
-                  NULL,
-                selected = NULL,
-                options = list(maxItems = NULL)
-                ),
-              radioButtons("XaxisVar_CDgene", h4("X axis variable"),
-                           choices = list("Value" = "xvalue", "Class" = "xclass",
-                                          "Gene" = "xgene"),selected = "xgene"),
-              radioButtons("YaxisVar_CDgene", h4("Y axis variable"),
-                           choices = list("Value" = "yvalue", "Class" = "yclass",
-                                          "Gene" = "ygene"),selected = "yvalue"),
-              radioButtons("FillVar_CDgene", h4("Fill variable"),
-                           choices = list("Class" = "fillclass", "Gene" = "fillgene"), selected = "fillclass"),
-              
-            hr(),
-            
-            h3(
-              "Aesthetics:"
-              ),
-            hr(),
-            materialSwitch(
-              inputId =
-                "genefacetbutton",
-              label =
-                "Facet Grid",
-              value =
-                FALSE,
-              right =
-                TRUE
-            ),
-           hr(),
-           #Palettes from colorBrewer
-           # selectInput("PaletteChoices", "Choose a color palette", choices =
-           #               c("Dark2", "Paired", "Set1"), selected = "Dark2"),
-           colourInput(
-             "genecolor1",
-             label = "Choose 1st color",
-             value = "#009292",
-             showColour = ("both"),
-             palette = ("square"),
-             allowedCols = NULL,
-             allowTransparent = FALSE,
-             returnName = FALSE,
-             closeOnClick = FALSE
-           ),
-           colourInput(
-             "genecolor2",
-             label = "Choose 2nd color",
-             value = "#ffff6d",
-             showColour = ("both"),
-             palette = ("square"),
-             allowedCols = NULL,
-             allowTransparent = FALSE,
-             returnName = FALSE,
-             closeOnClick = FALSE
-           ),
-           colourInput(
-             "genecolor3",
-             label = "Choose 3rd color",
-             value = "#490092",
-             showColour = ("both"),
-             palette = ("square"),
-             allowedCols = NULL,
-             allowTransparent = FALSE,
-             returnName = FALSE,
-             closeOnClick = FALSE
-           ),
-           
-           
-           hr(),
-           sliderInput("geneheightslider", "Adjust plot height",
-                                   min = 200, max = 1200, value = 600
-           ),
-           hr(),
-           sliderInput("genewidthslider", "Adjust plot width",
-                       min = 200, max = 1200, value = 800
-           ),
-           hr(),
-          
-           downloadButton("downloadGenePlot", label = "Download Plot"),
-           
-            ),
-            
-            mainPanel(
-              tabsetPanel(
-                type =
-                  "tabs",
-                tabPanel(
-                  "Gene Centric Plot",
-                  plotOutput(
-                    "VSTCDplot"
-                    )
+    "EAGLe: Cancer Discovery",
+    tabPanel( #QC Menu ####
+              "QC",
+              fluidPage(
+                theme =
+                  shinytheme(
+                    "flatly"
                   ),
-                tabPanel(
-                  "VST Summary",
-                  textOutput(
-                    "VSTCDsummary"
+                titlePanel(
+                  "QC Analysis Plots"
+                ), 
+                sidebarLayout(
+                  sidebarPanel(
+                    materialSwitch(
+                      inputId =
+                        "PCAplots",
+                      label =
+                        "PCA",
+                      value =
+                        FALSE,
+                      right =
+                        TRUE
+                    ),
+                    materialSwitch(
+                      inputId =
+                        "PCAscreeplots",
+                      label =
+                        "Scree",
+                      value =
+                        FALSE,
+                      right =
+                        TRUE
+                    ),
+                    
+                    condition = "input.PCAplots == true",
+                    radioButtons(
+                      "PCAvar",
+                      h4(
+                        "Choose PCA plot"
+                      ),
+                      choices =
+                        list("VST PCA", "VST + batch corrected PCA"),
+                      selected =
+                        "VST PCA"
+                    ),
+                    hr(),
+                    
+                    colourInput(
+                      "PCAcolor1",
+                      label = "Choose 1st color",
+                      value = "#009292",
+                      showColour = ("both"),
+                      palette = ("square"),
+                      allowedCols = NULL,
+                      allowTransparent = FALSE,
+                      returnName = FALSE,
+                      closeOnClick = FALSE
+                    ),
+                    hr(),
+                    
+                    colourInput(
+                      "PCAcolor2",
+                      label = "Choose 2nd color",
+                      value = "#FFFF6D",
+                      showColour = ("both"),
+                      palette = ("square"),
+                      allowedCols = NULL,
+                      allowTransparent = FALSE,
+                      returnName = FALSE,
+                      closeOnClick = FALSE
+                    ),
+                    hr(),
+                    
+                    downloadButton("downloadPlotPCA", label = "Download Plot"),
+                    
+                    conditionalPanel(
+                      condition = "input.PCAscreeplots == true",
+                      
+                      downloadButton("downloadPlotscree",
+                                     label =
+                                       "Download Plot")
+                    ) #end conditional
+                  ),
+                  mainPanel(
+                    conditionalPanel(condition = "input.PCAplots == true",
+                                     plotOutput("PCAplot")),
+                    conditionalPanel(condition = "input.PCAscreeplots == true",
+                                     plotOutput("PCAvarplot"))
+                  )
+                )
+              )
+    ), 
+    
+    
+    # tabPanel( #MultiQC Plots ####
+    #   "MultiQC",
+    #   fluidPage(
+    #     theme = 
+    #       shinytheme("flatly"),
+    #     titlePanel(
+    #       "QC Analysis: MultiQC Plots"
+    #     ),
+    #     sidebarLayout(
+    #       sidebarPanel(
+    #         selectInput(
+    #         "QCvar",
+    #         label=
+    #           "Choose MultiQC test",
+    #         choices =
+    #           c("% mapped reads", "# mapped reads", "% uniquely mapped reads", "# uniquely mapped reads"),
+    #         selected =
+    #           "% mapped reads"
+    #       ) #end selectInput
+    #     ), #end sidebar panel
+    #     mainPanel(
+    #         plotOutput(
+    #           "QCplot"
+    #           )
+    #         )
+    #       )
+    #     )
+    #     )
+    #   ),
+    tabPanel( #Gene centric analysis ####
+              "Gene Expression",
+              fluidPage(
+                theme=
+                  shinytheme("flatly"),
+                titlePanel(
+                  "Gene Expression Plot"
+                ),
+                sidebarLayout(
+                  sidebarPanel(
+                    useShinyjs(),
+                    selectizeInput(
+                      "VSTCDgenechoice",
+                      label=
+                        "Choose a gene for analysis",
+                      choices =
+                        NULL,
+                      selected = NULL,
+                      options = list(maxItems = NULL)
+                    ),
+                    radioButtons("XaxisVar_CDgene", h4("X axis variable"),
+                                 choices = list("Value" = "xvalue",
+                                                "Gene" = "xgene"), selected = "xgene"),
+                    radioButtons("YaxisVar_CDgene", h4("Y axis variable"),
+                                 choices = list("Value" = "yvalue",
+                                                "Gene" = "ygene"), selected = "yvalue"),
+                    # radioButtons("FillVar_CDgene", h4("Fill variable"),
+                    #              choices = list("Class" = "fillclass", "Gene" = "fillgene"), selected = "fillclass"),
+                    
+                    hr(),
+                    
+                    h3(
+                      "Aesthetics:"
+                    ),
+                    hr(),
+                    materialSwitch(
+                      inputId =
+                        "genefacetbutton",
+                      label =
+                        "Facet Grid",
+                      value =
+                        FALSE,
+                      right =
+                        TRUE
+                    ),
+                    hr(),
+                    #Palettes from colorBrewer
+                    # selectInput("PaletteChoices", "Choose a color palette", choices =
+                    #               c("Dark2", "Paired", "Set1"), selected = "Dark2"),
+                    colourInput(
+                      "genecolor1",
+                      label = "Choose 1st color",
+                      value = "#009292",
+                      showColour = ("both"),
+                      palette = ("square"),
+                      allowedCols = NULL,
+                      allowTransparent = FALSE,
+                      returnName = FALSE,
+                      closeOnClick = FALSE
+                    ),
+                    colourInput(
+                      "genecolor2",
+                      label = "Choose 2nd color",
+                      value = "#ffff6d",
+                      showColour = ("both"),
+                      palette = ("square"),
+                      allowedCols = NULL,
+                      allowTransparent = FALSE,
+                      returnName = FALSE,
+                      closeOnClick = FALSE
+                    ),
+                    colourInput(
+                      "genecolor3",
+                      label = "Choose 3rd color",
+                      value = "#490092",
+                      showColour = ("both"),
+                      palette = ("square"),
+                      allowedCols = NULL,
+                      allowTransparent = FALSE,
+                      returnName = FALSE,
+                      closeOnClick = FALSE
+                    ),
+                    
+                    
+                    hr(),
+                    sliderInput("geneheightslider", "Adjust plot height",
+                                min = 200, max = 1200, value = 600
+                    ),
+                    hr(),
+                    sliderInput("genewidthslider", "Adjust plot width",
+                                min = 200, max = 1200, value = 800
+                    ),
+                    hr(),
+                    
+                    downloadButton("downloadGenePlot", label = "Download Plot"),
+                    
+                  ),
+                  
+                  mainPanel(
+                    plotOutput(
+                      "VSTCDplot"
                     )
                   )
                 )
               )
-            )
-        )
-      ), #end Genecentric tabPanel
-    navbarMenu("DESeq Analysis",# DESeq Menu ####
-               tabPanel("DESeq Analysis: Table", #DESeq table ####
-                        fluidPage(
-                          theme =
-                            shinytheme("flatly"),
-                          titlePanel(
-                            "DESeq Table"
-                            ),#end title
-                          sidebarLayout(
-                            sidebarPanel( 
-                              h4("log2FoldChange = Prim/Mono"),
-                              radioButtons("padjbutton", h4("padj Value"), 
-                               choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
-                              
-                              hr(),
-                              radioButtons("DiffExpButton", h4("Differential Expression"),
-                               choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall"),
-                              
-                              hr(),
-                              materialSwitch(
-                                inputId =
-                                  "singscorebutton",
-                                label =
-                                  "Singscore Regression",
-                                value =
-                                  FALSE,
-                                right =
-                                  TRUE
-                              ),
-                              
-                              hr(),
-                              
-                              downloadButton("downloadDEtable", label = "Download Table"),
-                              ),
-                            mainPanel(
-                              DTOutput(
-                                "DETable"
-                                )
-                              )
-                          )
-                        )
-               ),
-               tabPanel("DESeq Volcano Plot", #DESeq volcano plot ####
-                        fluidPage(
-                          theme =
-                            shinytheme("flatly"),
-                          titlePanel(
-                            "DESeq Analysis: Volcano Plot"
-                          ),#end title
-                          sidebarLayout(
-                            sidebarPanel( 
-                              h4("log2FoldChange = Prim/Mono"),
-                              radioButtons("sigvaluesbutton", h4("padj Value"), 
-                                           choices = list("<= 0.01" = "sigvar0.01", "<= 0.05" = "sigvar0.05", "All" = "allvar2"), selected = "allvar2"),
-                              
-                              hr(),
-                              colourInput(
-                                "volcanocolor1",
-                                label = "Choose 1st color",
-                                value = "#009292",
-                                showColour = ("both"),
-                                palette = ("square"),
-                                allowedCols = NULL,
-                                allowTransparent = FALSE,
-                                returnName = FALSE,
-                                closeOnClick = FALSE
-                              ),
-                              colourInput(
-                                "volcanocolor2",
-                                label = "Choose 2nd color",
-                                value = "grey",
-                                showColour = ("both"),
-                                palette = ("square"),
-                                allowedCols = NULL,
-                                allowTransparent = FALSE,
-                                returnName = FALSE,
-                                closeOnClick = FALSE
-                              ),
-                              colourInput(
-                                "volcanocolor3",
-                                label = "Choose 3rd color",
-                                value = "#490092",
-                                showColour = ("both"),
-                                palette = ("square"),
-                                allowedCols = NULL,
-                                allowTransparent = FALSE,
-                                returnName = FALSE,
-                                closeOnClick = FALSE
-                              ),
-                              # sliderInput("volheightslider", "Adjust plot height",
-                              #             min = 200, max = 1000, value = 400
-                              # ),
-                              # sliderInput("volwidthslider", "Adjust plot width",
-                              #             min = 200, max = 1000, value = 600
-                              # ),
-                              # radioButtons("DiffExpButton", h4("Differential Expression"),
-                              #              choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall")
-                              downloadButton(
-                                          "downloadDEVolcano",
-                                          label =
-                                            "Download Plot"
-                                        )
-                            ),
-                            mainPanel(
-                              plotlyOutput(
-                                "DEVolcanoPlot"
-                              ),
-                              # textOutput(
-                              #   "gene_name"
-                              # )
-                            )
-                          )
-                        )
-               ),
-               tabPanel("DESeq MA Plot", #DESeq MA Plot####
-                        fluidPage(
-                          theme =
-                            shinytheme("flatly"),
-                          titlePanel(
-                            "DESeq Analysis: MA Plot"
-                          ),#end title
-                          sidebarLayout(
-                            sidebarPanel( 
-                              h4("log2FoldChange = Prim/Mono"),
-                              colourInput(
-                                "MAcolor1",
-                                label = "Choose 1st color",
-                                value = "#009292",
-                                showColour = ("both"),
-                                palette = ("square"),
-                                allowedCols = NULL,
-                                allowTransparent = FALSE,
-                                returnName = FALSE,
-                                closeOnClick = FALSE
-                              ),
-                              colourInput(
-                                "MAcolor2",
-                                label = "Choose 2nd color",
-                                value = "#490092",
-                                showColour = ("both"),
-                                palette = ("square"),
-                                allowedCols = NULL,
-                                allowTransparent = FALSE,
-                                returnName = FALSE,
-                                closeOnClick = FALSE
-                              ),
-                              colourInput(
-                                "MAcolor3",
-                                label = "Choose 3rd color",
-                                value = "grey",
-                                showColour = ("both"),
-                                palette = ("square"),
-                                allowedCols = NULL,
-                                allowTransparent = FALSE,
-                                returnName = FALSE,
-                                closeOnClick = FALSE
-                              ),
-                              # radioButtons("padjbutton", h4("padj Value"), 
-                              #              choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
-                              # 
-                              # hr(),
-                              # radioButtons("DiffExpButton", h4("Differential Expression"),
-                              #              choices = list("Up" = "DEup", "Down" = "DEdown", "No" = "DEno", "All" = "DEall"), selected = "DEall")
-                              downloadButton(
-                                "downloadDEMA",
-                                label =
-                                  "Download Plot"
-                              )
-                            ),
-                            mainPanel(
-                              plotlyOutput(
-                                "DEMAPlot"
-                              )
-                            )
-                          )
-                        )
-               )
-              
-               ), 
-#GSEA menu ####
-navbarMenu("GSEA", 
-  tabPanel("GSEA", ####GSEAtables
-            fluidPage(
-              theme =
-                shinytheme("flatly"),
-              titlePanel(
-                "GSEA"
-              ),#end title
-              sidebarLayout(
-                sidebarPanel( 
-                 selectInput("filechoice", label = "Choose gmt file to load pathways",
-                             choices = c(Hallmark = "hallmark", GOall = "goall",GOmolecular = "GOmolec", 
-                                         GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
-                                         allRegular = "allReg", Wiki = "wiki", Reactome = "reactome", KEGG = "KEGG",
-                                         Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg")),
-                             
-                             
-                  
-                  hr(),
-                  selectInput("gseachoice", "Choose a visualization tool",
-                              choices =
-                                c("fgsea Table" = "fgseaTable", "Waterfall Plot" = "rankedplot", "Moustache Plot" = "moustache",
-                                 "Enrichment Plot" = "eplot", "Volcano Plot" = "volcanoplot", "Heatmap" = "heatmap")
-                              ),
-                 
-                 conditionalPanel(
-                   condition = "input.gseachoice == 'fgseaTable'",
-                   downloadButton(
-                     "downloadfgsea",
+    ),
+    
+    tabPanel("DESeq Analysis",# DESeq Menu ####
+             fluidPage(
+               theme =
+                 shinytheme("flatly"),
+               titlePanel(
+                 "DESeq Table and Plots"
+               ),#end title
+               sidebarLayout(
+                 sidebarPanel( 
+                   materialSwitch(
+                     inputId =
+                       "DESeqtable",
                      label =
-                       "Download Table"
-                   )
-                 ),
-                 
-                 conditionalPanel(
-                   condition = "input.gseachoice == 'rankedplot'",
-                   downloadButton(
-                     "downloadranks",
-                     label =
-                       "Download Plot"
+                       "DE Table",
+                     value =
+                       FALSE,
+                     right =
+                       TRUE
                    ),
-                  hr(),
-                  sliderInput("howmanypathways", "Choose How Many Pathways to Rank",
-                              min = 5, max = 60, value = 15
-                  ),
-                  
-                   sliderInput("rankedheightslider", "Adjust plot height",
-                               min = 200, max = 1000, value = 400
+                   materialSwitch(
+                     inputId =
+                       "singscorebutton",
+                     label =
+                       "DE Table w/ Monocytic Contribution",
+                     value =
+                       FALSE,
+                     right =
+                       TRUE
+                   ),
+                   materialSwitch(
+                     inputId =
+                       "DESeqvolcano",
+                     label =
+                       "Volcano Plot",
+                     value =
+                       FALSE,
+                     right =
+                       TRUE
+                   ),
+                   materialSwitch(
+                     inputId =
+                       "DESeqMA",
+                     label =
+                       "MA Plot",
+                     value =
+                       FALSE,
+                     right =
+                       TRUE
+                   ),
+                   materialSwitch(
+                     inputId =
+                       "DESeqHeat",
+                     label =
+                       "Heatmap",
+                     value =
+                       FALSE,
+                     right =
+                       TRUE
                    ),
                    hr(),
                    
-                   sliderInput("rankedwidthslider", "Adjust plot width",
-                               min = 200, max = 1000, value = 600
-                   ),
-                  colourInput(
-                    "waterfallcolor1",
-                    label = "Choose 1st color",
-                    value = "#009292",
-                    showColour = ("both"),
-                    palette = ("square"),
-                    allowedCols = NULL,
-                    allowTransparent = FALSE,
-                    returnName = FALSE,
-                    closeOnClick = FALSE
-                  ),
-                  colourInput(
-                    "waterfallcolor2",
-                    label = "Choose 2nd color",
-                    value = "#490092",
-                    showColour = ("both"),
-                    palette = ("square"),
-                    allowedCols = NULL,
-                    allowTransparent = FALSE,
-                    returnName = FALSE,
-                    closeOnClick = FALSE
-                  ),
-                 ),
-                 conditionalPanel(
-                   condition = "input.gseachoice == 'moustache'",
-        
-                   colourInput(
-                     "choice1color",
-                     label = "Choose 1st color",
-                     value = "#009292",
-                     showColour = ("both"),
-                     palette = ("square"),
-                     allowedCols = NULL,
-                     allowTransparent = FALSE,
-                     returnName = FALSE,
-                     closeOnClick = FALSE
-                   ),
-                   
-                   colourInput(
-                     "choice2color",
-                     label = "Choose 2nd color",
-                     value = "#000000",
-                     showColour = ("both"),
-                     palette = ("square"),
-                     allowedCols = NULL,
-                     allowTransparent = FALSE,
-                     returnName = FALSE,
-                     closeOnClick = FALSE
-                   ),
-                   
-                   hr(),
-                   sliderInput("mheightslider", "Adjust plot height",
-                               min = 200, max = 1000, value = 400
-                   ),
+                   radioButtons("padjbutton", label = "Filter DE tables by padj", 
+                                choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"), 
                    hr(),
                    
-                   sliderInput("mwidthslider", "Adjust plot width",
-                               min = 200, max = 1000, value = 600
-                   ),
+                   h4("Aesthetics"),
                    
-                   downloadButton(
-                     "downloadmoustache",
-                     label =
-                       "Download Plot"
-                   )
-                   ),
-              
-                 conditionalPanel(
-                   condition = "input.gseachoice == 'eplot'",
-
-                   
-                   radioButtons("topupordownbutton", h4("Top Ranked Up or Down Pathway"), 
-                                choices = list("Top Ranked Up Pathway" = "topup", "Top Ranked Down Pathway" = "topdown"), selected = "topup"),
-                   downloadButton(
-                     "downloadeplot",
-                     label =
-                       "Download Plot"
-                   )
-                 ),
-                 conditionalPanel(
-                   condition = "input.gseachoice == 'volcanoplot'",
                    colourInput(
-                     "gseavolcolor1",
+                     "volcanocolor1",
                      label = "Choose 1st color",
                      value = "#009292",
                      showColour = ("both"),
@@ -662,19 +393,8 @@ navbarMenu("GSEA",
                      closeOnClick = FALSE
                    ),
                    colourInput(
-                     "gseavolcolor2",
+                     "volcanocolor2",
                      label = "Choose 2nd color",
-                     value = "#490092",
-                     showColour = ("both"),
-                     palette = ("square"),
-                     allowedCols = NULL,
-                     allowTransparent = FALSE,
-                     returnName = FALSE,
-                     closeOnClick = FALSE
-                   ),
-                   colourInput(
-                     "gseavolcolor3",
-                     label = "Choose 3rd color",
                      value = "grey",
                      showColour = ("both"),
                      palette = ("square"),
@@ -683,799 +403,1126 @@ navbarMenu("GSEA",
                      returnName = FALSE,
                      closeOnClick = FALSE
                    ),
+                   colourInput(
+                     "volcanocolor3",
+                     label = "Choose 3rd color",
+                     value = "#490092",
+                     showColour = ("both"),
+                     palette = ("square"),
+                     allowedCols = NULL,
+                     allowTransparent = FALSE,
+                     returnName = FALSE,
+                     closeOnClick = FALSE
+                   ),
+                   hr(),
+                   h4("Table and Plot Downloads"),
+                   downloadButton("downloadDEtable", label = "Download DE Table"),
+                   hr(),
+                   
+                   downloadButton(
+                     "downloadDEVolcano",
+                     label =
+                       "Download Volcano Plot"
+                   ),
                    hr(),
                    downloadButton(
-                     "downloadvolcano",
+                     "downloadDEMA",
                      label =
-                       "Download Plot"
+                       "Download MA Plot"
                    )
+                   
                  ),
-                 conditionalPanel(
-                   condition = "input.gseachoice == 'heatmap'",
-                   downloadButton(
-                     "downloadheatmap",
-                     label =
-                       "Download Plot"
+                 mainPanel(
+                   conditionalPanel(
+                     condition = "input.DESeqtable == true",
+                     DTOutput(
+                       "DETable"
+                     )
+                   ),
+                   conditionalPanel(
+                     condition = "input.DESeqvolcano == true",
+                     plotlyOutput(
+                       "DEVolcanoPlot"
+                     )
+                   ),
+                   conditionalPanel(
+                     condition = "input.DESeqMA == true",
+                     plotlyOutput(
+                       "DEMAPlot"
+                     )
+                   ),
+                   conditionalPanel(
+                     condition = "input.DESeqHeat == true",
+                     InteractiveComplexHeatmapOutput(heatmap_id = 
+                                                       "ht"
+                     )
                    )
-                 ),
-                ),
-                              
-
-                mainPanel(
-                  conditionalPanel(
-                    condition = "input.gseachoice == 'fgseaTable'",
-                  DTOutput(
-                    "fgseaTable"
-                  )
-                  ),
-                  conditionalPanel(
-                    condition = "input.gseachoice == 'rankedplot'",
-                    plotOutput(
-                    "GSEAranked"
-                  )
-                  ),
-                  conditionalPanel(
-                    condition = "input.gseachoice == 'moustache'",
-                  plotOutput(
-                    "GSEAMoustache"
-                  )
-                  ),
-                  conditionalPanel(
-                    condition = "input.gseachoice == 'eplot'",
-                    plotOutput(
-                      "GSEAenrichment"
-                    )
-                  ),
-                  conditionalPanel(
-                    condition = "input.gseachoice == 'volcanoplot'",
-                  plotOutput(
-                    "GSEAvolcano"
-                  )
-                  )
-                  )
-                )
-              )
-            
-  ),
-  tabPanel("Gene Centric Pathway Analysis",
-           fluidPage(
-             theme =
-               shinytheme("flatly"),
-             titlePanel(
-               "GSEA: Gene Centric Pathway Analysis"
-             ),#end title
-             h4("Positive NES is upregulated in Primitive cells and negative NES is upregulated in Monocytic cells"),
-             sidebarLayout( 
-               sidebarPanel( 
-                 selectizeInput(
-                   "Pathwaygenechoice",
-                   label=
-                     "Choose a gene of interest",
-                   choices =
-                     NULL,
-                   selected = NULL,
-                   options = list(maxItems = 1)
-                 ),
-                 hr(),
-                 
-                 selectInput("genefilechoice", "Choose gmt file to load pathways containing the gene of interest",
-                 choices = c(Hallmark = "hallmark", GOall = "GOall", GOmolecular = "GOmolec", 
-                             GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
-                             allRegular = "allReg", Wiki = "wiki", Reactome = "reactome", KEGG = "KEGG",
-                             Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg")),
-          
-               hr(),
-               sliderInput("howmanypathwaysgene", "Choose How Many Pathways to Plot",
-                           min = 5, max = 60, value = 20
-               ),
-               hr(),
-               sliderInput("goiheightslider", "Adjust plot height",
-                           min = 200, max = 1000, value = 400
-               ),
-               hr(),
-               
-               sliderInput("goiwidthslider", "Adjust plot width",
-                           min = 200, max = 1000, value = 600
-               )
-               ),
-               mainPanel(
-                 plotOutput(
-                   "PathwaysGenePlot"
                  )
                )
-           )
              )
-   )
-),
- 
-#WGCNA menu####
- navbarMenu(
-   "WGCNA"
- )
-)
+    ),
+    #GSEA menu ####
+    tabPanel("GSEA",  ####GSEAtables
+             fluidPage(
+               theme =
+                 shinytheme("flatly"),
+               titlePanel(
+                 "GSEA"
+               ),#end title
+               sidebarLayout(
+                 sidebarPanel( 
+                   materialSwitch(
+                     inputId =
+                       "fgseaTable",
+                     label =
+                       "Table",
+                     value =
+                       FALSE,
+                     right =
+                       TRUE
+                   ),
+                   materialSwitch(
+                     inputId =
+                       "rankedplot",
+                     label =
+                       "Waterfall",
+                     value =
+                       FALSE,
+                     right =
+                       TRUE
+                   ),
+                   materialSwitch(
+                     inputId =
+                       "moustache",
+                     label =
+                       "Moustache",
+                     value =
+                       FALSE,
+                     right =
+                       TRUE
+                   ),
+                   materialSwitch(
+                     inputId =
+                       "eplot",
+                     label =
+                       "Enrichment",
+                     value =
+                       FALSE,
+                     right =
+                       TRUE
+                   ),
+                   materialSwitch(
+                     inputId =
+                       "volcanoplot",
+                     label =
+                       "Volcano",
+                     value =
+                       FALSE,
+                     right =
+                       TRUE
+                   ),
+                   materialSwitch(
+                     inputId =
+                       "heatmap",
+                     label =
+                       "Heatmap",
+                     value =
+                       FALSE,
+                     right =
+                       TRUE
+                   ),
+                   
+                   
+                   selectInput("filechoice", label = "Choose gmt file to load pathway sets",
+                               choices = c(Hallmark = "hallmark", GOall = "goall",GOmolecular = "GOmolec", 
+                                           GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
+                                           allRegular = "allReg", Wiki = "wiki", Reactome = "reactome", KEGG = "KEGG",
+                                           Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg")),
+                   
+                   
+                   
+                   hr(),
+                   
+                   selectizeInput(
+                     "pathwaylist",
+                     label=
+                       "Choose a pathway",
+                     choices =
+                       NULL,
+                     selected = NULL,
+                     options = list(maxItems = NULL)
+                   ),
+                   
+                   conditionalPanel(
+                     condition = "input.fgseaTable == true",
+                     downloadButton(
+                       "downloadfgsea",
+                       label =
+                         "Download GSEA Table"
+                     )
+                   ),
+                   
+                   conditionalPanel(
+                     condition = "input.rankedplot == true",
+                     downloadButton(
+                       "downloadranks",
+                       label =
+                         "Download Waterfall Plot"
+                     ),
+                     h4("Waterfall Plot Specific Options"),
+                     
+                     sliderInput("howmanypathways", "Choose How Many Pathways to Rank",
+                                 min = 5, max = 60, value = 15
+                     ),
+                     
+                     sliderInput("rankedheightslider", "Adjust plot height",
+                                 min = 200, max = 1000, value = 400
+                     ),
+                     hr(),
+                     
+                     sliderInput("rankedwidthslider", "Adjust plot width",
+                                 min = 200, max = 1000, value = 600
+                     ),
+                     colourInput(
+                       "waterfallcolor1",
+                       label = "Choose 1st color",
+                       value = "#009292",
+                       showColour = ("both"),
+                       palette = ("square"),
+                       allowedCols = NULL,
+                       allowTransparent = FALSE,
+                       returnName = FALSE,
+                       closeOnClick = FALSE
+                     ),
+                     colourInput(
+                       "waterfallcolor2",
+                       label = "Choose 2nd color",
+                       value = "#490092",
+                       showColour = ("both"),
+                       palette = ("square"),
+                       allowedCols = NULL,
+                       allowTransparent = FALSE,
+                       returnName = FALSE,
+                       closeOnClick = FALSE
+                     ),
+                     downloadButton(
+                       "downloadranks",
+                       label =
+                         "Download Waterfall Plot")
+                   ),
+                   conditionalPanel(
+                     condition = "input.moustache == true",
+                     h4("Moustache Plot Specific Options"),
+                     
+                     colourInput(
+                       "choice1color",
+                       label = "Choose 1st color",
+                       value = "#009292",
+                       showColour = ("both"),
+                       palette = ("square"),
+                       allowedCols = NULL,
+                       allowTransparent = FALSE,
+                       returnName = FALSE,
+                       closeOnClick = FALSE
+                     ),
+                     
+                     colourInput(
+                       "choice2color",
+                       label = "Choose 2nd color",
+                       value = "#000000",
+                       showColour = ("both"),
+                       palette = ("square"),
+                       allowedCols = NULL,
+                       allowTransparent = FALSE,
+                       returnName = FALSE,
+                       closeOnClick = FALSE
+                     )
+                     
+                     # hr(),
+                     # sliderInput("mheightslider", "Adjust plot height",
+                     #             min = 200, max = 1000, value = 400
+                     # ),
+                     # hr(),
+                     # 
+                     # sliderInput("mwidthslider", "Adjust plot width",
+                     #             min = 200, max = 1000, value = 600
+                     # ),
+                     # 
+                     # downloadButton(
+                     #   "downloadmoustache",
+                     #   label =
+                     #     "Download Plot"
+                     # )
+                   ),
+                   
+                   conditionalPanel(
+                     condition = "input.eplot == true",
+                     
+                     h4("Enrichment Plot Specific Options"),
+                     radioButtons("topupordownbutton", h4("Top Ranked Up or Down Pathway"), 
+                                  choices = list("Top Ranked Up Pathway" = "topup", "Top Ranked Down Pathway" = "topdown"), selected = "topup"),
+                     downloadButton(
+                       "downloadeplot",
+                       label =
+                         "Download Enrichment Plot"
+                     )
+                   ),
+                   conditionalPanel(
+                     condition = "input.volcanoplot == true",
+                     h4("Volcano Plot Specific Options"),
+                     # colourInput(
+                     #   "gseavolcolor1",
+                     #   label = "Choose 1st color",
+                     #   value = "#009292",
+                     #   showColour = ("both"),
+                     #   palette = ("square"),
+                     #   allowedCols = NULL,
+                     #   allowTransparent = FALSE,
+                     #   returnName = FALSE,
+                     #   closeOnClick = FALSE
+                     # ),
+                     # colourInput(
+                     #   "gseavolcolor2",
+                     #   label = "Choose 2nd color",
+                     #   value = "#490092",
+                     #   showColour = ("both"),
+                     #   palette = ("square"),
+                     #   allowedCols = NULL,
+                     #   allowTransparent = FALSE,
+                     #   returnName = FALSE,
+                     #   closeOnClick = FALSE
+                     # ),
+                     # colourInput(
+                     #   "gseavolcolor3",
+                     #   label = "Choose 3rd color",
+                     #   value = "grey",
+                     #   showColour = ("both"),
+                     #   palette = ("square"),
+                     #   allowedCols = NULL,
+                     #   allowTransparent = FALSE,
+                     #   returnName = FALSE,
+                     #   closeOnClick = FALSE
+                     # ),
+                     # hr(),
+                     downloadButton(
+                       "downloadvolcano",
+                       label =
+                         "Download Volcano Plot"
+                     )
+                   ),
+                   conditionalPanel(
+                     condition = "input.heatmap == true",
+                     h4("Heatmap Specific Options"),
+                     # downloadButton(
+                     #   "downloadheatmap",
+                     #   label =
+                     #     "Download Plot"
+                     # )
+                   ),
+                 ),
+                 
+                 mainPanel(
+                   conditionalPanel(
+                     condition = "input.fgseaTable == true",
+                     DTOutput(
+                       "fgseaTable"
+                     )
+                   ),
+                   conditionalPanel(
+                     condition = "input.rankedplot == true",
+                     plotOutput(
+                       "GSEAranked"
+                     )
+                   ),
+                   conditionalPanel(
+                     condition = "input.moustache == true",
+                     plotOutput(
+                       "GSEAMoustache"
+                     )
+                   ),
+                   conditionalPanel(
+                     condition = "input.eplot == true",
+                     plotOutput(
+                       "GSEAenrichment"
+                     )
+                   ),
+                   conditionalPanel(
+                     condition = "input.volcanoplot == true",
+                     plotOutput(
+                       "GSEAvolcano"
+                     )
+                   ),
+                   conditionalPanel(
+                     condition = "input.heatmap == true",
+                     InteractiveComplexHeatmapOutput(heatmap_id = "htgsea")
+                   )
+                 )
+               )
+             )
+             
+    ),
+    tabPanel("GSEA Pathway/Gene Visualization",
+             fluidPage(
+               theme =
+                 shinytheme("flatly"),
+               titlePanel(
+                 "GSEA:Pathway/Gene Visualization"
+               ),#end title
+               h4("Positive NES is upregulated in Primitive cells and negative NES is upregulated in Monocytic cells"),
+               sidebarLayout( 
+                 sidebarPanel( 
+                   selectizeInput(
+                     "Pathwaygenechoice",
+                     label=
+                       "Choose a gene of interest",
+                     choices =
+                       NULL,
+                     selected = NULL,
+                     options = list(maxItems = 1)
+                   ),
+                   hr(),
+                   
+                   selectInput("genefilechoice", "Choose gmt file to load pathways containing the gene of interest",
+                               choices = c(Hallmark = "hallmark", GOall = "GOall", GOmolecular = "GOmolec", 
+                                           GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
+                                           allRegular = "allReg", Wiki = "wiki", Reactome = "reactome", KEGG = "KEGG",
+                                           Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg")),
+                   
+                   hr(),
+                   sliderInput("goiheightslider", "Adjust plot height",
+                               min = 200, max = 1000, value = 400
+                   ),
+                   hr(),
+                   
+                   sliderInput("goiwidthslider", "Adjust plot width",
+                               min = 200, max = 1000, value = 600
+                   )
+                 ),
+                 mainPanel(
+                   plotOutput(
+                     "PathwaysGenePlot"
+                   )
+                 )
+               )
+             )
+             
+    ),
+    
+    #WGCNA menu####
+    tabPanel(
+      "WGCNA"
+    )
+  )
 #Server ####
 server <- 
   function(input, output, session) {
-  
-  print("Initializing renderPlots")
-  options(shiny.reactlog = TRUE)
-  
-  
-##QC-MultiQC plots####
-  output$QCplot <- renderPlot({
-    QCdata <- switch(
-      input$QCvar,
-      "% mapped reads" = qcdt$raw.salmon.percent_mapped,
-      "# mapped reads" = qcdt$raw.salmon.num_mapped,
-      "% uniquely mapped reads" = qcdt$raw.star.uniquely_mapped_percent,
-      "# uniquely mapped reads" = qcdt$raw.star.uniquely_mapped,
-      "Sample_ID" = qcdt$metadata.sample_id
-    )
- 
- Sample_ID <-qcdt$metadata.sample_id 
-  
-  ggplot(
-    qcdt,
-    aes(
-      x = Sample_ID,
-      y = QCdata
-      )) +
-    geom_point(alpha = 0.5) +
-    theme_cowplot (12) +
-    theme(axis.text.x =
-            element_text(angle = 60, hjust = 1))
-  }) #end renderPlot
-  
-  # PCA plots ####
- 
-  PCAdata <-
-    eventReactive(input$PCAvar, {
-       if (input$PCAvar == "VST PCA") {
-        vsd.pca
-      } else if (input$PCAvar == "VST + batch corrected PCA") {
-        bcvsd.pca
-       }
-    })
-  
-  # PCA Scree data ####
-  # VSD PCA variance
-  PC_var_VST <- data.frame(PC =paste0("PC", 1:12),variance =(((vsd2.pca$sdev) ^ 2 / sum((vsd2.pca$sdev) ^ 2)) * 100))
-  lorder_VST <- as.vector(outer(c("PC"), 1:12, paste, sep = ""))
-  PC_var_VST$PC <-factor(PC_var_VST$PC,levels = lorder_VST)
-  
-  #batch corrected PCA variance
-  PC_var_bc <-data.frame(PC =paste0("PC", 1:12),variance =(((bcvsd2.pca$sdev) ^ 2 / sum((bcvsd2.pca$sdev) ^ 2)) * 100))
-  lorder_bc <-as.vector(outer(c("PC"), 1:12, paste, sep = ""))
-  PC_var_bc$PC <-factor(PC_var_bc$PC,levels = lorder_bc)
-  
-  PC_var_data <-
-    eventReactive(input$PCAvarscree, {
-      if (input$PCAvarscree == "VST PCA") {
-        PC_var_VST
-      } else if (input$PCAvarscree == "VST + batch corrected PCA") {
-        PC_var_bc
-      }
-    })
-  # reactive function for plot title
-  PCA_title <- 
-    reactive({
-       if (input$PCAvar == "VST PCA") {
+    
+    print("Initializing renderPlots")
+    options(shiny.reactlog = TRUE)
+    
+    
+    ##QC-MultiQC plots####
+    #  output$QCplot <- renderPlot({
+    #    QCdata <- switch(
+    #      input$QCvar,
+    #      "% mapped reads" = qcdt$raw.salmon.percent_mapped,
+    #      "# mapped reads" = qcdt$raw.salmon.num_mapped,
+    #      "% uniquely mapped reads" = qcdt$raw.star.uniquely_mapped_percent,
+    #      "# uniquely mapped reads" = qcdt$raw.star.uniquely_mapped,
+    #      "Sample_ID" = qcdt$metadata.sample_id
+    #    )
+    # 
+    # Sample_ID <-qcdt$metadata.sample_id 
+    #  
+    #  ggplot(
+    #    qcdt,
+    #    aes(
+    #      x = Sample_ID,
+    #      y = QCdata
+    #      )) +
+    #    geom_point(alpha = 0.5) +
+    #    theme_cowplot (12) +
+    #    theme(axis.text.x =
+    #            element_text(angle = 60, hjust = 1))
+    #  }) #end renderPlot
+    
+    # PCA plots ####
+    
+    PCAdata <-
+      eventReactive(input$PCAvar, {
+        if (input$PCAvar == "VST PCA") {
+          vsd.pca
+        } else if (input$PCAvar == "VST + batch corrected PCA") {
+          bcvsd.pca
+        }
+      })
+    
+    # PCA Scree data ####
+    # VSD PCA variance
+    PC_var_VST <- data.frame(PC =paste0("PC", 1:12),variance =(((vsd2.pca$sdev) ^ 2 / sum((vsd2.pca$sdev) ^ 2)) * 100))
+    lorder_VST <- as.vector(outer(c("PC"), 1:12, paste, sep = ""))
+    PC_var_VST$PC <-factor(PC_var_VST$PC,levels = lorder_VST)
+    
+    #batch corrected PCA variance
+    PC_var_bc <-data.frame(PC =paste0("PC", 1:12),variance =(((bcvsd2.pca$sdev) ^ 2 / sum((bcvsd2.pca$sdev) ^ 2)) * 100))
+    lorder_bc <-as.vector(outer(c("PC"), 1:12, paste, sep = ""))
+    PC_var_bc$PC <-factor(PC_var_bc$PC,levels = lorder_bc)
+    
+    PC_var_data <-
+      eventReactive(input$PCAvar, {
+        if (input$PCAvar == "VST PCA") {
+          PC_var_VST
+        } else if (input$PCAvar == "VST + batch corrected PCA") {
+          PC_var_bc
+        }
+      })
+    # reactive function for plot title
+    PCA_title <- 
+      reactive({
+        if (input$PCAvar == "VST PCA") {
           print("VST PCA")
         } else if (input$PCAvar == "VST + batch corrected PCA") {
           print("VST + batch corrected PCA")
         }
-    })
-  
-  #define objects for defining x label to include % variance of PC1
-  pc1varvsd <- paste("PC1", (round(vsd.variance[3, 1] * 100, 1)), "% variance")
-  pc1varbcvsd <- paste("PC1", (round(bcvsd.variance[3, 1] * 100, 1)), "% variance")
-  
-  # add reactive expression for x label for PC1 
-  variance_PC1 <-
-    eventReactive(input$PCAvar, {
-     if (input$PCAvar == "VST PCA") {
-        pc1varvsd
-      } else if (input$PCAvar == "VST + batch corrected PCA") {
-        pc1varbcvsd
-      }
-    })
-  #new objects with calculation only to use in calculation of PC2 % variance
-
-  pc12 <- round(vsd.variance[3, 1] * 100, 1)
-  pc13 <- round(bcvsd.variance[3, 1] * 100, 1)
-  
-  #create objects for defining Y label of PC2
-
-  pc2varvsd <-
-    paste("PC2", (round(vsd.variance[3, 2] * 100 - pc12, 1)), "% variance")
-  pc2varbcvsd <-
-    paste("PC2", (round(bcvsd.variance[3, 2] * 100 - pc13, 1)), "% variance")
-
-    #reactive expression for adding y labels for pc2
-  variance_PC2 <-
-    reactive({
-     if (input$PCAvar == "VST PCA") {
-        pc2varvsd
-      } else if (input$PCAvar == "VST + batch corrected PCA") {
-        pc2varbcvsd
-      }
-    })
-  
-  
-  output$PCAplot <- renderPlot ({
-    colors <-
-      c(input$PCAcolor1, input$PCAcolor2)
-   ggplot(PCAdata(), aes(x = PC1, y = PC2, fill = batch, shape = condition)) + 
-      geom_point(size = 5) + 
-      scale_shape_manual(values = c(21, 24), name = '') +
-      scale_fill_manual(values = colors) +
-      theme_cowplot() + 
-      theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-      theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-      xlab(variance_PC1()) + 
-      ylab(variance_PC2()) +
-      ggtitle(PCA_title()) +
-      guides(fill=guide_legend(override.aes = list(color=colors))) +
-      geom_text_repel(aes(label=sample_name),hjust=0, vjust=0)
- 
-  })
-  
-  #PCA plots download ####
-  output$downloadPlotPCA <- downloadHandler(
-    filename = function() { paste(input$PCAvar, '.png', sep='') },
-    content = function(file) {
-      ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
-    }
-  )
-  PCA_var_title <- 
-    reactive({
-      if (input$PCAvarscree == "VST PCA") {
-        print("VST PC variance")
-      } else if (input$PCAvarscree == "VST + batch corrected PCA") {
-        print("VST + batch corrected PC variance")
-      }
-    })
-  # PCA scree plot ####
-  output$PCAvarplot <- renderPlot ({
-    ggplot(PC_var_data(),
-           aes(x = PC,
-               y = variance,
-               group = 2)) +
-      geom_point(size = 2) +
-      geom_line() +
-      theme_cowplot() +
-      labs(x = "PC",
-           y = "% Variance") +
-      labs(title =
-             PCA_var_title())
-  })
-  #PCA Scree download ####
-  output$downloadPlotscree <- downloadHandler(
-    filename = function() { paste(input$PCAvarscree, '.png', sep='') },
-    content = function(file) {
-      ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
-    }
-  )
-##Gene Centric output ####
- updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
- 
- datavst<-
-   reactive({
-     vst.goi %>% 
-       dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
-   })
- 
-
-#make sure duplicate selections are not allowed with radio buttons
- observeEvent(input$XaxisVar_CDgene, {
-   if(input$XaxisVar_CDgene == "xvalue") {
-     mychoices <- c("Class" = "yclass", "Gene" = "ygene")
-      }else if(input$XaxisVar_CDgene=="xclass") {
-     mychoices <- c("Value"="yvalue", "Gene"="ygene")
-     } else if(input$XaxisVar_CDgene=="xgene") {
-     mychoices <- c("Value" = "yvalue", "Class" = "yclass")
-     }
-   updateRadioButtons(session, "YaxisVar_CDgene", choices = mychoices)
- })
- 
- 
-  #x axis output
- xvar_CDgene <-
-   eventReactive(input$XaxisVar_CDgene, {
-     if (input$XaxisVar_CDgene == "xvalue") {
-       "value"
-     } else if (input$XaxisVar_CDgene == "xclass") {
-       "class"
-     } else if (input$XaxisVar_CDgene == "xgene") {
-       "ext_gene"
-     }
-   })
-  #y axis output f
- yvar_CDgene <-
-   eventReactive(input$YaxisVar_CDgene, {
-     if (input$YaxisVar_CDgene == "yvalue") {
-       "value"
-     } else if (input$YaxisVar_CDgene == "yclass") {
-       "class"
-     } else if (input$YaxisVar_CDgene == "ygene") {
-       "ext_gene"
-     }
-   })
-  #fill output
- fillvar_CDgene <-
-   eventReactive(input$FillVar_CDgene, {
-     if (input$FillVar_CDgene == "fillclass") {
-       "class"
-     } else if (input$FillVar_CDgene == "fillgene") {
-       "ext_gene"
-     }
-   })
- Gene_facet <- 
-   eventReactive(input$genefacetbutton, {
-     if(input$genefacetbutton == TRUE) {
-       facet_grid(ext_gene ~ class, scales = 'free') 
-     } else(NULL)
-   })
-# colorpalettechoices <- 
-#   eventReactive(input$PalletteChoices, {
-#     if(input$PaletteChoices == "Dark") {
-#       scale_color_brewer(palette = "Dark2")
-#     } else if(input$PaletteChoices == "PurpleGreen") {
-#       scale_color_brewer(palette = "PRGn")
-#     } else if(input$PaletteChoices == "RedBlue") {
-#       scale_color_brewer(palette = "RdBu")
-#     } else if(input$PaletteChoices == "YellowGreenBlue") {
-#       scale_color_brewer(palette = "YlGnBu")
-#     }
-#   })
- #plot output
-  output$VSTCDplot <-
-    renderPlot(
-      width = function() input$genewidthslider,
-      height = function() input$geneheightslider,
-      {
- #build a color palette
-      colors <-
-        colorRampPalette(c(input$genecolor1, input$genecolor2, input$genecolor3))(10)
-      ggplot(datavst(),
-             aes(
-               x = .data[[xvar_CDgene()]],
-               y =  .data[[yvar_CDgene()]],
-               fill = .data[[fillvar_CDgene()]]
-             )) +
-        geom_boxplot(outlier.shape = NA) +
-        scale_fill_manual(values = colors) +
-        scale_color_manual(values = colors) +
-        geom_point(alpha = 0.5,
-                   position = position_jitterdodge(jitter.width = 0.2),
-                   aes(color = ext_gene)) + #this needs to be reactive too
-        theme_light() +
-        Gene_facet() +
-        ylab("") +
-        xlab("") +
-        ggtitle("Gene Expression:Sensitive vs Resistant")
-    }) #end render plot
-
-  output$downloadGenePlot <- downloadHandler(
-    filename = function() { paste('GeneCentricPlot','.png', sep='') },
-    content = function(file) {
-      ggsave(file, device = "png", width = 8,
-             height = 8, dpi = 72)
-    }
-  )
-
-  #DESEq #####
-  
-## DESeq2- Cancer Discovery outputs
-
-#   DElog2 <-
-#     reactive({
-#       dds.res[dds.res$log2FoldChange >= input$CDlog2foldchangeslider & dds.res$log2FoldChange <= input$CDlog2foldchangeslider, ]
-#     })
-
-  #function for sidebar input to create filtered DE table and associated volcano plot
-  CD_DE_DT <- 
-    reactive({
-      if (input$padjbutton == "sigvar1" &
-          input$DiffExpButton == "DEup") {
-        dds.res %>%
-          dplyr::filter(DiffExp == "up" & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEup") {
-        dds.res %>%
-          dplyr::filter(DiffExp == "up" & padj <= 0.05)
-      } else if (input$padjbutton == "sigvar1" &
-                 input$DiffExpButton == "DEdown") {
-        dds.res %>%
-          dplyr::filter(DiffExp == "down" & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEdown") {
-        dds.res %>%
-          dplyr::filter(DiffExp == "down" & padj <= 0.05)
-      } else if (input$padjbutton == "sigvar1" &
-                 input$DiffExpButton == "DEno") {
-        dds.res %>%
-          dplyr::filter(DiffExp == "no" & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEno") {
-        dds.res %>%
-          dplyr::filter(DiffExp == "no" & padj <= 0.05)
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEall") {
-        dds.res
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEup") {
-        dds.res %>%
-          dplyr::filter(DiffExp == "up" & padj >= 0)
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEdown") {
-        dds.res %>%
-          dplyr::filter(DiffExp == "down" & padj >= 0)
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEno") {
-        dds.res %>%
-          dplyr::filter(DiffExp == "no" & padj >= 0)
-      } else if (input$padjbutton == "sigvar1" &
-                 input$DiffExpButton == "DEall") {
-        dds.res %>%
-          dplyr::filter(DiffExp == c("up", "down", "no") & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEall") {
-        dds.res %>%
-          dplyr::filter(DiffExp == c("up", "down", "no") & padj <= 0.05)
-      } 
-    })
-  
-  CD_DE_DT_sing <- 
-    reactive({
-      if (input$padjbutton == "sigvar1" &
-          input$DiffExpButton == "DEup" & input$singscorebutton == TRUE) {
-        dds.resscore %>%
-          dplyr::filter(DiffExp == "up" & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEup" & input$singscorebutton == TRUE) {
-        dds.resscore %>%
-          dplyr::filter(DiffExp == "up" & padj <= 0.05)
-      } else if (input$padjbutton == "sigvar1" &
-                 input$DiffExpButton == "DEdown" & input$singscorebutton == TRUE) {
-        dds.resscore %>%
-          dplyr::filter(DiffExp == "down" & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEdown" & input$singscorebutton == TRUE) {
-        dds.resscore %>%
-          dplyr::filter(DiffExp == "down" & padj <= 0.05)
-      } else if (input$padjbutton == "sigvar1" &
-                 input$DiffExpButton == "DEno" & input$singscorebutton == TRUE) {
-        dds.resscore %>%
-          dplyr::filter(DiffExp == "no" & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEno" & input$singscorebutton == TRUE) {
-        dds.resscore %>%
-          dplyr::filter(DiffExp == "no" & padj <= 0.05)
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEall"& input$singscorebutton == TRUE ) {
-        dds.resscore
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEup" & input$singscorebutton == TRUE) {
-        dds.resscore %>%
-          dplyr::filter(DiffExp == "up" & padj >= 0)
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEdown" & input$singscorebutton == TRUE) {
-        dds.resscore %>%
-          dplyr::filter(DiffExp == "down" & padj >= 0)
-      } else if (input$padjbutton == "allvar" &
-                 input$DiffExpButton == "DEno" & input$singscorebutton == TRUE) {
-        dds.resscore %>%
-          dplyr::filter(DiffExp == "no" & padj >= 0)
-      } else if (input$padjbutton == "sigvar1" &
-                 input$DiffExpButton == "DEall" & input$singscorebutton == TRUE) {
-        dds.resscore %>%
-          dplyr::filter(DiffExp == c("up", "down", "no") & padj <= 0.01)
-      } else if (input$padjbutton == "sigvar5" &
-                 input$DiffExpButton == "DEall" & input$singscorebutton == TRUE) {
-        dds.resscore %>%
-          dplyr::filter(DiffExp == c("up", "down", "no") & padj <= 0.05)
-      }
-    })
-  #object for volcano plot data using DE and singscore tables
-  vol_sig_values <- 
-    reactive({
-      if(input$sigvaluesbutton == "sigvar0.05" ) {
-        dds.res %>% 
-          dplyr::filter(padj <= 0.05)
-      } else if(input$sigvaluesbutton == "sigvar0.01") {
-        dds.res %>% 
-          dplyr::filter(padj <= 0.01)
-      }else if(input$sigvaluesbutton == "allvar2") {
-        dds.res %>% 
-          dplyr::filter(padj > 0)
-      } 
       })
-  #output DE table with adjustment for singscore
-   output$DETable <-
-     renderDataTable({
-       if(input$singscorebutton == TRUE) {
-         CD_DE_DT_sing()
-       } else if(input$singscorebutton == FALSE) {
-         CD_DE_DT()
-       }
-       
-     })
- 
-   # download DE table
-   output$downloadDEtable <- downloadHandler(
-     filename = function() { paste("DESeqTable", '.csv', sep='') },
-     content = function(file) {
-       write.csv(CD_DE_DT(),file)
-     }
-   )
-   
-   output$DEVolcanoPlot <-
-     renderPlotly( 
-       # width = function() input$volwidthslider,
-       #           height = function() input$volheightslider,
-                 {
-      colors <- c(input$volcanocolor1, input$volcanocolor2, input$volcanocolor3)
-      p <- ggplot(vol_sig_values(), aes(
-         x = log2FoldChange,
-         y = -log10(padj),
-         col = DiffExp,
-         text = Gene
-       )) +
-         geom_point(size = 1, alpha = 0.5) +
-         theme_light() +
-         scale_colour_manual(values = colors) +
-         ggtitle("DE Volcano Plot") +
-         # geom_text_repel(
-         #   max.overlaps = 15,
-         #   aes(label = ifelse(
-         #     padj < 5e-20 &
-         #       abs(log2FoldChange) >= 0.5,
-         #     as.character(Gene),
-         #     ""
-         #   )),
-         #   hjust = 0,
-         #   vjust = 0
-         # ) +
-         coord_cartesian(xlim = c(-10, 7))
-      ggplotly(p)
-     })
-   # output$gene_name <- renderText({
-   #   if(input$point_hover) {
-   #     print(dds.res$Gene)
-   #   }
-   # })
-   output$downloadDEVolcano <- downloadHandler(
-     filename = function() { paste(input$sigvaluesbutton, '.png', sep='') },
-     content = function(file) {
-       ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
-     }
-   )
-   output$DEMAPlot <- renderPlotly ({
-     
-     ma <- ggmaplot(
-       dds.res,
-       fdr = 0.05,
-       fc = (2 ^ 1),
-       size = 1.5,
-       alpha = 0.7,
-       palette =  
-         c(input$MAcolor1, input$MAcolor2, input$MAcolor3),
-       legend = NULL,
-       top = TRUE,
-       title = "DE MA Plot",
-       ggtheme = ggplot2::theme_light())
-     ggplotly(ma)
-   })
-   output$downloadDEMA <- downloadHandler(
-     filename = function() { paste('DESeqMAplot', '.png', sep='') },
-     content = function(file) {
-       ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
-     }
-   )
-   
-####GSEA output ####
-#run GSEA for chosen pathway input
-  
-
-   #make an object to hold the values of the selectInput for gsea pathway choices
-   gsea_file_values <- list("hallmark" = pathways.hallmark,
-                            "goall" = pathways.GOall,
-                            "GOmolec" = pathways.GOmolec, 
-                            "GOcellcomp" = pathways.GOcellcomp,
-                            "GObio" = pathways.GObio,
-                            "TFtargets" = pathways.TFtargets,
-                            "allReg" = pathways.allReg,
-                            "wiki" = pathways.Wiki,
-                            "reactome" = pathways.Reactome,
-                            "KEGG" = pathways.KEGG,
-                            "positional" = pathways.Positional,
-                            "biocarta" = pathways.Positional,
-                            "lsc" = pathways.lsc,
-                            "aeg" = pathways.aeg)
-   
-   gene_gsea_file_values <- list("hallmark" = pathways.hallmark,
-                            "goall" = pathways.GOall,
-                            "GOmolec" = pathways.GOmolec, 
-                            "GOcellcomp" = pathways.GOcellcomp,
-                            "GObio" = pathways.GObio,
-                            "TFtargets" = pathways.TFtargets,
-                            "allReg" = pathways.allReg,
-                            "wiki" = pathways.Wiki,
-                            "reactome" = pathways.Reactome,
-                            "KEGG" = pathways.KEGG,
-                            "positional" = pathways.Positional,
-                            "biocarta" = pathways.Positional,
-                            "lsc" = pathways.lsc,
-                            "aeg" = pathways.aeg)
-   #reactive expression to run fgsea and load results table for each chosen pathway
-   gseafile <-
-     reactive({
-       pathwaygsea <- gsea_file_values[[input$filechoice]]
-          fgseaRes <- fgsea::fgsea(pathways = pathwaygsea, stats = ranks, nproc = 1)
-          fgseaResTidy <- fgseaRes %>%
-            as_tibble() %>%
-            arrange(desc(NES))
-          fgseaResTidy
-       })
- 
-  #filter Res table for chosen pathway to show in a waterfall plot
-   gseafile_waterfall <-
-     reactive({
-       pathwaygsea <- gsea_file_values[[input$filechoice]]
-         fgseaRes <-
-           fgsea::fgsea(pathways = pathwaygsea,
-                        stats = ranks,
-                        nproc = 1)
-         fgseaResTidy <- fgseaRes %>%
-           as_tibble() %>%
-           arrange(desc(NES))
-         top15 <- fgseaResTidy %>% 
-                   top_n(n = input$howmanypathways, wt = NES)
-                 bottom15 <- fgseaResTidy %>%
-                   top_n(n = -(input$howmanypathways), wt = NES)
-                 fgseaResTidy <- rbind.data.frame(top15, bottom15)
-                 fgseaResTidy
-       })
-  
-  #table output for Res tables
-   output$fgseaTable <- renderDataTable({
-     if (input$gseachoice == "fgseaTable") {
-       gseafile()
-   }
-   })
-   # 
-   #### GSEA pathway ranks waterfall plot ####
-
-   output$GSEAranked <- renderPlot(
-     width = function() input$rankedwidthslider,
-     height = function() input$rankedheightslider,
-     {
-     if(input$gseachoice == "rankedplot") {
-       colors <- c(input$waterfallcolor1, input$waterfallcolor2)
-       ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
-         geom_col(aes(fill= padj < 0.05)) +
-         scale_fill_manual(values = colors) +
-         coord_flip() +
-         labs(x="Pathway", y="Normalized Enrichment Score (Positive NES = Upregulated in Primitive
-Negative NES = Upregulated in Monocytic)",
-              title="Pathway NES from GSEA") +
-         theme_minimal()
-     }
-   })
-
-   #### GSEA moustache plot ####
- 
-   toplotMoustache <-
-     reactive({
-       pathwaygsea <- gsea_file_values[[input$filechoice]]
-       fgseaRes <-
-         fgsea::fgsea(pathways = pathwaygsea,
-                      stats = ranks,
-                      nproc = 1)
-       fgseaResTidy <- fgseaRes %>%
-         as_tibble() %>%
-       arrange(desc(NES))
-         toplotMoustache <-
-           cbind.data.frame(fgseaResTidy$pathway,
-                            fgseaResTidy$NES,
-                            fgseaResTidy$padj,
-                            fgseaResTidy$pval)
-         colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval")
-         toplotMoustache <- toplotMoustache %>%
-           mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no'))
-     })
-
-    output$GSEAMoustache <- renderPlot(
-      width = function() input$mwidthslider,
-      height = function() input$mheightslider,
-      {
-      if(input$gseachoice == "moustache") {
-colors <- c(input$choice1color, input$choice2color)
-      m <- ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) + 
-        geom_point() +
-        theme_minimal() +
-        xlab('NES') +
-        scale_colour_manual(values = colors) +
-        ylab('adjusted p-value') +
-        ggtitle("Pathways from GSEA") + #reactive
-        geom_text_repel(max.overlaps = 50,
-                        aes(label=ifelse(padj<0.05,as.character(fgseaResTidy$pathway),"")),
-                        hjust=0,vjust=0)
-        coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1))
-        print(m)
+    
+    #define objects for defining x label to include % variance of PC1
+    pc1varvsd <- paste("PC1", (round(vsd.variance[3, 1] * 100, 1)), "% variance")
+    pc1varbcvsd <- paste("PC1", (round(bcvsd.variance[3, 1] * 100, 1)), "% variance")
+    
+    # add reactive expression for x label for PC1 
+    variance_PC1 <-
+      eventReactive(input$PCAvar, {
+        if (input$PCAvar == "VST PCA") {
+          pc1varvsd
+        } else if (input$PCAvar == "VST + batch corrected PCA") {
+          pc1varbcvsd
+        }
+      })
+    #new objects with calculation only to use in calculation of PC2 % variance
+    
+    pc12 <- round(vsd.variance[3, 1] * 100, 1)
+    pc13 <- round(bcvsd.variance[3, 1] * 100, 1)
+    
+    #create objects for defining Y label of PC2
+    
+    pc2varvsd <-
+      paste("PC2", (round(vsd.variance[3, 2] * 100 - pc12, 1)), "% variance")
+    pc2varbcvsd <-
+      paste("PC2", (round(bcvsd.variance[3, 2] * 100 - pc13, 1)), "% variance")
+    
+    #reactive expression for adding y labels for pc2
+    variance_PC2 <-
+      reactive({
+        if (input$PCAvar == "VST PCA") {
+          pc2varvsd
+        } else if (input$PCAvar == "VST + batch corrected PCA") {
+          pc2varbcvsd
+        }
+      })
+    
+    
+    output$PCAplot <- renderPlot ({
+      colors <-
+        c(input$PCAcolor1, input$PCAcolor2)
+      ggplot(PCAdata(), aes(x = PC1, y = PC2, fill = batch, shape = condition)) + 
+        geom_point(size = 5) + 
+        scale_shape_manual(values = c(21, 24), name = '') +
+        scale_fill_manual(values = colors) +
+        theme_cowplot() + 
+        theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+        theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+        xlab(variance_PC1()) + 
+        ylab(variance_PC2()) +
+        ggtitle(PCA_title()) +
+        guides(fill=guide_legend(override.aes = list(color=colors))) +
+        geom_text_repel(aes(label=sample_name),hjust=0, vjust=0)
+      
+    })
+    
+    #PCA plots download ####
+    output$downloadPlotPCA <- downloadHandler(
+      filename = function() { paste(input$PCAvar, '.png', sep='') },
+      content = function(file) {
+        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+      }
+    )
+    PCA_var_title <- 
+      reactive({
+        if (input$PCAvar == "VST PCA") {
+          print("VST PC variance")
+        } else if (input$PCAvar == "VST + batch corrected PCA") {
+          print("VST + batch corrected PC variance")
+        }
+      })
+    # PCA scree plot ####
+    output$PCAvarplot <- renderPlot ({
+      ggplot(PC_var_data(),
+             aes(x = PC,
+                 y = variance,
+                 group = 2)) +
+        geom_point(size = 2) +
+        geom_line() +
+        theme_cowplot() +
+        labs(x = "PC",
+             y = "% Variance") +
+        labs(title =
+               PCA_var_title())
+    })
+    #PCA Scree download ####
+    output$downloadPlotscree <- downloadHandler(
+      filename = function() { paste(input$PCAvarscree, '.png', sep='') },
+      content = function(file) {
+        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+      }
+    )
+    ##Gene Centric output ####
+    updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
+    
+    datavst<-
+      reactive({
+        vst.goi %>% 
+          dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
+      })
+    
+    
+    #make sure duplicate selections are not allowed with radio buttons
+    observeEvent(input$XaxisVar_CDgene, {
+      if(input$XaxisVar_CDgene == "xvalue") {
+        mychoices <- c("Gene" = "ygene")
+      } else if(input$XaxisVar_CDgene=="xgene") {
+        mychoices <- c("Value" = "yvalue")
+      }
+      updateRadioButtons(session, "YaxisVar_CDgene", choices = mychoices)
+    })
+    
+    
+    #x axis output
+    xvar_CDgene <-
+      eventReactive(input$XaxisVar_CDgene, {
+        if (input$XaxisVar_CDgene == "xvalue") {
+          "value"
+        } else if (input$XaxisVar_CDgene == "xgene") {
+          "ext_gene"
+        }
+      })
+    #y axis output f
+    yvar_CDgene <-
+      eventReactive(input$YaxisVar_CDgene, {
+        if (input$YaxisVar_CDgene == "yvalue") {
+          "value"
+        } else if (input$YaxisVar_CDgene == "ygene") {
+          "ext_gene"
+        }
+      })
+    #fill output
+    # fillvar_CDgene <-
+    #   eventReactive(input$FillVar_CDgene, {
+    #     if (input$FillVar_CDgene == "fillclass") {
+    #       "class"
+    #     } else if (input$FillVar_CDgene == "fillgene") {
+    #       "ext_gene"
+    #     }
+    #   })
+    Gene_facet <- 
+      eventReactive(input$genefacetbutton, {
+        if(input$genefacetbutton == TRUE) {
+          facet_grid(ext_gene ~ class, scales = 'free') 
+        } else(NULL)
+      })
+    # colorpalettechoices <- 
+    #   eventReactive(input$PalletteChoices, {
+    #     if(input$PaletteChoices == "Dark") {
+    #       scale_color_brewer(palette = "Dark2")
+    #     } else if(input$PaletteChoices == "PurpleGreen") {
+    #       scale_color_brewer(palette = "PRGn")
+    #     } else if(input$PaletteChoices == "RedBlue") {
+    #       scale_color_brewer(palette = "RdBu")
+    #     } else if(input$PaletteChoices == "YellowGreenBlue") {
+    #       scale_color_brewer(palette = "YlGnBu")
+    #     }
+    #   })
+    #plot output
+    output$VSTCDplot <-
+      renderPlot(
+        width = function() input$genewidthslider,
+        height = function() input$geneheightslider,
+        {
+          #build a color palette
+          colors <-
+            colorRampPalette(c(input$genecolor1, input$genecolor2, input$genecolor3))(10)
+          ggplot(datavst(),
+                 aes(
+                   x = .data[[xvar_CDgene()]],
+                   y =  .data[[yvar_CDgene()]],
+                   fill = class
+                 )) +
+            geom_boxplot(outlier.shape = NA) +
+            scale_fill_manual(values = colors) +
+            scale_color_manual(values = colors) +
+            geom_point(alpha = 0.5,
+                       position = position_jitterdodge(jitter.width = 0.2),
+                       aes(color = ext_gene)) + #this needs to be reactive too
+            theme_light() +
+            Gene_facet() +
+            ylab("") +
+            xlab("") +
+            ggtitle("Gene Expression:Sensitive vs Resistant")
+        }) #end render plot
+    
+    output$downloadGenePlot <- downloadHandler(
+      filename = function() { paste('GeneCentricPlot','.png', sep='') },
+      content = function(file) {
+        ggsave(file, device = "png", width = 8,
+               height = 8, dpi = 72)
+      }
+    )
+    
+    #DESEq #####
+    
+    ## DESeq2- Cancer Discovery outputs
+    
+    #   DElog2 <-
+    #     reactive({
+    #       dds.res[dds.res$log2FoldChange >= input$CDlog2foldchangeslider & dds.res$log2FoldChange <= input$CDlog2foldchangeslider, ]
+    #     })
+    
+    #function for sidebar input to create filtered DE table and associated volcano plot
+    CD_DE_DT <- 
+      reactive({
+        if (input$padjbutton == "sigvar1") {
+          dds.res %>%
+            dplyr::filter(padj <= 0.01)
+        } else if (input$padjbutton == "sigvar5") {
+          dds.res %>%
+            dplyr::filter(padj <= 0.05)
+        } else if (input$padjbutton == "sigvar1") {
+          dds.res %>%
+            dplyr::filter(padj <= 0.01)
+        } else if (input$padjbutton == "sigvar5") {
+          dds.res %>%
+            dplyr::filter(padj <= 0.05)
+        } else if (input$padjbutton == "sigvar1") {
+          dds.res %>%
+            dplyr::filter(padj <= 0.01)
+        } else if (input$padjbutton == "sigvar5") {
+          dds.res %>%
+            dplyr::filter(padj <= 0.05)
+        } else if (input$padjbutton == "allvar") {
+          dds.res
+        } else if (input$padjbutton == "sigvar1") {
+          dds.res %>%
+            dplyr::filter(padj <= 0.01)
+        } else if (input$padjbutton == "sigvar5") {
+          dds.res %>%
+            dplyr::filter(padj <= 0.05)
+        } 
+      })
+    
+    CD_DE_DT_sing <- 
+      reactive({
+        if (input$padjbutton == "sigvar1" & input$singscorebutton == TRUE) {
+          dds.resscore %>%
+            dplyr::filter(padj <= 0.01)
+        } else if (input$padjbutton == "sigvar5" & input$singscorebutton == TRUE) {
+          dds.resscore %>%
+            dplyr::filter(padj <= 0.05)
+        } else if (input$padjbutton == "sigvar1" & input$singscorebutton == TRUE) {
+          dds.resscore %>%
+            dplyr::filter(padj <= 0.01)
+        } else if (input$padjbutton == "sigvar5" & input$singscorebutton == TRUE) {
+          dds.resscore %>%
+            dplyr::filter(padj <= 0.05)
+        } else if (input$padjbutton == "sigvar1" & input$singscorebutton == TRUE) {
+          dds.resscore %>%
+            dplyr::filter(padj <= 0.01)
+        } else if (input$padjbutton == "sigvar5" & input$singscorebutton == TRUE) {
+          dds.resscore %>%
+            dplyr::filter(padj <= 0.05)
+        } else if (input$padjbutton == "allvar" & input$singscorebutton == TRUE ) {
+          dds.resscore
+        } else if (input$padjbutton == "sigvar1" & input$singscorebutton == TRUE) {
+          dds.resscore %>%
+            dplyr::filter(padj <= 0.01)
+        } else if (input$padjbutton == "sigvar5" & input$singscorebutton == TRUE) {
+          dds.resscore %>%
+            dplyr::filter(padj <= 0.05)
+        }
+      })
+    #object for volcano plot data using DE and singscore tables
+    # vol_sig_values <- 
+    #   reactive({
+    #     if(input$sigvaluesbutton == "sigvar0.05" ) {
+    #       dds.res %>% 
+    #         dplyr::filter(padj <= 0.05)
+    #     } else if(input$sigvaluesbutton == "sigvar0.01") {
+    #       dds.res %>% 
+    #         dplyr::filter(padj <= 0.01)
+    #     }else if(input$sigvaluesbutton == "allvar2") {
+    #       dds.res %>% 
+    #         dplyr::filter(padj > 0)
+    #     } 
+    #     })
+    #output DE table with adjustment for singscore
+    output$DETable <-
+      renderDataTable({
+        if(input$singscorebutton == TRUE) {
+          CD_DE_DT_sing()
+        } else if(input$singscorebutton == FALSE) {
+          CD_DE_DT()
+        }
+        
+      })
+    
+    # download DE table
+    output$downloadDEtable <- downloadHandler(
+      filename = function() { paste("DESeqTable", '.csv', sep='') },
+      content = function(file) {
+        write.csv(CD_DE_DT(),file)
+      }
+    )
+    #DE Volcano Plot ####
+    
+    output$DEVolcanoPlot <-
+      renderPlotly({
+        colors <- c(input$volcanocolor1, input$volcanocolor2, input$volcanocolor3)
+        p <- ggplot(dds.res, aes(
+          x = `log2FoldChange(Prim/Mono)`,
+          y = -log10(padj),
+          col = DiffExp,
+          text = Gene
+        )) +
+          geom_point(size = 1, alpha = 0.5) +
+          theme_light() +
+          scale_colour_manual(values = colors) +
+          ggtitle("DE Volcano Plot") +
+          coord_cartesian(xlim = c(-10, 7))
+        ggplotly(p)
+      })
+    
+    output$downloadDEVolcano <- downloadHandler(
+      filename = function() { paste(input$sigvaluesbutton, '.png', sep='') },
+      content = function(file) {
+        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+      }
+    )
+    
+    #DE MA Plot ####
+    # output$DEMAPlot <- renderPlotly ({
+    #   
+    #   ma <- ggmaplot(
+    #     dds.res,
+    #     fdr = 0.05,
+    #     fc = 2 ^ 1,
+    #     size = 1.5,
+    #     alpha = 0.7,
+    #     palette =  
+    #       c(input$volcanocolor1, input$volcanocolor2, input$volcanocolor3),
+    #     legend = NULL,
+    #     top = TRUE,
+    #     title = "DE MA Plot",
+    #     ggtheme = ggplot2::theme_light())
+    #   ggplotly(ma)
+    # })
+    
+    output$downloadDEMA <- downloadHandler(
+      filename = function() { paste('DESeqMAplot', '.png', sep='') },
+      content = function(file) {
+        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+      }
+    )
+    #DE Heatmap ####
+    dds.mat <- dds.res %>%
+      dplyr::filter(padj < 0.05 & abs(`log2FoldChange(Prim/Mono)`) >= 2)
+    
+    vst.mat <- vstlimma %>%
+      dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
+      column_to_rownames(., var = "ensembl_gene_id") %>%
+      dplyr::select(.,-ext_gene) %>%
+      as.matrix()
+    rownames(vst.mat) = dds.mat$Gene
+    vst.mat <- t(scale(t(vst.mat)))
+    
+    vst.mat <- head(vst.mat, n = 100)
+    f1 = colorRamp2(seq(min(vst.mat), max(vst.mat), length = 3), c("blue", "#EEEEEE", "red"))
+    ht = draw(ComplexHeatmap::Heatmap(
+      vst.mat,
+      name = "z scaled expression",
+      col = f1,
+      row_names_gp = gpar(fontsize = 4),
+      row_km = 2,
+      top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("red", "blueviolet")),
+                                                            labels = c("prim", "mono"),
+                                                            labels_gp = gpar(col = "white", fontsize = 10))),
+      column_km = 2,
+      column_title = NULL,
+      row_title = NULL
+    ))
+    makeInteractiveComplexHeatmap(input, output, session, ht, "ht")
+    
+    
+    ####GSEA output ####
+    #run GSEA for chosen pathway input
+    
+    #make an object to hold the values of the selectInput for gsea pathway choices
+    gsea_file_values <- list("hallmark" = pathways.hallmark,
+                             "goall" = pathways.GOall,
+                             "GOmolec" = pathways.GOmolec, 
+                             "GOcellcomp" = pathways.GOcellcomp,
+                             "GObio" = pathways.GObio,
+                             "TFtargets" = pathways.TFtargets,
+                             "allReg" = pathways.allReg,
+                             "wiki" = pathways.Wiki,
+                             "reactome" = pathways.Reactome,
+                             "KEGG" = pathways.KEGG,
+                             "positional" = pathways.Positional,
+                             "biocarta" = pathways.Positional,
+                             "lsc" = pathways.lsc,
+                             "aeg" = pathways.aeg)
+    
+    gene_gsea_file_values <- list("hallmark" = pathways.hallmark,
+                                  "goall" = pathways.GOall,
+                                  "GOmolec" = pathways.GOmolec, 
+                                  "GOcellcomp" = pathways.GOcellcomp,
+                                  "GObio" = pathways.GObio,
+                                  "TFtargets" = pathways.TFtargets,
+                                  "allReg" = pathways.allReg,
+                                  "wiki" = pathways.Wiki,
+                                  "reactome" = pathways.Reactome,
+                                  "KEGG" = pathways.KEGG,
+                                  "positional" = pathways.Positional,
+                                  "biocarta" = pathways.Positional,
+                                  "lsc" = pathways.lsc,
+                                  "aeg" = pathways.aeg)
+    
+    #reactive expression to run fgsea and load results table for each chosen pathway
+    gseafile <-
+      reactive({
+        pathwaygsea <- gsea_file_values[[input$filechoice]]
+        fgseaRes <- fgsea::fgsea(pathways = pathwaygsea, stats = ranks, nproc = 1)
+        fgseaResTidy <- fgseaRes %>%
+          as_tibble() %>%
+          dplyr::select(., -pval,-log2err, -ES) %>% 
+          arrange(desc(NES))
+        fgseaResTidy
+      })
+    pathwaygenelist <-
+      reactive({
+        pathwaygsea <- gsea_file_values[[input$filechoice]]
+        genelist <- input$pathwaylist
+        p<- pathwaygsea[names(pathwaygsea) %in% input$pathwaylist]
+      })
+    
+    observe({
+      pathwaygsea <- gsea_file_values[[input$filechoice]]
+      updateSelectizeInput(session,"pathwaylist", choices = names(pathwaygsea), server = TRUE)})
+    
+    
+    #filter Res table for chosen pathway to show in a waterfall plot
+    gseafile_waterfall <-
+      reactive({
+        pathwaygsea <- gsea_file_values[[input$filechoice]]
+        fgseaRes <-
+          fgsea::fgsea(pathways = pathwaygsea,
+                       stats = ranks,
+                       nproc = 1)
+        fgseaResTidy <- fgseaRes %>%
+          as_tibble() %>%
+          dplyr::select(., -pval,-log2err, -ES) %>% 
+          arrange(desc(NES))
+        top15 <- fgseaResTidy %>% 
+          top_n(n = input$howmanypathways, wt = NES)
+        bottom15 <- fgseaResTidy %>%
+          top_n(n = -(input$howmanypathways), wt = NES)
+        fgseaResTidy <- rbind.data.frame(top15, bottom15)
+        fgseaResTidy
+      })
+    
+    #table output for Res tables
+    output$fgseaTable <- renderDataTable({
+      if (input$fgseaTable == TRUE) {
+        gseafile()
       }
     })
-  #GSEA Enrichment Plots ####
+    # 
+    #### GSEA pathway ranks waterfall plot ####
+    
+    output$GSEAranked <- renderPlot(
+      width = function() input$rankedwidthslider,
+      height = function() input$rankedheightslider,
+      {
+        if(input$rankedplot == TRUE) {
+          colors <- c(input$waterfallcolor1, input$waterfallcolor2)
+          ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
+            geom_col(aes(fill= padj < 0.05)) +
+            scale_fill_manual(values = colors) +
+            coord_flip() +
+            labs(x="Pathway", y="Normalized Enrichment Score (Positive NES = Upregulated in Primitive
+Negative NES = Upregulated in Monocytic)",
+                 title="Pathway NES from GSEA") +
+            theme_minimal()
+        }
+      })
+    
+    #### GSEA moustache plot ####
+    
+    toplotMoustache <-
+      reactive({
+        pathwaygsea <- gsea_file_values[[input$filechoice]]
+        fgseaRes <-
+          fgsea::fgsea(pathways = pathwaygsea,
+                       stats = ranks,
+                       nproc = 1)
+        fgseaResTidy <-
+          fgseaRes %>%
+          as_tibble() %>%
+          dplyr::select(., -pval,-log2err, -ES) %>% 
+          arrange(desc(NES))
+        toplotMoustache <-
+          cbind.data.frame(fgseaResTidy$pathway,
+                           fgseaResTidy$NES,
+                           fgseaResTidy$padj)
+        colnames(toplotMoustache) <- c("pathway", "NES", "padj")
+        toplotMoustache <- toplotMoustache %>%
+          mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no'))
+      })
+    
+    output$GSEAMoustache <- renderPlot(
+      # width = function()
+      #   input$mwidthslider,
+      # height = function()
+      #   input$mheightslider,
+      {
+        if (input$moustache == TRUE) {
+          colors <- c(input$choice1color, input$choice2color)
+          m <-
+            ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) +
+            geom_point() +
+            theme_minimal() +
+            xlab('NES') +
+            scale_colour_manual(values = colors) +
+            ylab('adjusted p-value') +
+            ggtitle("Pathways from GSEA") + #reactive
+            # geom_text_repel(
+            #   max.overlaps = 10,
+            #   aes(label = ifelse(
+            #     padj < 0.05, as.character(fgseaRes$pathway), ""
+            #   )),
+            #   hjust = 0,
+            #   vjust = 0
+            # )
+            coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1))
+          print(m)
+        }
+      }
+    )
+    
+    #GSEA Enrichment Plots ####
     output$GSEAenrichment <- renderPlot ({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
+      fgseaRes <-
+        fgsea::fgsea(pathways = pathwaygsea,
+                     stats = ranks,
+                     nproc = 1)
+      fgseaResTidy <- fgseaRes %>%
+        as_tibble() %>%
+        dplyr::select(., -pval,-log2err, -ES) %>% 
+        arrange(desc(NES))
       if(input$topupordownbutton == "topup") {
-      top.UP.path <- as.character(fgseaResTidy[1,1])
-      plotEnrichment(pathwaygsea[[top.UP.path]],
-                     ranks) + labs(title=top.UP.path)
+        top.UP.path <- as.character(fgseaResTidy[1,1])
+        plotEnrichment(pathwaygsea[[top.UP.path]],
+                       ranks) + labs(title=top.UP.path)
       } else if(input$topupordownbutton == "topdown") {
-      top.DOWN.path <- as.character(fgseaResTidy[nrow(fgseaResTidy), 1])
-      plotEnrichment(pathwaygsea[[top.DOWN.path]],
-                     ranks) + labs(title=top.DOWN.path)
+        top.DOWN.path <- as.character(fgseaResTidy[nrow(fgseaResTidy), 1])
+        plotEnrichment(pathwaygsea[[top.DOWN.path]],
+                       ranks) + labs(title=top.DOWN.path)
       }
     })
-  
     
- # GSEA Volcano plot ####
+    
+    # GSEA Volcano plot ####
     #need to figure out how to access the list of lists to get gene names reactively
-
+    
     dds.res.pathways <- reactive({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
-      pathwaychoice <- pathwaygsea$pathway
-      dds.res %>%
-        mutate(., react_path = ifelse(Gene %in% pathwaychoice, 'yes', 'no'))
-      
-      dds.res.pathways$react_path <- factor(dds.res.pathways$react_path, levels = c('no','yes'))
+      p <-
+        unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylist]))
+      dds.res.pathways <- dds.res %>%
+        mutate(., react_path = ifelse(Gene %in% p, 'yes', 'no'))
+      # labelgene <- dds.res.pathways %>% 
+      #   dplyr::filter(react_path == "yes")
     })
     
-
+    
     output$GSEAvolcano <- renderPlot ({
-      
-      if(input$gseachoice == "volcanoplot") {
-        colors <- c(input$gseavolcolor1, input$gseavolcolor2, input$gseavolcolor3)
-        v <- ggplot(
-          data = (dds.res.pathways() %>%
-                    arrange(., (react_path))),
+      if (input$volcanoplot == TRUE) {
+        ggplot(
+          data = (dds.res.pathways() %>% arrange(., (react_path))),
           aes(
-            x = log2FoldChange,
+            x = `log2FoldChange(Prim/Mono)`,
             y = -log10(padj),
             col = react_path
           )
         ) +
           theme_light() +
           geom_point() +
-          scale_colour_manual(values = colors) +
-          geom_text_repel(
-            max.overlaps = 1500,
-            aes(label = ifelse(
-              Gene %in% pathwaychoice & log2FoldChange > 1.5,
-              as.character(Gene),
-              ""
-            )),
-            hjust = 0,
-            vjust = 0
-          ) +
-          # theme(
-          #   plot.title = element_text(color = "black", size = 14, face = "bold"),
-          #   axis.title.x = element_text(color = "black", size = 14, face =
-          #                                 "bold"),
-          #   axis.title.y = element_text(color = "black", size = 14, face =
-          #                                 "bold"),
-          #   axis.text.x = element_text(size = 14),
-          #   axis.text.y = element_text(size = 14)
-          # ) +
-          ggtitle("") +
-          xlab("log2FoldChange")
-        print(v)
+          scale_colour_brewer(palette = 'Dark2') +
+          # geom_text_repel(
+          #   max.overlaps = 1500,
+          #   aes(
+          #     label = ifelse(
+          #       Gene %in% p & `log2FoldChange(Prim/Mono)` > 1.5,
+          #       as.character(Gene),
+          #       ""
+          #     )
+          #   ),
+          #   hjust = 0,
+          #   vjust = 0
+        # ) +
+        ggtitle("") +
+          xlab("log2foldchange")
       }
     })
-  
- #Gene Centeric pathways analysis plots ####
+    #GSEA heatmap ####
+    # gseaht_title <- 
+    #   eventReactive(input$pathwaylist, {
+    #    print(input$pathwaylist)
+    #   })
+    
+    
+    
+    observeEvent(input$pathwaylist, {
+      pathwaygsea <- gsea_file_values[[input$filechoice]]
+      
+      p <- unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylist]))
+      
+      dds.sig <- dds.res %>%
+        dplyr::filter(padj < 0.05 & abs(`log2FoldChange(Prim/Mono)`) >= 0.5)
+      
+      vst.myc <- vstlimma %>% 
+        mutate(., Hallmark_myc = ifelse(ext_gene %in% p, 'yes', 'no')) %>% 
+        dplyr::filter(Hallmark_myc == "yes")
+      
+      vstgsea.mat <- vst.myc %>%
+        dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
+        column_to_rownames(., var = "ext_gene") %>%
+        dplyr::select(.,-ensembl_gene_id, -Hallmark_myc) %>%
+        as.matrix()
+      
+      vstgsea.mat <- t(scale(t(vstgsea.mat)))
+      
+      htgsea = draw(ComplexHeatmap::Heatmap(
+        vstgsea.mat,
+        name = "gseaht_title()",
+        row_names_gp = gpar(fontsize = 6),
+        column_title = NULL,
+        row_title = NULL))
+      
+      makeInteractiveComplexHeatmap(input, output, session, htgsea, "htgsea")
+    })
+    
+    
+    #Gene Centeric pathways analysis plots ####
     genecentricgseaplot <- reactive({
       genepathwaygsea <- (gene_gsea_file_values[[input$genefilechoice]])
       fgseaRes <-
@@ -1488,14 +1535,12 @@ colors <- c(input$choice1color, input$choice2color)
       goi_paths <- genepathwaygsea %>% keep(grepl(input$Pathwaygenechoice, genepathwaygsea))
       goi_paths <- list(grep(input$Pathwaygenechoice, genepathwaygsea))
       goi_paths <- fgseaResTidy %>%
-        dplyr::filter(grepl(input$Pathwaygenechoice, leadingEdge)) %>% 
-        top_n(n = input$howmanypathwaysgene, wt = NES)
+        dplyr::filter(grepl(input$Pathwaygenechoice, leadingEdge)) 
       GOI <- input$Pathwaygenechoice
-      goi_paths$GOI <- "yes"
+      goi_paths$GOI <- "Yes"
       nongoi_paths <- fgseaResTidy %>%
-        dplyr::filter(!grepl(input$Pathwaygenechoice, leadingEdge)) %>% 
-        top_n(n = input$howmanypathwaysgene, wt = NES)
-      nongoi_paths$GOI <- "no"
+        dplyr::filter(!grepl(input$Pathwaygenechoice, leadingEdge))  
+      nongoi_paths$GOI <- "No"
       allgoi_paths <- rbind.data.frame(goi_paths, nongoi_paths)
     })
     
@@ -1504,22 +1549,22 @@ colors <- c(input$choice1color, input$choice2color)
       width = function() input$goiwidthslider,
       height = function() input$goiheightslider,
       {
-
-      ggplot(genecentricgseaplot(), aes(
-        x = NES,
-        y = pathway,
-        color = (padj < 0.05)
-      )) +
-        geom_boxplot()  +
-        facet_wrap( ~ GOI, scales = "free") +
-        theme_light() +
-        geom_hline(yintercept = 0, linetype = "dashed")
-    })
-
-   # #gene list for gene centric pathway analysis
-   updateSelectizeInput(session,"Pathwaygenechoice", choices = dds.res$Gene, server = TRUE)
+        
+        ggplot(genecentricgseaplot(), aes(
+          x = NES,
+          y = NES,
+          color = (padj < 0.05)
+        )) +
+          geom_boxplot()  +
+          facet_wrap( ~ GOI, scales = "free") +
+          theme_light() +
+          geom_hline(yintercept = 0, linetype = "dashed")
+      })
+    
+    # #gene list for gene centric pathway analysis
+    updateSelectizeInput(session,"Pathwaygenechoice", choices = dds.res$Gene, server = TRUE)
   } #end server
 # Run the application 
- shinyApp(ui = ui, server = server)
+shinyApp(ui = ui, server = server)
 
 
