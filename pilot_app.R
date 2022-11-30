@@ -21,7 +21,12 @@ library(DESeq2)
 library(shinyWidgets)
 library(shinyjs)
 library(fgsea)
+# BiocManager::install("fgsea")
 library(WGCNA)
+# BiocManager::install("Biobase")
+# BiocManager::install("GO.db")
+# BiocManager::install("impute")
+# BiocManager::install("preprocessCore")
 library(plotly)
 library(BiocParallel)
 library(ComplexHeatmap)
@@ -31,13 +36,6 @@ library(colourpicker)
 options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
-<<<<<<< Updated upstream
-=======
-if (!require("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-
-BiocManager::install("InteractiveComplexHeatmap")
->>>>>>> Stashed changes
 
 #Data ####
 meta_lut_ven <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/meta_lut_ven.rds")
