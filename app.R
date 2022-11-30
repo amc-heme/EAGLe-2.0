@@ -267,20 +267,12 @@ ui <-
               )
     ),
     
-<<<<<<< Updated upstream
     tabPanel("Differential Expression",# DESeq Menu ####
-=======
-    tabPanel("DESeq Analysis",# DESeq Menu ####
->>>>>>> Stashed changes
              fluidPage(
                theme =
                  shinytheme("flatly"),
                titlePanel(
-<<<<<<< Updated upstream
                  "Differential Expression Tables and Plots"
-=======
-                 "DESeq Table and Plots"
->>>>>>> Stashed changes
                ),#end title
                sidebarLayout(
                  sidebarPanel( 
