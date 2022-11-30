@@ -31,6 +31,13 @@ library(colourpicker)
 options(shiny.reactlog = TRUE)
 #reactlogShow(time = TRUE)
 
+<<<<<<< Updated upstream
+=======
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+BiocManager::install("InteractiveComplexHeatmap")
+>>>>>>> Stashed changes
 
 #Data ####
 meta_lut_ven <- readRDS("~/Documents/JordanLab/EAGLe-2.0/data/meta_lut_ven.rds")
