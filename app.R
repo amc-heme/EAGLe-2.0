@@ -784,20 +784,14 @@ ui <-
              )
              
     ),
-<<<<<<< Updated upstream
+
     tabPanel("GSEA Pathway/Gene Visualization", #GOI plots ####
-=======
-    tabPanel("GSEA Pathway/Gene Visualization",
->>>>>>> Stashed changes
              fluidPage(
                theme =
                  shinytheme("flatly"),
                titlePanel(
-<<<<<<< Updated upstream
+
                  "GSEA: Interrogation of pathways containing a gene of interest"
-=======
-                 "GSEA:Pathway/Gene Visualization"
->>>>>>> Stashed changes
                ),#end title
                h4("Positive NES is upregulated in Primitive cells and negative NES is upregulated in Monocytic cells"),
                sidebarLayout( 
@@ -859,11 +853,8 @@ ui <-
              
     ),
     
-<<<<<<< Updated upstream
-    
-=======
-    #WGCNA menu####
->>>>>>> Stashed changes
+
+
     
   )
 #Server ####
