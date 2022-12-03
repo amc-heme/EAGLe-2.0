@@ -33,46 +33,44 @@ library(scales)
 library(esquisse)
 library(ggprism)
 library(shinycssloaders)
-#options(shiny.reactlog = TRUE)
-#reactlogShow(time = TRUE)
 
 #Data ####
-meta_lut_ven <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/meta_lut_ven.Rds")
-qcdt<-load_multiqc("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
-vst.goi <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
+meta_lut_ven <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/meta_lut_ven.Rds")
+qcdt<-load_multiqc("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
+vst.goi <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
 #DESeq data table
-dds.res <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/DEtable.rds")
+dds.res <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/DEtable.rds")
 #sample metadata table
-metadata <- read.table(file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/SampleSheetJordanLab.txt")
+metadata <- read.table(file = "/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/SampleSheetJordanLab.txt")
 # DE table with singscore
-dds.resscore <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/dds.resscore.rds")
+dds.resscore <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/dds.resscore.rds")
 #tables for PCA
-vsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.pca.rds")
-bcvsd.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.pca.rds")
+vsd.pca <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/vsd.pca.rds")
+bcvsd.pca <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/bcvsd.pca.rds")
 #tables for variance
-vsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.variance.rds")
-bcvsd.variance <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.variance.rds")
+vsd.variance <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/vsd.variance.rds")
+bcvsd.variance <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/bcvsd.variance.rds")
 
-vsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd2.pca.rds")
-bcvsd2.pca <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd2.pca.rds")
+vsd2.pca <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/vsd2.pca.rds")
+bcvsd2.pca <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/bcvsd2.pca.rds")
 #GSEA data table
-ranks <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/ranks.rds")
+ranks <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/ranks.rds")
 #load pathways
-pathways.hallmark <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/h.all.v7.4.symbols.gmt")
-pathways.GOall <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.v2022.1.Hs.symbols.gmt")
-pathways.GOmolec <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.mf.v7.4.symbols.gmt")
-pathways.GOcellcomp <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.cc.v2022.1.Hs.symbols.gmt") 
-pathways.GObio <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.bp.v7.4.symbols.gmt")
-pathways.TFtargets <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c3.tft.v2022.1.Hs.symbols.gmt")
-pathways.allReg <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c3.all.v2022.1.Hs.symbols.gmt")
-pathways.Wiki <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.wikipathways.v2022.1.Hs.symbols.gmt")
-pathways.Reactome <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.reactome.v2022.1.Hs.symbols.gmt")
-pathways.KEGG <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.kegg.v2022.1.Hs.symbols.gmt")
-pathways.Positional <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c1.all.v2022.1.Hs.symbols.gmt")
-pathways.Biocarta <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.biocarta.v2022.1.Hs.symbols.gmt")
-pathways.lsc <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/lsc_sigs.gmt")
-pathways.aeg <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/aeg_genesets_20220602.gmt")
-vstlimma <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vstlimma.rds")
+pathways.hallmark <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/h.all.v7.4.symbols.gmt")
+pathways.GOall <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.v2022.1.Hs.symbols.gmt")
+pathways.GOmolec <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.mf.v7.4.symbols.gmt")
+pathways.GOcellcomp <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.cc.v2022.1.Hs.symbols.gmt") 
+pathways.GObio <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.bp.v7.4.symbols.gmt")
+pathways.TFtargets <-gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c3.tft.v2022.1.Hs.symbols.gmt")
+pathways.allReg <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c3.all.v2022.1.Hs.symbols.gmt")
+pathways.Wiki <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.wikipathways.v2022.1.Hs.symbols.gmt")
+pathways.Reactome <-gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.reactome.v2022.1.Hs.symbols.gmt")
+pathways.KEGG <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.kegg.v2022.1.Hs.symbols.gmt")
+pathways.Positional <-gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c1.all.v2022.1.Hs.symbols.gmt")
+pathways.Biocarta <-gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.biocarta.v2022.1.Hs.symbols.gmt")
+pathways.lsc <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/lsc_sigs.gmt")
+pathways.aeg <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/aeg_genesets_20220602.gmt")
+vstlimma <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/vstlimma.rds")
 
 names(pathways.aeg)[10] <- "PM_Primitive_Blast"
 names(pathways.aeg)[9] <- "PM_Monocytic_Blast"
@@ -339,19 +337,27 @@ ui <-
                    conditionalPanel(
                      condition = "input.DESeqvolcano == true",
                      h4("Volcano Plot Specific Options"),
-                     
-                     colorPicker(
-                       inputId = "col1",
-                       label = "Volcano plot: Choose 1st color:",
-                       choices = c(scales::viridis_pal(option = "viridis")(5), scales::brewer_pal(palette = "Dark2")(5)),
-                       textColor = "white"
+                     colourInput(
+                       "col1",
+                       label = "Choose color",
+                       value = "#490092",
+                       showColour = ("both"),
+                       palette = ("square"),
+                       allowedCols = NULL,
+                       allowTransparent = FALSE,
+                       returnName = FALSE,
+                       closeOnClick = FALSE
                      ),
-
-                     colorPicker(
-                       inputId = "col2",
-                       label = "Volcano plot: Choose 2nd color:",
-                       choices = c(scales::viridis_pal(option = "viridis")(5)[2:5],scales::brewer_pal(palette = "Dark2")(5)),
-                       textColor = "white"
+                     colourInput(
+                       "col2",
+                       label = "Choose color",
+                       value = "#0F6B34",
+                       showColour = ("both"),
+                       palette = ("square"),
+                       allowedCols = NULL,
+                       allowTransparent = FALSE,
+                       returnName = FALSE,
+                       closeOnClick = FALSE
                      ),
                      hr(),
                      downloadButton(
@@ -365,20 +371,29 @@ ui <-
                    conditionalPanel(
                      condition = "input.DESeqMA ==true", 
                      h4("MA Plot Specific Options"),
-                     
-                     colorPicker(
-                       inputId = "MAcol1",
-                       label = "MA plot: Choose 1st color:",
-                       choices = c(scales::viridis_pal(option = "viridis")(5), scales::brewer_pal(palette = "Dark2")(5)),
-                       textColor = "white"
+                     colourInput(
+                       "MAcol1",
+                       label = "Choose color",
+                       value = "#490092",
+                       showColour = ("both"),
+                       palette = ("square"),
+                       allowedCols = NULL,
+                       allowTransparent = FALSE,
+                       returnName = FALSE,
+                       closeOnClick = FALSE
                      ),
-         
-                     colorPicker(
-                       inputId = "MAcol2",
-                       label = "MA plot: Choose 2nd color:",
-                       choices = c(scales::viridis_pal(option = "viridis")(5)[2:5],scales::brewer_pal(palette = "Dark2")(5)),
-                       textColor = "white"
+                     colourInput(
+                       "MAcol2",
+                       label = "Choose color",
+                       value = "#0F6B34",
+                       showColour = ("both"),
+                       palette = ("square"),
+                       allowedCols = NULL,
+                       allowTransparent = FALSE,
+                       returnName = FALSE,
+                       closeOnClick = FALSE
                      ),
+                    
                      hr(),
                      downloadButton(
                        "downloadDEMA",
@@ -834,6 +849,11 @@ ui <-
                    
                    sliderInput("goiwidthslider", "Adjust plot width",
                                min = 200, max = 1000, value = 600
+                   ),
+                   downloadButton(
+                     "downloadGOI",
+                     label =
+                       "Download Plot"
                    )
                  ),
                  mainPanel(
@@ -1163,25 +1183,10 @@ server <-
       value <- vst.goi$value
       if(input$XaxisVar_CDgene == "xvalue") {
         geom_text(aes(x = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
-          #               (case_when(
-          # padj < 0.001 ~ "***",
-          # padj < 0.01 ~ "**",
-          # padj < 0.05 ~ "*",
-          # padj >= 0.05 ~ "NS"))), check_overlap = TRUE)
       } else if(input$XaxisVar_CDgene == "xgene") {
         geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
-          #               (case_when(
-          # padj < 0.001 ~ "***",
-          # padj < 0.01 ~ "**",
-          # padj < 0.05 ~ "*",
-          # padj >= 0.05 ~ "NS"))), check_overlap = TRUE)
       } else if(input$XaxisVar_CDgene == "xclass") {
         geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
-          #               (case_when(
-          # padj < 0.001 ~ "***",
-          # padj < 0.01 ~ "**",
-          # padj < 0.05 ~ "*",
-          # padj >= 0.05 ~ "NS"))), check_overlap = TRUE)
       }
     })
     
@@ -1225,13 +1230,6 @@ server <-
     )
     
     #DESEq #####
-    
-    ## DESeq2- Cancer Discovery outputs
-    
-    #   DElog2 <-
-    #     reactive({
-    #       dds.res[dds.res$log2FoldChange >= input$CDlog2foldchangeslider & dds.res$log2FoldChange <= input$CDlog2foldchangeslider, ]
-    #     })
     
     #function for sidebar input to create filtered DE table and associated volcano plot
     CD_DE_DT <- 
@@ -1295,20 +1293,7 @@ server <-
             dplyr::filter(padj <= 0.05)
         }
       })
-    #object for volcano plot data using DE and singscore tables
-    # vol_sig_values <- 
-    #   reactive({
-    #     if(input$sigvaluesbutton == "sigvar0.05" ) {
-    #       dds.res %>% 
-    #         dplyr::filter(padj <= 0.05)
-    #     } else if(input$sigvaluesbutton == "sigvar0.01") {
-    #       dds.res %>% 
-    #         dplyr::filter(padj <= 0.01)
-    #     }else if(input$sigvaluesbutton == "allvar2") {
-    #       dds.res %>% 
-    #         dplyr::filter(padj > 0)
-    #     } 
-    #     })
+
     #output DE table with adjustment for singscore
     output$DETable <-
       renderDataTable({
@@ -1524,35 +1509,7 @@ server <-
         gseafile()
       }
     })
-    #  colorpalettechoicesGSEAfill <-
-    # eventReactive(input$PaletteChoicesGSEA, {
-    #   if(input$PaletteChoicesGSEA == "viridis") {
-    #     scale_fill_viridis_d(option = "viridis")
-    #   } else if(input$PaletteChoicesGSEA == "cividis") {
-    #     scale_fill_viridis_d(option = "cividis")
-    #   } else if(input$PaletteChoicesGSEA == "magma") {
-    #     scale_fill_viridis_d(option = "magma")
-    #   } else if(input$PaletteChoicesGSEA == "plasma") {
-    #     scale_fill_viridis_d(option = "plasma")
-    #   }else if(input$PaletteChoicesGSEA == "inferno") {
-    #     scale_fill_viridis_d(option = "inferno")
-    #   }
-    # })
-    # colorpalettechoicesGSEA <-
-    #   eventReactive(input$PaletteChoicesGSEA, {
-    #     if(input$PaletteChoicesGSEA == "viridis") {
-    #       scale_color_viridis_d(option = "viridis")
-    #     } else if(input$PaletteChoicesGSEA == "cividis") {
-    #       scale_color_viridis_d(option = "cividis")
-    #     } else if(input$PaletteChoicesGSEA == "magma") {
-    #       scale_color_viridis_d(option = "magma")
-    #     } else if(input$PaletteChoicesGSEA == "plasma") {
-    #       scale_color_viridis_d(option = "plasma")
-    #     }else if(input$PaletteChoicesGSEA == "inferno") {
-    #       scale_fill_viridis_d(option = "inferno")
-    #     }
-    #   })
-    # 
+   
     #### GSEA pathway ranks waterfall plot ####
     
     output$GSEAranked <- renderPlot(
@@ -1621,10 +1578,6 @@ Negative NES = Upregulated in Monocytic)",
       })
     # updateSelectizeInput(session,"pathwaylistmoustache", choices = fgseaResTidy$pathway, server = TRUE)
     output$GSEAMoustache <- renderPlot(
-      # width = function()
-      #   input$mwidthslider,
-      # height = function()
-      #   input$mheightslider,
       {
         if (input$moustache == TRUE) {
           colors <- c('grey', input$colMoustache)
@@ -1888,9 +1841,26 @@ Negative NES = Upregulated in Monocytic)",
           facet_wrap( ~ GOI, scales = "free") +
           theme_light(base_size = 18) +
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-          geom_hline(yintercept = 0, linetype = "dashed")
+          geom_hline(yintercept = 0, linetype = "dashed") +
+          plot_annotation(
+                title = feature,
+                theme =
+                  theme(
+                    plot.title = "Pathways with and without Gene of Interest",
+                      element_text(
+                        face = "bold",
+                        hjust = 0.5,
+                        size = 16
+                      )
+                  )
+              )
       })
-    
+    output$downloadGOI <- downloadHandler(
+      filename = function() { paste("Gene of Interest Plot", '.png', sep='') },
+      content = function(file) {
+        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+      }
+    )
     # #gene list for gene centric pathway analysis
     updateSelectizeInput(session,"Pathwaygenechoice", choices = dds.res$Gene, server = TRUE)
   } #end server
