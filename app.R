@@ -21,7 +21,6 @@ library(DESeq2)
 library(shinyWidgets)
 library(shinyjs)
 library(fgsea)
-#library(WGCNA)
 library(plotly)
 library(BiocParallel)
 library(ComplexHeatmap)
@@ -35,6 +34,7 @@ library(ggprism)
 library(shinycssloaders)
 
 #Data ####
+#load in data and metadat 
 meta_lut_ven <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/meta_lut_ven.Rds")
 qcdt<-load_multiqc("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
 vst.goi <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
@@ -55,7 +55,7 @@ vsd2.pca <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/vsd2
 bcvsd2.pca <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/bcvsd2.pca.rds")
 #GSEA data table
 ranks <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/ranks.rds")
-#load pathways
+#load molecular pathways for GSEA
 pathways.hallmark <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/h.all.v7.4.symbols.gmt")
 pathways.GOall <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.v2022.1.Hs.symbols.gmt")
 pathways.GOmolec <- gmtPathways("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c5.go.mf.v7.4.symbols.gmt")
@@ -74,7 +74,7 @@ vstlimma <- readRDS("/Users/stephanie_renee/Documents/GitHub/EAGLe-2.0/data/vstl
 
 names(pathways.aeg)[10] <- "PM_Primitive_Blast"
 names(pathways.aeg)[9] <- "PM_Monocytic_Blast"
-pathways.aegGOBP <- c(pathways.aeg, pathways.GObio)
+#pathways.aegGOBP <- c(pathways.aeg, pathways.GObio)
 # UI ####
 ui <-
   navbarPage(
@@ -90,7 +90,7 @@ ui <-
                   "QC Analysis Plots"
                 ), 
                 sidebarLayout(
-                  sidebarPanel(
+                  sidebarPanel( #create toggle switches for each plot
                     materialSwitch(
                       inputId =
                         "PCAplots",
@@ -120,7 +120,7 @@ ui <-
                         FALSE,
                       right =
                         TRUE
-                    ),
+                    ),  #palette choices for PCA plots
                     palettePicker(
                       inputId = "PaletteChoicesQC",
                       label = "Choose a color palette",
@@ -135,7 +135,7 @@ ui <-
                     ),
                     conditionalPanel(
                     condition = "input.PCAplots == true",
-                    radioButtons(
+                    radioButtons( #choose type of PCA plot
                       "PCAvar",
                       h4(
                         "Choose PCA plot"
@@ -144,7 +144,7 @@ ui <-
                         list("VST PCA", "VST + batch corrected PCA"),
                       selected =
                         "VST PCA"
-                    ),
+                    ), 
                     downloadButton("downloadPlotPCA", label = "Download PCA Plot")
                     ),
                     
@@ -160,7 +160,7 @@ ui <-
                     hr(),
                     conditionalPanel(
                       condition = "input.multiqc == true",
-                      selectInput(
+                      selectInput( #choose type of multiqc test to visualize
                                 "QCvar",
                                 label=
                                   "Choose MultiQC test",
@@ -172,11 +172,14 @@ ui <-
                     )
                   ),
                   mainPanel(
-                    conditionalPanel(condition = "input.PCAplots == true",
+                    conditionalPanel(
+                      condition = "input.PCAplots == true",
                                      plotOutput("PCAplot")),
-                    conditionalPanel(condition = "input.PCAscreeplots == true",
+                    conditionalPanel(
+                      condition = "input.PCAscreeplots == true",
                                      plotOutput("PCAvarplot")),
-                    conditionalPanel(condition = "input.multiqc == true",
+                    conditionalPanel(
+                      condition = "input.multiqc == true",
                                      plotOutput("QCplot"))
                   )
                 )
@@ -194,8 +197,8 @@ ui <-
                 h6("*p values are indicated for the comparison of gene expression between prim and mono samples"),
                 sidebarLayout(
                   sidebarPanel(
-                    useShinyjs(),
-                    selectizeInput(
+                    useShinyjs(), #this is needed for javascript functions
+                    selectizeInput( #gene choice dropdown menu
                       "VSTCDgenechoice",
                       label=
                         "Choose a gene for analysis",
@@ -203,7 +206,7 @@ ui <-
                         NULL,
                       selected = NULL,
                       options = list(maxItems = NULL)
-                    ),
+                    ), #options for axis variables, fill variable, and plot filters
                     radioButtons("XaxisVar_CDgene", h4("X axis variable"),
                                  choices = list("Value" = "xvalue",
                                                 "Gene" = "xgene", "Class" = "xclass"),selected = "xgene"),
@@ -216,11 +219,11 @@ ui <-
                     radioButtons("PrimMonobutton", h4("Show only prim or mono gene expression"),
                                 choices = list("Show Comparison" = "comparison", "Prim" = "prim", "Mono" = "mono"), selected = "comparison"),
                     hr(),
-                    
+                    #add a facet toggle switch
                     materialSwitch("genefacetbutton", label = "Facet", value = FALSE, right = TRUE),
                     hr(),
                    
-        
+                    #add palette choices for boxplot colors
                     palettePicker(
                       inputId = "PaletteChoicesGene", 
                       label = "Choose a color palette", 
@@ -234,10 +237,10 @@ ui <-
                       )
                         ),
                    
-                    hr(),
+                    hr(), #js functions to hide plot dimensions until selected
                     materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
             
-                    
+                    #plot dimension input
                     sliderInput("geneheightslider", "Adjust plot height",
                                 min = 200, max = 1200, value = 600
                     ),
@@ -251,7 +254,7 @@ ui <-
                     
                   ),
                   
-                  mainPanel(
+                  mainPanel( #add loading spinner
                     shinycssloaders::withSpinner(
                       plotOutput(
                       "VSTCDplot"
@@ -270,7 +273,7 @@ ui <-
                  "Differential Expression Tables and Plots"
                ),#end title
                sidebarLayout(
-                 sidebarPanel( 
+                 sidebarPanel( #toggle buttons for choosing each plot type
                    materialSwitch(
                      inputId =
                        "DESeqtable",
@@ -280,7 +283,7 @@ ui <-
                        FALSE,
                      right =
                        TRUE
-                   ),
+                   ), 
                    materialSwitch(
                      inputId =
                        "singscorebutton",
@@ -325,7 +328,7 @@ ui <-
                    conditionalPanel(
                      condition = "input.DESeqtable == true",
                     h4("DE Table Specific Options"),
-                    
+                    #option to filter table by padj
                    radioButtons("padjbutton", label = "Filter DE tables by padj", 
                                 choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
                    hr(),
@@ -337,6 +340,7 @@ ui <-
                    conditionalPanel(
                      condition = "input.DESeqvolcano == true",
                      h4("Volcano Plot Specific Options"),
+                     #color paletter choice for volcano plot
                      colourInput(
                        "col1",
                        label = "Choose color",
@@ -371,6 +375,7 @@ ui <-
                    conditionalPanel(
                      condition = "input.DESeqMA ==true", 
                      h4("MA Plot Specific Options"),
+                     #color palette choice for MA plot
                      colourInput(
                        "MAcol1",
                        label = "Choose color",
@@ -406,7 +411,7 @@ ui <-
                    conditionalPanel(
                      condition = "input.DESeqHeat == true",
                      h4("Heatmap Specific Options"),
-                     
+                     #color palette choices for heatmap
                      colourInput(
                        "heatcolor1",
                        label = "Choose 1st color",
@@ -434,9 +439,9 @@ ui <-
                      ),
                  
                  mainPanel(
-                   conditionalPanel(
+                   conditionalPanel( 
                      condition = "input.DESeqtable == true",
-                     shinycssloaders::withSpinner(
+                     shinycssloaders::withSpinner( #add loading spinner
                        DTOutput(
                        "DETable"
                      )
@@ -444,7 +449,7 @@ ui <-
                    ),
                    conditionalPanel(
                      condition = "input.DESeqvolcano == true",
-                     shinycssloaders::withSpinner(
+                     shinycssloaders::withSpinner( #add loading spinner
                        plotlyOutput(
                        "DEVolcanoPlot"
                      )
@@ -452,7 +457,7 @@ ui <-
                    ),
                    conditionalPanel(
                      condition = "input.DESeqMA == true",
-                     shinycssloaders::withSpinner(
+                     shinycssloaders::withSpinner( #add loading spinner
                        plotlyOutput(
                        "DEMAPlot"
                      )
@@ -479,14 +484,14 @@ ui <-
                sidebarLayout(
                  sidebarPanel( 
                    h4("Choose gmt file to load pathway sets"),
-                   
+                   #dropdown menu for molecular pathways 
                    selectInput("filechoice", label = NULL,
                                choices = c(Hallmark = "hallmark", GOall = "goall",GOmolecular = "GOmolec", 
                                            GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
                                            allRegular = "allReg", Wiki = "wiki", Reactome = "reactome", KEGG = "KEGG",
                                            Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg")),
                    h4("Choose a plot type"),
-                   
+                   #toggle buttons to load table and plots
                    materialSwitch(
                      inputId =
                        "fgseaTable",
@@ -548,19 +553,6 @@ ui <-
                        TRUE
                    ),
                    
-                   # palettePicker(
-                   #   inputId = "PaletteChoicesGSEA", 
-                   #   label = "Choose a color palette", 
-                   #   choices = list(
-                   #     "Viridis" = list(
-                   #       "viridis" = viridis_pal(option = "viridis")(5),
-                   #       "magma" = viridis_pal(option = "magma")(5),
-                   #       "mako" = viridis_pal(option = "mako")(5),
-                   #       "plasma" = viridis_pal(option = "plasma")(5),
-                   #       "cividis" = viridis_pal(option = "cividis")(5))
-                   #   )
-                   # ),
-                   
                    conditionalPanel(
                      condition = "input.fgseaTable == true",
                      downloadButton(
@@ -576,6 +568,7 @@ ui <-
                   
                      h4("Waterfall Plot Specific Options"),
                      hr(),
+                     #color palette choices for waterfall plot
                      colourInput(
                        "colWF",
                        label = "Choose color",
@@ -588,11 +581,12 @@ ui <-
                        closeOnClick = FALSE
                      ),
                      hr(), 
-                     
+                     #slider scale to choose how many pathways to load
                      sliderInput("howmanypathways", "Choose How Many Pathways to Rank",
-                                 min = 5, max = 60, value = 15
+                                 min = 5, max = 50, value = 15
                      ),
                      hr(),
+                     #js function to hide plot dimensions until selected
                    materialSwitch("hidedimsWF", "Custom plot dimensions", value = FALSE, right = TRUE),
                    
                      sliderInput("rankedheightslider", "Adjust plot height",
@@ -615,14 +609,9 @@ ui <-
                    conditionalPanel(
                      condition = "input.moustache == true",
                      h4("Moustache Plot Specific Options"),
-                     #h5("Choose pathway(s) to label on plot"),
+                     
                      hr(),
-                     # colorPicker(
-                     #   inputId = "colMoustache",
-                     #   label = "Moustache plot: Choose color:",
-                     #   choices = c(scales::viridis_pal(option = "viridis")(5)[1:5], scales::brewer_pal(palette = "Dark2")(5)[1:5]),
-                     #   textColor = "white"
-                     # ),
+                   #color palette choices for muostache plot
                      colourInput(
                        "colMoustache",
                        label = "Choose color",
@@ -649,10 +638,11 @@ ui <-
                      condition = "input.eplot == true",
                      
                      h4("Enrichment Plot Specific Options"),
-      
+                     #options for type of enrichment plot to load
                      radioButtons("topupordownbutton", h5("Enrichment Plot Choices"), 
                                   choices = list("Top Ranked Up Pathway" = "topup", "Top Ranked Down Pathway" = "topdown", "Pathway of Choice:" = "eplotpath"), selected = "topup"),
                      h5("Choose a specific pathway"),
+                     #dropdown menu for specific pathway choices that is reactive to the pathway set dropdown menu
                      selectizeInput(
                        "pathwaylisteplot",
                        label=
@@ -675,6 +665,7 @@ ui <-
                      condition = "input.volcanoplot == true",
                      
                      h4("Volcano Plot Specific Options"),
+                     #dropdown list of specific pathways for volcano plot that is reactive to the pathway set dropdown menu
                      selectizeInput(
                        "pathwaylist",
                        label=
@@ -684,7 +675,7 @@ ui <-
                        selected = NULL,
                        options = list(maxItems = 1)
                      ),
-                
+                #color palette choices for volcano plot
                      colourInput(
                        "colVolcano",
                        label = "Choose color",
@@ -708,7 +699,7 @@ ui <-
                    conditionalPanel(
                      condition = "input.heatmap == true",
                      h4("Heatmap Specific Options"),
-
+                   #dropdown menu of specific pathways for heatmap, reactive to pathway sets dropdown
                      selectizeInput(
                        "pathwaylistht",
                        label=
@@ -718,6 +709,7 @@ ui <-
                        selected = NULL ,
                        options = list(maxItems = 1)
                      ),
+                   #color palette choices for heatmap
                      colourInput(
                        "GSEAheatcolor1",
                        label = "Choose 1st color",
@@ -750,14 +742,13 @@ ui <-
           
                    conditionalPanel(
                      condition = "input.fgseaTable == true",
-                       DTOutput(
+                        DTOutput( #add loading spinners
                        "fgseaTable"
-                     )
-                     
+                        )
                    ),
                    conditionalPanel(
                      condition = "input.rankedplot == true",
-                     shinycssloaders::withSpinner(
+                     shinycssloaders::withSpinner( #add loading spinners
                        plotOutput(
                        "GSEAranked"
                      )
@@ -765,7 +756,7 @@ ui <-
                    ),
                    conditionalPanel(
                      condition = "input.moustache == true",
-                     shinycssloaders::withSpinner(
+                     shinycssloaders::withSpinner( #add loading spinners
                        plotOutput(
                        "GSEAMoustache"
                      )
@@ -773,7 +764,7 @@ ui <-
                    ),
                    conditionalPanel(
                      condition = "input.eplot == true",
-                     shinycssloaders::withSpinner(
+                     shinycssloaders::withSpinner( #add loading spinners
                        plotOutput(
                        "GSEAenrichment"
                      )
@@ -781,7 +772,7 @@ ui <-
                    ),
                    conditionalPanel(
                      condition = "input.volcanoplot == true",
-                     shinycssloaders::withSpinner(
+                     shinycssloaders::withSpinner( #add loading spinners
                        plotOutput(
                        "GSEAvolcano"
                      )
@@ -807,6 +798,7 @@ ui <-
                sidebarLayout( 
                  sidebarPanel( 
                    useShinyjs(),
+                   #gene list dropdown menu of all genes from DE table
                    selectizeInput(
                      "Pathwaygenechoice",
                      label=
@@ -814,10 +806,10 @@ ui <-
                      choices =
                        NULL,
                      selected = NULL,
-                     options = list(maxItems = 1)
+                     options = list(maxItems = 1) #only one gene can be selected at once
                    ),
                    hr(),
-                   
+                   #pathway set dropdown list
                    selectInput("genefilechoice", "Choose gmt file to plot pathways containing the gene of interest",
                                choices = c(Hallmark = "hallmark", GOall = "GOall", GOmolecular = "GOmolec", 
                                            GOcellcomp = "GOcellcomp", GObio = "GObio", TFtargets = "TFtargets",
@@ -825,7 +817,7 @@ ui <-
                                            Positional = "positional", Biocarta = "biocarta", lsc = "lsc", aeg = "aeg")),
                    
                    hr(),
-                   
+                   #color palette options for GOI
                    palettePicker(
                      inputId = "PaletteChoicesGP",
                      label = "Choose a color palette",
@@ -840,6 +832,7 @@ ui <-
                    ),
                    
                    hr(),
+                   #js function to hide plot dimension options until selected
                    materialSwitch("hidedimsGP", "Custom plot dimensions", value = FALSE, right = TRUE),
                    
                    sliderInput("goiheightslider", "Adjust plot height",
@@ -857,7 +850,7 @@ ui <-
                    )
                  ),
                  mainPanel(
-                   shinycssloaders::withSpinner(
+                   shinycssloaders::withSpinner( #add loading spinners
                      plotOutput(
                      "PathwaysGenePlot"
                    )
@@ -874,11 +867,12 @@ ui <-
 #Server ####
 server <- 
   function(input, output, session) {
-    
+    # check to make sure server is initiating
     print("Initializing renderPlots")
+    
     options(shiny.reactlog = TRUE)
     
-    #color palette choices ####
+    #PCA plots color palette choices for fill
     colorpalettechoices <-
       eventReactive(input$PaletteChoicesQC, {
         if(input$PaletteChoicesQC == "viridis") {
@@ -893,7 +887,7 @@ server <-
           scale_fill_viridis_d(option = "inferno")
         }
       }) 
-    
+    #PCA plot color palette choices for color
     colorchoicesQC <-
       eventReactive(input$PaletteChoicesQC, {
         if(input$PaletteChoicesQC == "viridis") {
@@ -910,6 +904,7 @@ server <-
       })
  
     ##QC-MultiQC plots####
+    #reactive function for multiqc plot title
     QC_title <- 
       reactive({
         if (input$QCvar == "% mapped reads") {
@@ -922,7 +917,9 @@ server <-
           print("# uniquely mapped reads per sample")
         }
       })
+    #multiQC plot
     output$QCplot <- renderPlot({
+      #create object for reactive data input based on user choice of multiqc test option
       QCdata <- switch(
         input$QCvar,
         "% mapped reads" = qcdt$raw.salmon.percent_mapped,
@@ -931,7 +928,7 @@ server <-
         "# uniquely mapped reads" = qcdt$raw.star.uniquely_mapped,
         "Sample_ID" = qcdt$metadata.sample_id
       )
-
+     #need to make an object to tell the ggplot what the sample names are
       Sample_ID <-qcdt$metadata.sample_id
 
       ggplot(
@@ -948,7 +945,7 @@ server <-
     }) #end renderPlot
 
     # PCA plots ####
-
+#function to tell ggplot which data set to use depending on user input
     PCAdata <-
       eventReactive(input$PCAvar, {
         if (input$PCAvar == "VST PCA") {
@@ -960,6 +957,7 @@ server <-
     
     # PCA Scree data ####
     # VSD PCA variance
+    #write functions and store in object to calculate the % variance for each PC
     PC_var_VST <- data.frame(PC =paste0("PC", 1:12),variance =(((vsd2.pca$sdev) ^ 2 / sum((vsd2.pca$sdev) ^ 2)) * 100))
     lorder_VST <- as.vector(outer(c("PC"), 1:12, paste, sep = ""))
     PC_var_VST$PC <-factor(PC_var_VST$PC,levels = lorder_VST)
@@ -968,7 +966,7 @@ server <-
     PC_var_bc <-data.frame(PC =paste0("PC", 1:12),variance =(((bcvsd2.pca$sdev) ^ 2 / sum((bcvsd2.pca$sdev) ^ 2)) * 100))
     lorder_bc <-as.vector(outer(c("PC"), 1:12, paste, sep = ""))
     PC_var_bc$PC <-factor(PC_var_bc$PC,levels = lorder_bc)
-    
+    #function to tell ggplot which data set to use for the scree plots
     PC_var_data <-
       eventReactive(input$PCAvar, {
         if (input$PCAvar == "VST PCA") {
@@ -977,7 +975,7 @@ server <-
           PC_var_bc
         }
       })
-    # reactive function for plot title
+    # reactive function for PCA plot title
     PCA_title <- 
       reactive({
         if (input$PCAvar == "VST PCA") {
@@ -1022,20 +1020,20 @@ server <-
         }
       })
     
-    
+    #PCA plot output
     output$PCAplot <- renderPlot ({
       ggplot(PCAdata(), aes(x = PC1, y = PC2, shape = condition, color = batch, fill = batch)) + 
         geom_point(size = 5) + 
         scale_shape_manual(values = c(21, 24), name = '') +
-        colorpalettechoices() +
-        colorchoicesQC() +
+        colorpalettechoices() + #scale_fill_manual reactive function
+        colorchoicesQC() + #scale_color manual reactive function
         theme_cowplot(font_size = 18) + 
         theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
         theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
         theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-        xlab(variance_PC1()) + 
-        ylab(variance_PC2()) +
-        ggtitle(PCA_title()) +
+        xlab(variance_PC1()) +  #reactive xlab
+        ylab(variance_PC2()) + #reactive y lab
+        ggtitle(PCA_title()) + #reactive title
         geom_text_repel(colour = "black", aes(label=sample_name),hjust=0, vjust=0)
       
     })
@@ -1047,6 +1045,7 @@ server <-
         ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
       }
     )
+    #reactive function for scree plots title
     PCA_var_title <- 
       reactive({
         if (input$PCAvar == "VST PCA") {
@@ -1064,12 +1063,11 @@ server <-
         geom_point(size = 2) +
         geom_line() +
         theme_cowplot(font_size = 18) +
-        #theme_light(base_size = 18) +
         theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
         labs(x = "PC",
              y = "% Variance") +
         labs(title =
-               PCA_var_title())
+               PCA_var_title()) #reactive title
     })
     #PCA Scree download ####
     output$downloadPlotscree <- downloadHandler(
@@ -1080,7 +1078,7 @@ server <-
     )
     ##Gene Centric output ####
     updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
-    
+    #reactive function for for filtering vst data table based on user input 
     datavst <-
       reactive({
         if(input$PrimMonobutton == "comparison") {
@@ -1111,7 +1109,7 @@ server <-
     })
     
     
-    #x axis output
+    #x axis reactive output based on radio buttons
     xvar_CDgene <-
       eventReactive(input$XaxisVar_CDgene, {
         if (input$XaxisVar_CDgene == "xvalue") {
@@ -1122,7 +1120,7 @@ server <-
           "class"
         }
       })
-    #y axis output f
+    #y axis reactive output based on radio buttons
     yvar_CDgene <-
       eventReactive(input$YaxisVar_CDgene, {
         if (input$YaxisVar_CDgene == "yvalue") {
@@ -1133,7 +1131,7 @@ server <-
       })
 
     
-    #fill output
+    #fill reactive output based on radio buttons
     fillvar_CDgene <-
       eventReactive(input$FillVar_CDgene, {
         if (input$FillVar_CDgene == "fillclass") {
@@ -1142,6 +1140,7 @@ server <-
           "ext_gene"
         }
       })
+    # facet toggle switch function to turn faceting on or off
     Gene_facet <-
       eventReactive(input$genefacetbutton, {
         if(input$genefacetbutton == TRUE) {
@@ -1149,7 +1148,7 @@ server <-
         } else(NULL)
       })
   
-    
+    #reactive function to tell ggplot which color palette to use for fill based on user input
     colorpalettechoicesfgene <-
       eventReactive(input$PaletteChoicesGene, {
         if(input$PaletteChoicesGene == "viridis") {
@@ -1164,6 +1163,7 @@ server <-
           scale_fill_viridis_d(option = "inferno")
         }
       })
+    #reactive function for scale_Color_manual based on palette choice
     colorpalettechoicesgene <-
       eventReactive(input$PaletteChoicesGene, {
         if(input$PaletteChoicesGene == "viridis") {
@@ -1189,7 +1189,7 @@ server <-
         geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
       }
     })
-    
+    #reactive wrapper for showing the plot dimensions options or hiding them based on toggle selection
     observe({
       toggle(id = "geneheightslider", condition = input$hidedims)
       toggle(id ="genewidthslider", condition = input$hidedims)
@@ -1208,14 +1208,14 @@ server <-
                    fill = .data[[fillvar_CDgene()]]
                  )) +
             geom_boxplot(outlier.shape = NA) +
-            Gene_facet() +
-            colorpalettechoicesfgene() +
-            colorpalettechoicesgene() +
+            Gene_facet() + #reactive faceting
+            colorpalettechoicesfgene() + #reactive  scale_fill_manual
+            colorpalettechoicesgene() + #reactive scale_color_manual
             geom_point(alpha = 0.5,
                        position = position_jitterdodge(jitter.width = 0.2),
                        aes(color = class)) + 
             theme_light() +
-            sig_label_position() +
+            sig_label_position() + # function for adjusted pvalues position and format on plot
             ylab("") +
             xlab("") +
             ggtitle("Gene Expression: Prim vs Mono")
@@ -1262,7 +1262,7 @@ server <-
             dplyr::filter(padj <= 0.05)
         } 
       })
-    
+    #function for filtering DE object with monocytic contribution regressed out based on padj value chosen by user 
     CD_DE_DT_sing <- 
       reactive({
         if (input$padjbutton == "sigvar1" & input$singscorebutton == TRUE) {
@@ -1294,7 +1294,7 @@ server <-
         }
       })
 
-    #output DE table with adjustment for singscore
+    #output DE table with adjustment for singscore reactive to toggle swich 
     output$DETable <-
       renderDataTable({
         if(input$singscorebutton == TRUE) {
@@ -1312,27 +1312,13 @@ server <-
         write.csv(CD_DE_DT(),file)
       }
     )
-    
-    colorpalettechoicesDE <-
-      eventReactive(input$PaletteChoicesDE, {
-        if(input$PaletteChoicesDE == "viridis") {
-          scale_color_viridis_d(option = "viridis")
-        } else if(input$PaletteChoicesDE == "cividis") {
-          scale_color_viridis_d(option = "cividis")
-        } else if(input$PaletteChoicesDE == "magma") {
-          scale_color_viridis_d(option = "magma")
-        } else if(input$PaletteChoicesDE == "plasma") {
-          scale_color_viridis_d(option = "plasma")
-        } else if(input$PaletteChoicesDE == "inferno") {
-          scale_color_viridis_d(option = "inferno")
-        }
-      })
+   
 
     #DE Volcano Plot ####
     
     output$DEVolcanoPlot <-
       renderPlotly({
-        colors <- c(input$col1, "grey", input$col2)
+        colors <- c(input$col1, "grey", input$col2) #object for colors on volcano based on user input
         p <- ggplot(dds.res, aes(
           x = `log2FoldChange(Prim/Mono)`,
           y = -log10(padj),
@@ -1356,7 +1342,7 @@ server <-
     
     #DE MA Plot ####
     output$DEMAPlot <- renderPlotly ({
-        colors <- c(input$col1, "grey", input$col2)
+        colors <- c(input$col1, "grey", input$col2) #object for color choices dependent on user input
       ma <-
         ggplot(dds.res,
                aes(
@@ -1386,25 +1372,14 @@ server <-
       }
     )
     
-    heatpalettechoicesDE <-
-      eventReactive(input$PaletteChoicesDE, {
-        if(input$PaletteChoicesDE == "viridis") {
-          viridis_pal(option = "viridis")(10)
-        } else if(input$PaletteChoicesDE == "cividis") {
-          viridis_pal(option = "cividis")(10)
-        } else if(input$PaletteChoicesDE == "magma") {
-          viridis_pal(option = "magma")(10)
-        } else if(input$PaletteChoicesDE == "plasma") {
-          viridis_pal(option = "plasma")(10)
-        } else if(input$PaletteChoicesDE == "inferno") {
-          viridis_pal(option = "inferno")(10)
-        }
-      })
+  
     #DE Heatmap ####
+    #interactive heatmap needs to be wrapped in a reactive function to work
     observe({
+      #filter DE object for only significantly differentially experessed genes
      dds.mat <- dds.res %>%
       dplyr::filter(padj < 0.05 & abs(`log2FoldChange(Prim/Mono)`) >= 2)
-    
+    #filter vst counts matrix by sig expressed genes
     vst.mat <- vstlimma %>%
       dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
       column_to_rownames(., var = "ensembl_gene_id") %>%
@@ -1412,9 +1387,11 @@ server <-
       as.matrix()
     rownames(vst.mat) = dds.mat$Gene
     vst.mat <- t(scale(t(vst.mat)))
-    
+    #only show the first 100 genes for visualization in this example(can change)
     vst.mat <- head(vst.mat, n = 100)
+    #create a colorRamp function based on user input in color palette choices
     colors = colorRamp2(c(-2, 0, 2), c(input$heatcolor1, "white", input$heatcolor2))
+    #create heatmap object
     ht = draw(ComplexHeatmap::Heatmap(
       vst.mat,
       name = "z scaled expression",
@@ -1449,7 +1426,7 @@ server <-
                              "biocarta" = pathways.Positional,
                              "lsc" = pathways.lsc,
                              "aeg" = pathways.aeg)
-    
+    #object for pathway choice files to use with the goi pathway input
     gene_gsea_file_values <- list("hallmark" = pathways.hallmark,
                                   "goall" = pathways.GOall,
                                   "GOmolec" = pathways.GOmolec, 
@@ -1519,7 +1496,7 @@ server <-
         input$rankedheightslider,
       {
          if (input$rankedplot == TRUE) {
-           
+           #color object reactive to user choice from palette
             colors <- c("grey", input$colWF)
         
           ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
@@ -1545,16 +1522,22 @@ Negative NES = Upregulated in Monocytic)",
         ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
       }
     )
-    #### GSEA moustache plot ####
-    gseamoustache_title <-
-      eventReactive(input$filechoice, {
-        print(input$filechoice)
-      })
-    
+    #reactive wrapper for js functions to hide or show plot dimensions based on toggle switch
     observe({
       toggle(id = "rankedheightslider", condition = input$hidedimsWF)
       toggle(id ="rankedwidthslider", condition = input$hidedimsWF)
     })
+    #### GSEA moustache plot ####
+    #reactive title for moustache plot
+    gseamoustache_title <-
+      eventReactive(input$filechoice, {
+        print(input$filechoice)
+      })
+   
+    #function for making moustache reactive to pathway choice
+    #fgsea analysis run on pathway chosen
+    #resulting table is put into tidy format and uncessary rows are removed for plotting
+    #new column added to state significance 
     toplotMoustache <-
       reactive({
         pathwaygsea <- gsea_file_values[[input$filechoice]]
@@ -1576,10 +1559,11 @@ Negative NES = Upregulated in Monocytic)",
           mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no'))
         
       })
-    # updateSelectizeInput(session,"pathwaylistmoustache", choices = fgseaResTidy$pathway, server = TRUE)
+    
     output$GSEAMoustache <- renderPlot(
       {
         if (input$moustache == TRUE) {
+          #color object reactive to user input from plalette choice
           colors <- c('grey', input$colMoustache)
           m <-
             ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) +
@@ -1589,8 +1573,8 @@ Negative NES = Upregulated in Monocytic)",
             xlab('NES') +
             scale_color_manual(values = colors) +
             ylab('adjusted p-value') +
-            ggtitle("Pathways from GSEA") + 
-            #geom_text() +
+            ggtitle("Pathways from GSEA") +
+            #only label pathways that sig
             geom_text_repel(colour = "black", aes(label= ifelse(padj <0.05, as.character(pathway), ""), hjust=0,vjust=0)) +
             coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1)) 
           print(m)
@@ -1605,15 +1589,16 @@ Negative NES = Upregulated in Monocytic)",
       }
     )
     #GSEA Enrichment Plots ####
+    #reactive expression for specific pathway choice
     observe({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
       updateSelectizeInput(session,"pathwaylisteplot", choices = names(pathwaygsea), server = TRUE)})
-    
+    #reactive expression for plot title based on enrichment plot type
     gseaeplot_title <-
       eventReactive(input$pathwaylisteplot, {
         print(input$pathwaylisteplot)
       })
-    
+    #fgsea run for selected pathway, tidy results table, filter for top up or down pathway to plot, or plot pathway of choice
     output$GSEAenrichment <- renderPlot ({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
       fgseaRes <-
@@ -1645,10 +1630,11 @@ Negative NES = Upregulated in Monocytic)",
       }
     )
     # GSEA Volcano plot ####
+    #reactive expression for selection of specific pathway by user input
     observe({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
       updateSelectizeInput(session,"pathwaylist", choices = names(pathwaygsea), server = TRUE)})
-    
+    #function to select only genes from the DE object that are found in the chocen pathway
     dds.res.pathways <- reactive({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
       p <-
@@ -1658,13 +1644,14 @@ Negative NES = Upregulated in Monocytic)",
         mutate(., genes_in_pathway = ifelse(Gene %in% p, 'yes', 'no'))
  print(dds.res.pathways)
     })
-    
+    #reactive title for volcano based on specific pathway choice
     gseavol_title <-
       eventReactive(input$pathwaylist, {
         paste(input$pathwaylist)
       })
    
     output$GSEAvolcano <- renderPlot ({
+      #color object reactive to user input from palette chpice
       colors <- 
         c("grey", input$colVolcano)
       if (input$volcanoplot == TRUE) {
@@ -1683,7 +1670,7 @@ Negative NES = Upregulated in Monocytic)",
         geom_text_repel(
           max.overlaps = 1500,
           colour = "black",
-          aes(
+          aes( #only label is gene is in pathway and sig expression 
             label = ifelse(
               genes_in_pathway == 'yes' & `log2FoldChange(Prim/Mono)` > 1.5,
               as.character(Gene),
@@ -1693,7 +1680,7 @@ Negative NES = Upregulated in Monocytic)",
           hjust = 0,
           vjust = 0
         ) +
-        ggtitle(gseavol_title()) +
+        ggtitle(gseavol_title()) + #reactive title
           xlab("log2foldchange")
       }
     })
@@ -1705,35 +1692,37 @@ Negative NES = Upregulated in Monocytic)",
       }
     )
     #GSEA heatmap ####
+    #reactive expression for selected pathway choice for heatmap
     observe({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
       updateSelectizeInput(session,"pathwaylistht", choices = names(pathwaygsea), server = TRUE)})
-    
+    #reactive expression of title for heatmap
     gseaht_title <-
       eventReactive(input$pathwaylistht, {
        print(input$pathwaylistht)
       })
-    
+    #interactive heatmap must be wrapped in a reactive expression
     observeEvent(input$pathwaylistht, {
       if(input$heatmap == TRUE) {
       pathwaygsea <- gsea_file_values[[input$filechoice]]
       
       p <- unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylistht]))
-      
+      #filter DE object for significance 
       dds.sig <- dds.res %>%
         dplyr::filter(padj < 0.05 & abs(`log2FoldChange(Prim/Mono)`) >= 0.5)
-      
+      #filter vst counts matrix for genes in pathway
       vst.myc <- vstlimma %>% 
-        mutate(., Hallmark_myc = ifelse(ext_gene %in% p, 'yes', 'no')) %>% 
-        dplyr::filter(Hallmark_myc == "yes")
-      
+        mutate(., pathwayheat = ifelse(ext_gene %in% p, 'yes', 'no')) %>% 
+        dplyr::filter(pathwayheat == "yes")
+      #create matrix for heatmap using genes in significant DE that are in pathway of choice
       vstgsea.mat <- vst.myc %>%
         dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
         column_to_rownames(., var = "ext_gene") %>%
-        dplyr::select(.,-ensembl_gene_id, -Hallmark_myc) %>%
+        dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
         as.matrix()
-      
+      #transform and scale and transform back
       vstgsea.mat <- t(scale(t(vstgsea.mat)))
+      #color function buliding a colorRamp palette based on user input from palette choices
       colors = colorRamp2(c(-2, 0, 2), c(input$GSEAheatcolor1, "white", input$GSEAheatcolor2))
       htgsea = draw(ComplexHeatmap::Heatmap(
         vstgsea.mat,
@@ -1751,11 +1740,14 @@ Negative NES = Upregulated in Monocytic)",
       makeInteractiveComplexHeatmap(input, output, session, htgsea, "htgsea")
       }
     })
+  
+    #Gene Centeric pathways analysis plots ####
+    #reactive title
     gsea_gene_title <- 
       eventReactive(input$Pathwaygenechoice, {
         paste(input$Pathwaygenechoice)
       })
-    #Gene Centeric pathways analysis plots ####
+    #reactive color palette
     colorchoicesGP <-
       eventReactive(input$PaletteChoicesGP, {
         if(input$PaletteChoicesGP == "viridis") {
@@ -1770,11 +1762,12 @@ Negative NES = Upregulated in Monocytic)",
           scale_color_viridis_d(option = "inferno")
         }
       })
-    
+    #reactive wrapper for js function to hide or show plot dimension options
     observe({
       toggle(id = "goiheightslider", condition = input$hidedimsGP)
       toggle(id ="goiwidthslider", condition = input$hidedimsGP)
     })
+    
     genecentricgseaplot <- reactive({
       #load chosen pathway file based on reactive input 
       genepathwaygsea <- (gene_gsea_file_values[[input$genefilechoice]])
@@ -1787,21 +1780,6 @@ Negative NES = Upregulated in Monocytic)",
       fgseaResTidy <- fgseaRes %>%
         as_tibble() %>%
         arrange(desc(NES))
-      # plot <-
-      #   plot +
-      #   plot_annotation(
-      #     title = feature,
-      #     theme = 
-      #       theme(
-      #         plot.title = 
-      #           element_text(
-      #             face = "bold",
-      #             hjust = 0.5,
-      #             size = 16
-      #           )
-      #       )
-      #   )
-      
 
       #create object for storing pathways that contain the chosen gene 
       goi_paths <- genepathwaygsea %>% keep(grepl(input$Pathwaygenechoice, genepathwaygsea))
@@ -1830,7 +1808,6 @@ Negative NES = Upregulated in Monocytic)",
       width = function() input$goiwidthslider,
       height = function() input$goiheightslider,
       {
-        
         ggplot(genecentricgseaplot(), aes(
           x = class,
           y = NES,
