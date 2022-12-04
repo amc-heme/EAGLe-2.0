@@ -166,6 +166,16 @@ bcvsd.pca <-
   left_join(., as_tibble(colData(vsd))) %>% 
   dplyr::select(SRR, batch, condition, sample_name, everything())
 
+<<<<<<< Updated upstream
+=======
+bcvsd2.pca <- (prcomp(t(assay(vsd))))
+#saveRDS(bcvsd2.pca, file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd2.pca.rds")
+bcvsd2.pca.var <- data.frame(summary(bcvsd2.pca)$importance)
+#saveRDS(bcvsd2.pca.var, file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.variance.rds")
+pc1var = round(bcvsd2.pca.var[3, 1] * 100, 1)
+pc2var = round(bcvsd2.pca.var[3, 2] * 100 - pc1var, 1)
+#saveRDS(bcvsd.pca, file= "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.pca.rds")
+>>>>>>> Stashed changes
 ```
 
 ```{r, Batch Corrected VST PCA, echo=F, fig.width=6, fig.height=4.5}
