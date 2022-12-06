@@ -1820,10 +1820,10 @@ Negative NES = Upregulated in Monocytic)",
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
           geom_hline(yintercept = 0, linetype = "dashed") +
           plot_annotation(
-            title = feature,
+            title = "Pathways with and without Gene of Interest",
             theme =
               theme(
-                plot.title = "Pathways with and without Gene of Interest",
+                plot.title =
                 element_text(
                   face = "bold",
                   hjust = 0.5,
