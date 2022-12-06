@@ -32,7 +32,7 @@ library(scales)
 library(esquisse)
 library(ggprism)
 library(shinycssloaders)
-
+library(limma)
 #Data ####
 #load in data and metadat 
 meta_lut_ven <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/meta_lut_ven.Rds")
@@ -74,7 +74,7 @@ vstlimma <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/vstlimma.rds")
 
 names(pathways.aeg)[10] <- "PM_Primitive_Blast"
 names(pathways.aeg)[9] <- "PM_Monocytic_Blast"
-#pathways.aegGOBP <- c(pathways.aeg, pathways.GObio)
+pathways.aegGOBP <- c(pathways.aeg, pathways.GObio)
 # UI ####
 ui <-
   navbarPage(
