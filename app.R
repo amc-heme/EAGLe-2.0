@@ -70,7 +70,7 @@ pathways.Positional <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/d
 pathways.Biocarta <-gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/c2.cp.biocarta.v2022.1.Hs.symbols.gmt")
 pathways.lsc <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/lsc_sigs.gmt")
 pathways.aeg <- gmtPathways("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/gmt_pathway_files copy/aeg_genesets_20220602.gmt")
-vstlimma <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/vstlimma.rds")
+vstlimma <- readRDS("/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vstlimma.rds")
 
 names(pathways.aeg)[10] <- "PM_Primitive_Blast"
 names(pathways.aeg)[9] <- "PM_Monocytic_Blast"
