@@ -34,7 +34,7 @@ library(ggprism)
 library(shinycssloaders)
 library(patchwork)
 #Data ####
-#load in data and metadat 
+#load in data and metadata
 meta_lut_ven <- readRDS("/Users/stephaniegipson/Documents/GitHub/EAGLe-2.0/data/meta_lut_ven.Rds")
 qcdt<-load_multiqc("/Users/stephaniegipson/Documents/GitHub/EAGLe-2.0/data/multiqc_data.json", sections="raw") 
 vst.goi <- readRDS("/Users/stephaniegipson/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
