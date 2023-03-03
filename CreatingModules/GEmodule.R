@@ -1,8 +1,8 @@
 ##practice space for creating modules for each analysis within the EAGLe app
-
-library(shiny)
-
-radio_button_UI<- function(id) {
+# 
+# library(shiny)
+# 
+geneexpressionUI<- function(id) {
   tagList(
     selectizeInput( #gene choice dropdown menu
       NS(id,"VSTCDgenechoice"),
@@ -41,10 +41,10 @@ radio_button_UI<- function(id) {
           "cividis" = viridis_pal(option = "cividis")(5))
       )
     ),
-    
+
     hr(), #js functions to hide plot dimensions until selected
     materialSwitch(NS(id,"hidedims"), "Custom plot dimensions", value = FALSE, right = TRUE),
-    
+
     #plot dimension input
     sliderInput(NS(id,"geneheightslider"), "Adjust plot height",
                 min = 200, max = 1200, value = 600
@@ -54,23 +54,23 @@ radio_button_UI<- function(id) {
                 min = 200, max = 1200, value = 800
     ),
     hr(),
-    
+
     downloadButton(NS(id, "downloadGenePlot"), label = "Download Plot"),
       plotOutput(NS(id,"VSTCDplot"))
-    
+
   )
 }
 
-radio_button_Server <- function(id) {
+geneexpressionServer <- function(id) {
   moduleServer(
     id,
     function(input, output, session) {
       updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
-      #reactive function for for filtering vst data table based on user input 
+      #reactive function for for filtering vst data table based on user input
       datavst <-
         reactive({
           if(input$PrimMonobutton == "comparison") {
-            vst.goi %>% 
+            vst.goi %>%
               dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
           } else if(input$PrimMonobutton == "prim") {
             vst.goi %>%
@@ -82,7 +82,7 @@ radio_button_Server <- function(id) {
               dplyr::filter(class == "mono")
           }
         })
-      
+
       observeEvent(input$XaxisVar_CDgene, {
         if(input$XaxisVar_CDgene == "xvalue") {
           mychoices <- c("Gene" = "ygene")
@@ -91,35 +91,35 @@ radio_button_Server <- function(id) {
         }else if(input$XaxisVar_CDgene == "xclass") {
           mychoices <- c("Value" = "yvalue")
         }
-        updateRadioButtons(session, "YaxisVar_CDgene", choices = mychoices)
+        #updateRadioButtons(session, "YaxisVar_CDgene", choices = mychoices)
       })
-      #y axis reactive output based on radio buttons
-      yvar_CDgene <-
-        eventReactive(input$YaxisVar_CDgene, {
-          if (input$YaxisVar_CDgene == "yvalue") {
-            "value"
-          } else if (input$YaxisVar_CDgene == "ygene") {
-            "ext_gene"
-          }
-        })
-      
-      #fill reactive output based on radio buttons
-      fillvar_CDgene <-
-        eventReactive(input$FillVar_CDgene, {
-          if (input$FillVar_CDgene == "fillclass") {
-            "class"
-          } else if (input$FillVar_CDgene == "fillgene") {
-            "ext_gene"
-          }
-        })
-      # facet toggle switch function to turn faceting on or off
+    # y axis reactive output based on radio buttons
+     yvar_CDgene <-
+       eventReactive(input$YaxisVar_CDgene, {
+         if (input$YaxisVar_CDgene == "yvalue") {
+           "value"
+         } else if (input$YaxisVar_CDgene == "ygene") {
+           "ext_gene"
+         }
+       })
+
+     #fill reactive output based on radio buttons
+     fillvar_CDgene <-
+       eventReactive(input$FillVar_CDgene, {
+         if (input$FillVar_CDgene == "fillclass") {
+           "class"
+         } else if (input$FillVar_CDgene == "fillgene") {
+           "ext_gene"
+         }
+       })
+     #facet toggle switch function to turn faceting on or off
       Gene_facet <-
         eventReactive(input$genefacetbutton, {
           if(input$genefacetbutton == TRUE) {
             facet_grid(cols = vars(class))
           } else(NULL)
         })
-      
+
      # reactive function to tell ggplot which color palette to use for fill based on user input
       colorpalettechoicesfgene <-
         eventReactive(input$PaletteChoicesGene, {
@@ -154,11 +154,11 @@ radio_button_Server <- function(id) {
       sig_label_position <- reactive({
         value <- vst.goi$value
         if(input$XaxisVar_CDgene == "xvalue") {
-          geom_text(aes(x = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
+          geom_text(aes(x = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T)
         } else if(input$XaxisVar_CDgene == "xgene") {
-          geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
+          geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T)
         } else if(input$XaxisVar_CDgene == "xclass") {
-          geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
+          geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T)
         }
       })
       #reactive wrapper for showing the plot dimensions options or hiding them based on toggle selection
@@ -185,36 +185,36 @@ radio_button_Server <- function(id) {
               colorpalettechoicesgene() + #reactive scale_color_manual
               geom_point(alpha = 0.5,
                          position = position_jitterdodge(jitter.width = 0.2),
-                         aes(color = class)) + 
+                         aes(color = class)) +
               theme_light() +
               sig_label_position() + # function for adjusted pvalues position and format on plot
               ylab("") +
               xlab("") +
               ggtitle("Gene Expression: Prim vs Mono")
           }) #end render plot
-      
+
       output$downloadGenePlot <- downloadHandler(
         filename = function() { paste('GeneCentricPlot','.png', sep='') },
         content = function(file) {
           ggsave(file, device = "png", width = 8,
                  height = 8, dpi = 72)
         }
-      )
+     )
     }
   )
 }
-
-radio_buttonApp<- function() {
+# 
+geneexpressionApp <- function() {
   ui <- fluidPage(
-    radio_button_UI("radio1")
+    geneexpressionUI("Gene1")
   )
   server<- function(input, output, session) {
-    radio_button_Server("radio1")
+    geneexpressionServer("Gene1")
   }
   shinyApp(ui = ui, server = server)
 }
 
-radio_buttonApp()
+geneexpressionApp()
 
 ##example from masteringshiny chapter 19 for reference
 
@@ -241,6 +241,7 @@ radio_buttonApp()
 #   server <- function(input, output, session) {
 #     histogramServer("hist1")
 #   }
-#   shinyApp(ui, server)  
+#   shinyApp(ui, server)
 # }
+# 
 # histogramApp()
