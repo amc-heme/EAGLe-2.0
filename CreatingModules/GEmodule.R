@@ -61,10 +61,8 @@ geneexpressionUI<- function(id) {
   )
 }
 
-geneexpressionServer <- function(id) {
-  moduleServer(
-    id,
-    function(input, output, session) {
+geneexpressionServer<- function(id) {
+  moduleServer(id,function(input, output, session) {
       updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
       #reactive function for for filtering vst data table based on user input
       datavst <-
@@ -203,15 +201,17 @@ geneexpressionServer <- function(id) {
     }
   )
 }
-# 
+
 geneexpressionApp <- function() {
   ui <- fluidPage(
     geneexpressionUI("Gene1")
   )
+  
   server<- function(input, output, session) {
     geneexpressionServer("Gene1")
   }
-  shinyApp(ui = ui, server = server)
+  
+  shinyApp(ui, server)
 }
 
 geneexpressionApp()
