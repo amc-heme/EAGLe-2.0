@@ -1,7 +1,8 @@
 ##practice space for creating modules for each analysis within the EAGLe app
-# 
-# library(shiny)
-# 
+
+library(shiny)
+# load files
+vst.goi <- readRDS("data/vst.goi.rds")
 geneexpressionUI<- function(id) {
   tagList(
     selectizeInput( #gene choice dropdown menu
