@@ -120,19 +120,10 @@ ui <-
                         FALSE,
                       right =
                         TRUE
-                    ),  #palette choices for PCA plots
-                    palettePicker(
-                      inputId = "PaletteChoicesQC",
-                      label = "Choose a color palette",
-                      choices = list(
-                        "Viridis" = list(
-                          "viridis" = viridis_pal(option = "viridis")(5),
-                          "magma" = viridis_pal(option = "magma")(5),
-                          "mako" = viridis_pal(option = "mako")(5),
-                          "plasma" = viridis_pal(option = "plasma")(5),
-                          "cividis" = viridis_pal(option = "cividis")(5))
-                      )
-                    ),
+                    ),  
+                    #palette choices for PCA plots
+                     paletteUI("color1"),
+                   
                     conditionalPanel(
                     condition = "input.PCAplots == true",
                     radioButtons( #choose type of PCA plot
@@ -224,18 +215,7 @@ ui <-
                     hr(),
                    
                     #add palette choices for boxplot colors
-                    palettePicker(
-                      inputId = "PaletteChoicesGene", 
-                      label = "Choose a color palette", 
-                      choices = list(
-                        "Viridis" = list(
-                          "viridis" = viridis_pal(option = "viridis")(5),
-                          "magma" = viridis_pal(option = "magma")(5),
-                          "mako" = viridis_pal(option = "mako")(5),
-                          "plasma" = viridis_pal(option = "plasma")(5),
-                          "cividis" = viridis_pal(option = "cividis")(5))
-                      )
-                        ),
+                    paletteUI("color1"),
                    
                     hr(), #js functions to hide plot dimensions until selected
                     materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
@@ -873,37 +853,11 @@ server <-
     options(shiny.reactlog = TRUE)
     
     #PCA plots color palette choices for fill
-    colorpalettechoices <-
-      eventReactive(input$PaletteChoicesQC, {
-        if(input$PaletteChoicesQC == "viridis") {
-           scale_fill_viridis_d(option = "viridis")
-        } else if(input$PaletteChoicesQC == "cividis") {
-          scale_fill_viridis_d(option = "cividis")
-        } else if(input$PaletteChoicesQC == "magma") {
-          scale_fill_viridis_d(option = "magma")
-        } else if(input$PaletteChoicesQC == "plasma") {
-          scale_fill_viridis_d(option = "plasma")
-        }else if(input$PaletteChoicesQC == "inferno") {
-          scale_fill_viridis_d(option = "inferno")
-        }
-      }) 
-    #PCA plot color palette choices for color
+    colorpalettechoicesQC <-
+      paletteServer("color1")
     colorchoicesQC <-
-      eventReactive(input$PaletteChoicesQC, {
-        if(input$PaletteChoicesQC == "viridis") {
-          scale_color_viridis_d(option = "viridis")
-        } else if(input$PaletteChoicesQC == "cividis") {
-          scale_color_viridis_d(option = "cividis")
-        } else if(input$PaletteChoicesQC == "magma") {
-          scale_color_viridis_d(option = "magma")
-        } else if(input$PaletteChoicesQC == "plasma") {
-          scale_color_viridis_d(option = "plasma")
-        }else if(input$PaletteChoicesQC == "inferno") {
-          scale_color_viridis_d(option = "inferno")
-        }
-      })
- 
-    ##QC-MultiQC plots####
+      paletteServer("color1")
+  ###QC-MultiQC plots####
     #reactive function for multiqc plot title
     QC_title <- 
       reactive({
@@ -1025,7 +979,7 @@ server <-
       ggplot(PCAdata(), aes(x = PC1, y = PC2, shape = condition, color = batch, fill = batch)) + 
         geom_point(size = 5) + 
         scale_shape_manual(values = c(21, 24), name = '') +
-        colorpalettechoices() + #scale_fill_manual reactive function
+        colorpalettechoicesQC() + #scale_fill_manual reactive function
         colorchoicesQC() + #scale_color manual reactive function
         theme_cowplot(font_size = 18) + 
         theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
@@ -1149,35 +1103,10 @@ server <-
       })
   
     #reactive function to tell ggplot which color palette to use for fill based on user input
-    colorpalettechoicesfgene <-
-      eventReactive(input$PaletteChoicesGene, {
-        if(input$PaletteChoicesGene == "viridis") {
-          scale_fill_viridis_d(option = "viridis")
-        } else if(input$PaletteChoicesGene == "cividis") {
-          scale_fill_viridis_d(option = "cividis")
-        } else if(input$PaletteChoicesGene == "magma") {
-          scale_fill_viridis_d(option = "magma")
-        } else if(input$PaletteChoicesGene == "plasma") {
-          scale_fill_viridis_d(option = "plasma")
-        }else if(input$PaletteChoicesGene == "inferno") {
-          scale_fill_viridis_d(option = "inferno")
-        }
-      })
-    #reactive function for scale_Color_manual based on palette choice
-    colorpalettechoicesgene <-
-      eventReactive(input$PaletteChoicesGene, {
-        if(input$PaletteChoicesGene == "viridis") {
-          scale_color_viridis_d(option = "viridis")
-        } else if(input$PaletteChoicesGene == "cividis") {
-          scale_color_viridis_d(option = "cividis")
-        } else if(input$PaletteChoicesGene == "magma") {
-          scale_color_viridis_d(option = "magma")
-        } else if(input$PaletteChoicesGene == "plasma") {
-          scale_color_viridis_d(option = "plasma")
-        }else if(input$PaletteChoicesGene == "inferno") {
-          scale_fill_viridis_d(option = "inferno")
-        }
-      })
+    colorpalettechoices <-
+      paletteServer("color1")
+    colorchoices <- 
+      paletteServer("color1")
     # function for adding padj values to plot, position needs to change when x and y variables change for readability
     sig_label_position <- reactive({
       value <- vst.goi$value
@@ -1209,8 +1138,8 @@ server <-
                  )) +
             geom_boxplot(outlier.shape = NA) +
             Gene_facet() + #reactive faceting
-            colorpalettechoicesfgene() + #reactive  scale_fill_manual
-            colorpalettechoicesgene() + #reactive scale_color_manual
+            colorpalettechoices() + #reactive  scale_fill_manual
+            colorchoices() + #reactive scale_color_manual
             geom_point(alpha = 0.5,
                        position = position_jitterdodge(jitter.width = 0.2),
                        aes(color = class)) + 
