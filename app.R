@@ -512,17 +512,8 @@ ui <-
                      h4("Waterfall Plot Specific Options"),
                      hr(),
                      #color palette choices for waterfall plot
-                     colourInput(
-                       "colWF",
-                       label = "Choose color",
-                       value = "#490092",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     ),
+                     colorUI("color7"),
+                     
                      hr(), 
                      #slider scale to choose how many pathways to load
                      sliderInput("howmanypathways", "Choose How Many Pathways to Rank",
@@ -555,17 +546,8 @@ ui <-
                      
                      hr(),
                    #color palette choices for muostache plot
-                     colourInput(
-                       "colMoustache",
-                       label = "Choose color",
-                       value = "#490092",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     ),
+                    colorUI("color8"),
+                   
                     hr(), 
     
                      downloadButton(
@@ -619,17 +601,7 @@ ui <-
                        options = list(maxItems = 1)
                      ),
                 #color palette choices for volcano plot
-                     colourInput(
-                       "colVolcano",
-                       label = "Choose color",
-                       value = "#490092",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     ),
+                     colorUI("color9"),
                      
                      downloadButton(
                        "downloadvolcano",
@@ -642,41 +614,21 @@ ui <-
                    conditionalPanel(
                      condition = "input.heatmap == true",
                      h4("Heatmap Specific Options"),
-                   #dropdown menu of specific pathways for heatmap, reactive to pathway sets dropdown
-                     selectizeInput(
-                       "pathwaylistht",
-                       label=
-                         "Choose a specific pathway to view genes on heatmap",
-                       choices =
-                         NULL,
-                       selected = NULL ,
-                       options = list(maxItems = 1)
-                     ),
+        
                    #color palette choices for heatmap
-                     colourInput(
-                       "GSEAheatcolor1",
-                       label = "Choose 1st color",
-                       value = "red",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     ),
-
-                     colourInput(
-                       "GSEAheatcolor2",
-                       label = "Choose 2nd color",
-                       value = "blue",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     )
-                     
+             colorUI("color10"),
+             
+             colorUI("color11"),
+             #dropdown menu of specific pathways for heatmap, reactive to pathway sets dropdown
+             selectizeInput(
+               "pathwaylistht",
+               label=
+                 "Choose a specific pathway to view genes on heatmap",
+               choices =
+                 NULL,
+               selected = NULL ,
+               options = list(maxItems = 1)
+             ),
                    ),
                  ),
                  
@@ -761,18 +713,7 @@ ui <-
                    
                    hr(),
                    #color palette options for GOI
-                   palettePicker(
-                     inputId = "PaletteChoicesGP",
-                     label = "Choose a color palette",
-                     choices = list(
-                       "Viridis" = list(
-                         "viridis" = viridis_pal(option = "viridis")(5),
-                         "magma" = viridis_pal(option = "magma")(5),
-                         "mako" = viridis_pal(option = "mako")(5),
-                         "plasma" = viridis_pal(option = "plasma")(5),
-                         "cividis" = viridis_pal(option = "cividis")(5))
-                     )
-                   ),
+                  paletteUI("paletteGOI"),
                    
                    hr(),
                    #js function to hide plot dimension options until selected
@@ -1395,6 +1336,9 @@ server <-
     })
    
     #### GSEA pathway ranks waterfall plot ####
+    #call in singlecolor_palette module for plot
+    colorWF <- 
+      colorServer("color7")
     
     output$GSEAranked <- renderPlot(
       width = function()
@@ -1404,7 +1348,7 @@ server <-
       {
          if (input$rankedplot == TRUE) {
            #color object reactive to user choice from palette
-            colors <- c("grey", input$colWF)
+            colors <- c("grey", colorWF())
         
           ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
             geom_col(aes(fill = padj < 0.05)) +
@@ -1466,12 +1410,14 @@ Negative NES = Upregulated in Monocytic)",
           mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no'))
         
       })
-    
+    #call in singlecolor_module for plot
+    colorM <- 
+      colorServer("color8")
     output$GSEAMoustache <- renderPlot(
       {
         if (input$moustache == TRUE) {
           #color object reactive to user input from plalette choice
-          colors <- c('grey', input$colMoustache)
+          colors <- c('grey', colorM())
           m <-
             ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) +
             geom_point() +
@@ -1556,11 +1502,13 @@ Negative NES = Upregulated in Monocytic)",
       eventReactive(input$pathwaylist, {
         paste(input$pathwaylist)
       })
-   
+   #call in singlecolor_module for plot
+    colorVol <- 
+      colorServer("color9")
     output$GSEAvolcano <- renderPlot ({
       #color object reactive to user input from palette chpice
       colors <- 
-        c("grey", input$colVolcano)
+        c("grey", colorVol())
       if (input$volcanoplot == TRUE) {
         ggplot(
           data = (dds.res.pathways() %>% arrange(., (genes_in_pathway))),
@@ -1608,6 +1556,11 @@ Negative NES = Upregulated in Monocytic)",
       eventReactive(input$pathwaylistht, {
        print(input$pathwaylistht)
       })
+    #call in singlecolor_module for plot palette
+    colorGHeat <- 
+      colorServer("color10")
+    colorGHeat2 <-
+      colorServer("color11")
     #interactive heatmap must be wrapped in a reactive expression
     observeEvent(input$pathwaylistht, {
       if(input$heatmap == TRUE) {
@@ -1630,7 +1583,7 @@ Negative NES = Upregulated in Monocytic)",
       #transform and scale and transform back
       vstgsea.mat <- t(scale(t(vstgsea.mat)))
       #color function buliding a colorRamp palette based on user input from palette choices
-      colors = colorRamp2(c(-2, 0, 2), c(input$GSEAheatcolor1, "white", input$GSEAheatcolor2))
+      colors = colorRamp2(c(-2, 0, 2), c(colorGHeat(), "white", colorGHeat2()))
       htgsea = draw(ComplexHeatmap::Heatmap(
         vstgsea.mat,
         name = paste(gseaht_title(), fontsize = 6),
@@ -1655,20 +1608,8 @@ Negative NES = Upregulated in Monocytic)",
         paste(input$Pathwaygenechoice)
       })
     #reactive color palette
-    colorchoicesGP <-
-      eventReactive(input$PaletteChoicesGP, {
-        if(input$PaletteChoicesGP == "viridis") {
-          scale_color_viridis_d(option = "viridis")
-        } else if(input$PaletteChoicesGP == "cividis") {
-          scale_color_viridis_d(option = "cividis")
-        } else if(input$PaletteChoicesGP == "magma") {
-          scale_color_viridis_d(option = "magma")
-        } else if(input$PaletteChoicesGP == "plasma") {
-          scale_color_viridis_d(option = "plasma")
-        }else if(input$PaletteChoicesGP == "inferno") {
-          scale_color_viridis_d(option = "inferno")
-        }
-      })
+    colorGOI <-
+      paletteServer("paletteGOI")
     #reactive wrapper for js function to hide or show plot dimension options
     observe({
       toggle(id = "goiheightslider", condition = input$hidedimsGP)
@@ -1721,7 +1662,7 @@ Negative NES = Upregulated in Monocytic)",
           color = (padj < 0.05)
         )) +
           geom_boxplot()  +
-          colorchoicesGP() +
+          scale_color_viridis_d(option = colorGOI()) +
           facet_wrap( ~ GOI, scales = "free") +
           theme_light(base_size = 18) +
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
