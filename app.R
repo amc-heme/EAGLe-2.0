@@ -221,13 +221,16 @@ ui <-
                     materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
             
                     #plot dimension input
-                    sliderInput("geneheightslider", "Adjust plot height",
-                                min = 200, max = 1200, value = 600
-                    ),
-                    hr(),
-                    sliderInput("genewidthslider", "Adjust plot width",
-                                min = 200, max = 1200, value = 800
-                    ),
+                    sliderUI("plotheightslider", 200, 1200, 600),
+                    # sliderInput("geneheightslider", "Adjust plot height",
+                    #             min = 200, max = 1200, value = 600
+                    # ),
+                     hr(),
+                    
+                    sliderUI("plotwidthslider", 200,1200,800),
+                    # sliderInput("genewidthslider", "Adjust plot width",
+                    #             min = 200, max = 1200, value = 800
+                    #),
                     hr(),
                     
                     downloadButton("downloadGenePlot", label = "Download Plot"),
@@ -1020,16 +1023,21 @@ server <-
         geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
       }
     })
+    geneheight <-
+    sliderServer("plotheightslider")
+    
+    genewidth <- 
+      sliderServer("plotwidthslider")
     #reactive wrapper for showing the plot dimensions options or hiding them based on toggle selection
     observe({
-      toggle(id = "geneheightslider", condition = input$hidedims)
-      toggle(id ="genewidthslider", condition = input$hidedims)
+      toggle(id = "plotheightslider", condition = input$hidedims)
+      toggle(id = "plotwidthslider", condition = input$hidedims)
     })
     #plot output
     output$VSTCDplot <-
       renderPlot(
-        width = function() input$genewidthslider,
-        height = function() input$geneheightslider,
+        width = function() geneheight(), #input$genewidthslider,
+        height = function() genewidth(), #input$geneheightslider,
         res = 120,
         {
           ggplot(datavst(),
@@ -1607,7 +1615,7 @@ Negative NES = Upregulated in Monocytic)",
       eventReactive(input$Pathwaygenechoice, {
         paste(input$Pathwaygenechoice)
       })
-    #reactive color palette
+    #reactive color palette from module
     colorGOI <-
       paletteServer("paletteGOI")
     #reactive wrapper for js function to hide or show plot dimension options
