@@ -122,7 +122,7 @@ ui <-
                         TRUE
                     ),  
                     #palette choices for PCA plots
-                     paletteUI("color"),
+                     paletteUI("palette"),
                    
                     conditionalPanel(
                     condition = "input.PCAplots == true",
@@ -215,7 +215,7 @@ ui <-
                     hr(),
                    
                     #add palette choices for boxplot colors
-                    paletteUI("color2"),
+                    paletteUI("palette2"),
                    
                     hr(), #js functions to hide plot dimensions until selected
                     materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
@@ -320,29 +320,10 @@ ui <-
                    conditionalPanel(
                      condition = "input.DESeqvolcano == true",
                      h4("Volcano Plot Specific Options"),
-                     #color paletter choice for volcano plot
-                     colourInput(
-                       "col1",
-                       label = "Choose color",
-                       value = "#490092",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     ),
-                     colourInput(
-                       "col2",
-                       label = "Choose color",
-                       value = "#0F6B34",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     ),
+                     #color palette choice for volcano plot
+                     colorUI("color"),
+                     colorUI("color2"),
+                     
                      hr(),
                      downloadButton(
                        "downloadDEVolcano",
@@ -356,28 +337,8 @@ ui <-
                      condition = "input.DESeqMA ==true", 
                      h4("MA Plot Specific Options"),
                      #color palette choice for MA plot
-                     colourInput(
-                       "MAcol1",
-                       label = "Choose color",
-                       value = "#490092",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     ),
-                     colourInput(
-                       "MAcol2",
-                       label = "Choose color",
-                       value = "#0F6B34",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     ),
+                     colorUI("color3"),
+                     colorUI("color4"),
                     
                      hr(),
                      downloadButton(
@@ -392,28 +353,30 @@ ui <-
                      condition = "input.DESeqHeat == true",
                      h4("Heatmap Specific Options"),
                      #color palette choices for heatmap
-                     colourInput(
-                       "heatcolor1",
-                       label = "Choose 1st color",
-                       value = "red",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     ),
-                     colourInput(
-                       "heatcolor2",
-                       label = "Choose 2nd color",
-                       value = "blue",
-                       showColour = ("both"),
-                       palette = ("square"),
-                       allowedCols = NULL,
-                       allowTransparent = FALSE,
-                       returnName = FALSE,
-                       closeOnClick = FALSE
-                     )
+                     colorUI("color5"),
+                     colorUI("color6"),
+                     # colourInput(
+                     #   "heatcolor1",
+                     #   label = "Choose 1st color",
+                     #   value = "red",
+                     #   showColour = ("both"),
+                     #   palette = ("square"),
+                     #   allowedCols = NULL,
+                     #   allowTransparent = FALSE,
+                     #   returnName = FALSE,
+                     #   closeOnClick = FALSE
+                     # ),
+                     # colourInput(
+                     #   "heatcolor2",
+                     #   label = "Choose 2nd color",
+                     #   value = "blue",
+                     #   showColour = ("both"),
+                     #   palette = ("square"),
+                     #   allowedCols = NULL,
+                     #   allowTransparent = FALSE,
+                     #   returnName = FALSE,
+                     #   closeOnClick = FALSE
+                     # )
 
                        )
                      ),
@@ -851,38 +814,7 @@ server <-
     print("Initializing renderPlots")
     
     options(shiny.reactlog = TRUE)
-    
-    #PCA plots color palette choices for fill
-    # colorpalettechoicesQC <-
-    # paletteServer("color", {
-    #   if(color == "viridis") {
-    #     scale_fill_viridis_d(option = "viridis")
-    #   } else if(color == "cividis") {
-    #     scale_fill_viridis_d(option = "cividis")
-    #   } else if(color == "magma") {
-    #     scale_fill_viridis_d(option = "magma")
-    #   } else if(color == "plasma") {
-    #     scale_fill_viridis_d(option = "plasma")
-    #   }else if(color == "inferno") {
-    #     scale_fill_viridis_d(option = "inferno")
-    #   }
-    # }) 
-    # colorpalettechoicesQC <-
-    #   scale_fill_viridis_d(paletteServer("color"))
-    # colorchoicesQC <-
-    #   paletteServer("color", {
-    #     if(color == "viridis") {
-    #       scale_color_viridis_d(option = "viridis")
-    #     } else if(color == "cividis") {
-    #       scale_color_viridis_d(option = "cividis")
-    #     } else if(color == "magma") {
-    #       scale_color_viridis_d(option = "magma")
-    #     } else if(color == "plasma") {
-    #       scale_color_viridis_d(option = "plasma")
-    #     }else if(color == "inferno") {
-    #       scale_color_viridis_d(option = "inferno")
-    #     }
-    #   }) 
+  
    
   ###QC-MultiQC plots####
     #reactive function for multiqc plot title
@@ -1002,7 +934,7 @@ server <-
       })
     
     colorpaletteQC <- 
-      paletteServer("color")
+      paletteServer("palette")
   
     #PCA plot output
     output$PCAplot <- renderPlot ({
@@ -1134,7 +1066,7 @@ server <-
   
     #call in palette module for plot
     colorpaletteGene <- 
-      paletteServer("color2")
+      paletteServer("palette2")
     
     # function for adding padj values to plot, position needs to change when x and y variables change for readability
     sig_label_position <- reactive({
@@ -1273,10 +1205,15 @@ server <-
    
 
     #DE Volcano Plot ####
+    colorDE <- 
+      colorServer("color")
+    
+    color2DE <-
+      colorServer("color2")
     
     output$DEVolcanoPlot <-
       renderPlotly({
-        colors <- c(input$col1, "grey", input$col2) #object for colors on volcano based on user input
+        colors <- c(colorDE(), "grey", color2DE()) #object for colors on volcano based on user input
         p <- ggplot(dds.res, aes(
           x = `log2FoldChange(Prim/Mono)`,
           y = -log10(padj),
@@ -1299,8 +1236,15 @@ server <-
     )
     
     #DE MA Plot ####
+    #call for module_singlcolor_palette
+    color3DE <- 
+      colorServer("color3")
+    
+    color4DE <-
+      colorServer("color4")
+    
     output$DEMAPlot <- renderPlotly ({
-        colors <- c(input$col1, "grey", input$col2) #object for color choices dependent on user input
+        colors <- c(color3DE(), "grey", color4DE()) #object for color choices dependent on user input
       ma <-
         ggplot(dds.res,
                aes(
@@ -1332,6 +1276,11 @@ server <-
     
   
     #DE Heatmap ####
+    color5DE <- 
+      colorServer("color5")
+    
+    color6DE <-
+      colorServer("color6")
     #interactive heatmap needs to be wrapped in a reactive function to work
     observe({
       #filter DE object for only significantly differentially experessed genes
@@ -1348,7 +1297,7 @@ server <-
     #only show the first 100 genes for visualization in this example(can change)
     vst.mat <- head(vst.mat, n = 100)
     #create a colorRamp function based on user input in color palette choices
-    colors = colorRamp2(c(-2, 0, 2), c(input$heatcolor1, "white", input$heatcolor2))
+    colors = colorRamp2(c(-2, 0, 2), c(color5DE(), "white", color6DE()))
     #create heatmap object
     ht = draw(ComplexHeatmap::Heatmap(
       vst.mat,

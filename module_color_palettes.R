@@ -7,24 +7,25 @@ library(esquisse)
 
 paletteUI <- function(id, choices) {
   ns <- NS(id)
-
-    palettePicker(ns("palette"), 
-       "Choose a color palette",
-      choices = list(
-        "Viridis" = list(
-          "viridis" = viridis_pal(option = "viridis")(5),
-          "magma" = viridis_pal(option = "magma")(5),
-          "mako" = viridis_pal(option = "mako")(5),
-          "plasma" = viridis_pal(option = "plasma")(5),
-          "cividis" = viridis_pal(option = "cividis")(5))
-      )
-    )
+  
+  palettePicker(ns("palette"),
+                "Choose a color palette",
+                choices = list(
+                  "Viridis" = list(
+                    "viridis" = viridis_pal(option = "viridis")(5),
+                    "magma" = viridis_pal(option = "magma")(5),
+                    "mako" = viridis_pal(option = "mako")(5),
+                    "plasma" = viridis_pal(option = "plasma")(5),
+                    "cividis" = viridis_pal(option = "cividis")(5)
+                  )
+                ))
 }
 
 paletteServer <- function(id) {
   moduleServer(id, function(input, output, session) {
-    
-    color <- reactive({input$palette})
+    color <- reactive({
+      input$palette
+    })
     
     return(color)
   })
@@ -32,12 +33,10 @@ paletteServer <- function(id) {
 
 
 paletteApp <- function() {
-  ui <- fluidPage(
-    paletteUI("color")
-  )
+  ui <- fluidPage(paletteUI("palette"))
   server <- function(input, output, session) {
-    paletteServer("color")
+    paletteServer("palette")
   }
-  shinyApp(ui, server)  
+  shinyApp(ui, server)
 }
 paletteApp()
