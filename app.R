@@ -122,7 +122,7 @@ ui <-
                         TRUE
                     ),  
                     #palette choices for PCA plots
-                     paletteUI("color1"),
+                     paletteUI("color"),
                    
                     conditionalPanel(
                     condition = "input.PCAplots == true",
@@ -215,7 +215,7 @@ ui <-
                     hr(),
                    
                     #add palette choices for boxplot colors
-                    paletteUI("color1"),
+                    paletteUI("color2"),
                    
                     hr(), #js functions to hide plot dimensions until selected
                     materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
@@ -853,10 +853,37 @@ server <-
     options(shiny.reactlog = TRUE)
     
     #PCA plots color palette choices for fill
-    colorpalettechoicesQC <-
-      paletteServer("color1")
-    colorchoicesQC <-
-      paletteServer("color1")
+    # colorpalettechoicesQC <-
+    # paletteServer("color", {
+    #   if(color == "viridis") {
+    #     scale_fill_viridis_d(option = "viridis")
+    #   } else if(color == "cividis") {
+    #     scale_fill_viridis_d(option = "cividis")
+    #   } else if(color == "magma") {
+    #     scale_fill_viridis_d(option = "magma")
+    #   } else if(color == "plasma") {
+    #     scale_fill_viridis_d(option = "plasma")
+    #   }else if(color == "inferno") {
+    #     scale_fill_viridis_d(option = "inferno")
+    #   }
+    # }) 
+    # colorpalettechoicesQC <-
+    #   scale_fill_viridis_d(paletteServer("color"))
+    # colorchoicesQC <-
+    #   paletteServer("color", {
+    #     if(color == "viridis") {
+    #       scale_color_viridis_d(option = "viridis")
+    #     } else if(color == "cividis") {
+    #       scale_color_viridis_d(option = "cividis")
+    #     } else if(color == "magma") {
+    #       scale_color_viridis_d(option = "magma")
+    #     } else if(color == "plasma") {
+    #       scale_color_viridis_d(option = "plasma")
+    #     }else if(color == "inferno") {
+    #       scale_color_viridis_d(option = "inferno")
+    #     }
+    #   }) 
+   
   ###QC-MultiQC plots####
     #reactive function for multiqc plot title
     QC_title <- 
@@ -974,13 +1001,16 @@ server <-
         }
       })
     
+    colorpaletteQC <- 
+      paletteServer("color")
+  
     #PCA plot output
     output$PCAplot <- renderPlot ({
       ggplot(PCAdata(), aes(x = PC1, y = PC2, shape = condition, color = batch, fill = batch)) + 
         geom_point(size = 5) + 
         scale_shape_manual(values = c(21, 24), name = '') +
-        colorpalettechoicesQC() + #scale_fill_manual reactive function
-        colorchoicesQC() + #scale_color manual reactive function
+        scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
+        scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
         theme_cowplot(font_size = 18) + 
         theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
         theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
@@ -1102,11 +1132,10 @@ server <-
         } else(NULL)
       })
   
-    #reactive function to tell ggplot which color palette to use for fill based on user input
-    colorpalettechoices <-
-      paletteServer("color1")
-    colorchoices <- 
-      paletteServer("color1")
+    #call in palette module for plot
+    colorpaletteGene <- 
+      paletteServer("color2")
+    
     # function for adding padj values to plot, position needs to change when x and y variables change for readability
     sig_label_position <- reactive({
       value <- vst.goi$value
@@ -1138,8 +1167,8 @@ server <-
                  )) +
             geom_boxplot(outlier.shape = NA) +
             Gene_facet() + #reactive faceting
-            colorpalettechoices() + #reactive  scale_fill_manual
-            colorchoices() + #reactive scale_color_manual
+            scale_fill_viridis_d(option = colorpaletteGene()) + #reactive  scale_fill_manual from module
+            scale_color_viridis_d(option = colorpaletteGene()) + #reactive scale_color_manual from module
             geom_point(alpha = 0.5,
                        position = position_jitterdodge(jitter.width = 0.2),
                        aes(color = class)) + 

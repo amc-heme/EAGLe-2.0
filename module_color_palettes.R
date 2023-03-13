@@ -24,18 +24,19 @@ paletteUI <- function(id, choices) {
 paletteServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     
-    color <- reactive(scale_color_viridis_d(option = (input$palette)))
+    color <- reactive({input$palette})
     
+    return(color)
   })
 }
 
 
 paletteApp <- function() {
   ui <- fluidPage(
-    paletteUI("color1")
+    paletteUI("color")
   )
   server <- function(input, output, session) {
-    paletteServer("color1")
+    paletteServer("color")
   }
   shinyApp(ui, server)  
 }
