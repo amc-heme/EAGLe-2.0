@@ -218,9 +218,9 @@ ui <-
                     paletteUI("palette2"),
                    
                     hr(), #js functions to hide plot dimensions until selected
-                    # materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
+                    materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
                     tagList(
-                    switchUI("hidedimsbtn", "Custom plot dimensions", value = FALSE, right = TRUE),
+                    # switchUI("hidedimsbtn", "Custom plot dimensions", value = FALSE, right = TRUE),
                     #plot dimension input
                     sliderUI("plotheightslider", 200, 1200, 600, "Adjust Plot Height"),
                   
@@ -727,13 +727,11 @@ ui <-
                    #js function to hide plot dimension options until selected
                    materialSwitch("hidedimsGP", "Custom plot dimensions", value = FALSE, right = TRUE),
                    
-                   sliderInput("goiheightslider", "Adjust plot height",
-                               min = 200, max = 1000, value = 400
+                   sliderUI("goiheightslider", 200, 1000, 400, "Adjust plot height"
                    ),
                    hr(),
                    
-                   sliderInput("goiwidthslider", "Adjust plot width",
-                               min = 200, max = 1000, value = 600
+                   sliderUI("goiwidthslider", 200, 1000, 600, "Adjust plot width"
                    ),
                    downloadButton(
                      "downloadGOI",
@@ -1035,7 +1033,7 @@ server <-
       sliderServer("plotwidthslider")
     
      
-    switchServer("hidedimsbtn")
+    # switchServer("hidedimsbtn")
     
     #reactive wrapper for showing the plot dimensions options or hiding them based on toggle selection
     # observe({
@@ -1633,6 +1631,10 @@ Negative NES = Upregulated in Monocytic)",
     #reactive color palette from module
     colorGOI <-
       paletteServer("paletteGOI")
+    goiheights <- 
+      sliderServer("goiheightslider")
+    goiwidths <- 
+      sliderServer("goiwidthslider")
     #reactive wrapper for js function to hide or show plot dimension options
     observe({
       toggle(id = "goiheightslider", condition = input$hidedimsGP)
@@ -1676,8 +1678,8 @@ Negative NES = Upregulated in Monocytic)",
     })
     
     output$PathwaysGenePlot <- renderPlot(
-      width = function() input$goiwidthslider,
-      height = function() input$goiheightslider,
+      width = function() goiwidths(),
+      height = function() goiheights(),
       {
         ggplot(genecentricgseaplot(), aes(
           x = class,
