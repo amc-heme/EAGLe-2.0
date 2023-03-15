@@ -218,19 +218,17 @@ ui <-
                     paletteUI("palette2"),
                    
                     hr(), #js functions to hide plot dimensions until selected
-                    materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
-            
+                    # materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
+                    tagList(
+                    switchUI("hidedimsbtn", "Custom plot dimensions", value = FALSE, right = TRUE),
                     #plot dimension input
-                    sliderUI("plotheightslider", 200, 1200, 600),
-                    # sliderInput("geneheightslider", "Adjust plot height",
-                    #             min = 200, max = 1200, value = 600
-                    # ),
+                    sliderUI("plotheightslider", 200, 1200, 600, "Adjust Plot Height"),
+                  
                      hr(),
                     
-                    sliderUI("plotwidthslider", 200,1200,800),
-                    # sliderInput("genewidthslider", "Adjust plot width",
-                    #             min = 200, max = 1200, value = 800
-                    #),
+                    sliderUI("plotwidthslider", 200, 1200, 800, "Adjust Plot Width")
+                    ),
+                
                     hr(),
                     
                     downloadButton("downloadGenePlot", label = "Download Plot"),
@@ -324,8 +322,8 @@ ui <-
                      condition = "input.DESeqvolcano == true",
                      h4("Volcano Plot Specific Options"),
                      #color palette choice for volcano plot
-                     colorUI("color"),
-                     colorUI("color2"),
+                     colorUI("color", "Choose 1st color", "#0000FF"),
+                     colorUI("color2", "Choose 2nd color", "028a0f"),
                      
                      hr(),
                      downloadButton(
@@ -340,8 +338,8 @@ ui <-
                      condition = "input.DESeqMA ==true", 
                      h4("MA Plot Specific Options"),
                      #color palette choice for MA plot
-                     colorUI("color3"),
-                     colorUI("color4"),
+                     colorUI("color3", "Choose 1st color", "#0000FF"),
+                     colorUI("color4", "Choose 2nd color", "028a0f"),
                     
                      hr(),
                      downloadButton(
@@ -356,8 +354,8 @@ ui <-
                      condition = "input.DESeqHeat == true",
                      h4("Heatmap Specific Options"),
                      #color palette choices for heatmap
-                     colorUI("color5"),
-                     colorUI("color6"),
+                     colorUI("color5","Choose 1st color", "#0000FF"),
+                     colorUI("color6", "Choose 2nd color", "#FF0000"),
                      # colourInput(
                      #   "heatcolor1",
                      #   label = "Choose 1st color",
@@ -515,25 +513,32 @@ ui <-
                      h4("Waterfall Plot Specific Options"),
                      hr(),
                      #color palette choices for waterfall plot
-                     colorUI("color7"),
+                     colorUI("color7", "Choose color for plot", "#FF0000"),
                      
                      hr(), 
                      #slider scale to choose how many pathways to load
                      sliderInput("howmanypathways", "Choose How Many Pathways to Rank",
                                  min = 5, max = 50, value = 15
                      ),
+                     # sliderUI("howmanypathways", 5, 50, 15, "Choose How Many Pathways to Rank"), 
+                     
                      hr(),
                      #js function to hide plot dimensions until selected
                    materialSwitch("hidedimsWF", "Custom plot dimensions", value = FALSE, right = TRUE),
                    
-                     sliderInput("rankedheightslider", "Adjust plot height",
-                                 min = 200, max = 1000, value = 400
-                     ),
+                     # sliderInput("rankedheightslider", "Adjust plot height",
+                     #             min = 200, max = 1000, value = 400
+                     # ),
+                   #call in mosule UI for height slider
+                   sliderUI("rankedheightslider", 200, 1000, 400, "Adjust Plot Height"),
+                   
                      hr(),
                      
-                     sliderInput("rankedwidthslider", "Adjust plot width",
-                                 min = 200, max = 1000, value = 600
-                     ),
+                     # sliderInput("rankedwidthslider", "Adjust plot width",
+                     #             min = 200, max = 1000, value = 600
+                     # ),
+                   #call in module UI for width slider
+                   sliderUI("rankedwidthslider", 200, 1000, 600, "Adjust Plot Width"),
     
                      downloadButton(
                        "downloadranks",
@@ -549,7 +554,7 @@ ui <-
                      
                      hr(),
                    #color palette choices for muostache plot
-                    colorUI("color8"),
+                    colorUI("color8", "Choose color for plot", "#FF0000"),
                    
                     hr(), 
     
@@ -604,7 +609,7 @@ ui <-
                        options = list(maxItems = 1)
                      ),
                 #color palette choices for volcano plot
-                     colorUI("color9"),
+                     colorUI("color9", "Choose color for plot", "#FF0000"),
                      
                      downloadButton(
                        "downloadvolcano",
@@ -619,9 +624,9 @@ ui <-
                      h4("Heatmap Specific Options"),
         
                    #color palette choices for heatmap
-             colorUI("color10"),
+             colorUI("color10", "Choose 1st color", "#FF0000"),
              
-             colorUI("color11"),
+             colorUI("color11", "Choose 2nd color", "#0000FF"),
              #dropdown menu of specific pathways for heatmap, reactive to pathway sets dropdown
              selectizeInput(
                "pathwaylistht",
@@ -1028,11 +1033,15 @@ server <-
     
     genewidth <- 
       sliderServer("plotwidthslider")
+    
+     
+    switchServer("hidedimsbtn")
+    
     #reactive wrapper for showing the plot dimensions options or hiding them based on toggle selection
-    observe({
-      toggle(id = "plotheightslider", condition = input$hidedims)
-      toggle(id = "plotwidthslider", condition = input$hidedims)
-    })
+    # observe({
+    #   toggle(id = geneheight(), condition = input$hidedims)
+    #   toggle(id = genewidth(), condition = input$hidedims)
+    # })
     #plot output
     output$VSTCDplot <-
       renderPlot(
@@ -1316,6 +1325,8 @@ server <-
         write.csv(gseafile(),file)
       }
     )
+   
+    
     #filter Res table for chosen pathway to show in a waterfall plot
     gseafile_waterfall <-
       reactive({
@@ -1347,12 +1358,16 @@ server <-
     #call in singlecolor_palette module for plot
     colorWF <- 
       colorServer("color7")
+    rankedheight <-
+      sliderServer("rankedheightslider")
+    rankedwidth <-
+      sliderServer("rankedwidthslider")
     
     output$GSEAranked <- renderPlot(
       width = function()
-        input$rankedwidthslider,
+        rankedwidth(),
       height = function()
-        input$rankedheightslider,
+        rankedheight(),
       {
          if (input$rankedplot == TRUE) {
            #color object reactive to user choice from palette

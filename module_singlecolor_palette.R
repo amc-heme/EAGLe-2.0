@@ -2,13 +2,13 @@ library(shiny)
 library(colourpicker)
 library(esquisse)
 
-colorUI <- function(id, choices) {
+colorUI <- function(id, label, value) {
   ns <- NS(id)
   
   colourInput(
     ns("colorpalette"),
-    label = "Choose a color",
-    value = NULL,
+    label = label,
+    value = value,
     showColour = ("both"),
     palette = ("square"),
     allowedCols = NULL,
