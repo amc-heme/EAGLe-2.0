@@ -2,32 +2,27 @@ library(shiny)
 library(shinyjs)
 sliderUI <- function(id, min, max, value, label) {
   ns <- NS(id)
-
-  sliderInput(ns("slider"), label = label,
+  tagList(
+    materialSwitch(ns("hidedims"), label = "Custom Plot Dimensions", value = FALSE, right = TRUE),
+    shinyjs::hidden(
+    sliderInput(ns("slider"), label = label,
               min = min, max = max, value = value
     )
+  )
+  )
 }
-# switchUI <- function(id, label, value, right){
-#   ns <- NS(id)
-#   materialSwitch(ns("hidedims"), label = label, value = value, right = right)
-# }
 
 sliderServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     sliderscale <- reactive({
       input$slider
     })
+    observe({
+    shinyjs::toggle("slider", condition = input$hidedims)
+    })
     return(sliderscale)
   })
 }
-
-# switchServer <- function(id) {
-#   moduleServer(id, function(input, output, session) {
-#     observe({
-#       shinyjs::toggle("slider", condition = input$hidedims)
-#     })
-#   })
-# }
 
 sliderApp <- function() {
   ui <- fluidPage(sliderUI("slider"))

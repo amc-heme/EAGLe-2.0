@@ -211,23 +211,22 @@ ui <-
                                 choices = list("Show Comparison" = "comparison", "Prim" = "prim", "Mono" = "mono"), selected = "comparison"),
                     hr(),
                     #add a facet toggle switch
-                    materialSwitch("genefacetbutton", label = "Facet", value = FALSE, right = TRUE),
+                     materialSwitch("genefacetbutton", label = "Facet", value = FALSE, right = TRUE),
                     hr(),
                    
                     #add palette choices for boxplot colors
                     paletteUI("palette2"),
                    
                     hr(), #js functions to hide plot dimensions until selected
-                    materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
-                    tagList(
-                    # switchUI("hidedimsbtn", "Custom plot dimensions", value = FALSE, right = TRUE),
+                   #materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
+                    
+                    
                     #plot dimension input
                     sliderUI("plotheightslider", 200, 1200, 600, "Adjust Plot Height"),
                   
                      hr(),
                     
-                    sliderUI("plotwidthslider", 200, 1200, 800, "Adjust Plot Width")
-                    ),
+                    sliderUI("plotwidthslider", 200, 1200, 800, "Adjust Plot Width"),
                 
                     hr(),
                     
@@ -1030,10 +1029,8 @@ server <-
     sliderServer("plotheightslider")
     
     genewidth <- 
-      sliderServer("plotwidthslider")
+    sliderServer("plotwidthslider")
     
-     
-    # switchServer("hidedimsbtn")
     
     #reactive wrapper for showing the plot dimensions options or hiding them based on toggle selection
     # observe({
@@ -1636,7 +1633,7 @@ Negative NES = Upregulated in Monocytic)",
     goiwidths <- 
       sliderServer("goiwidthslider")
     #reactive wrapper for js function to hide or show plot dimension options
-    observe({
+    observeEvent(goiheights(), {
       toggle(id = "goiheightslider", condition = input$hidedimsGP)
       toggle(id ="goiwidthslider", condition = input$hidedimsGP)
     })
