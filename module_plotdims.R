@@ -5,10 +5,10 @@ sliderUI <- function(id, min, max, value, label) {
   tagList(
     materialSwitch(ns("hidedims"), label = "Custom Plot Dimensions", value = FALSE, right = TRUE),
     shinyjs::hidden(
-    sliderInput(ns("slider"), label = label,
-              min = min, max = max, value = value
+      sliderInput(ns("slider"), label = label,
+                  min = min, max = max, value = value
+      )
     )
-  )
   )
 }
 
@@ -18,7 +18,7 @@ sliderServer <- function(id) {
       input$slider
     })
     observe({
-    shinyjs::toggle("slider", condition = input$hidedims)
+      shinyjs::toggle("slider", condition = input$hidedims)
     })
     return(sliderscale)
   })

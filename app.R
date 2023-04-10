@@ -224,8 +224,8 @@ ui <-
                     #plot dimension input
                     sliderUI("plotheightslider", 200, 1200, 600, "Adjust Plot Height"),
                   
-                     hr(),
-                    
+                    #  hr(),
+                    # 
                     sliderUI("plotwidthslider", 200, 1200, 800, "Adjust Plot Width"),
                 
                     hr(),
@@ -1025,10 +1025,11 @@ server <-
         geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
       }
     })
+    
     geneheight <-
     sliderServer("plotheightslider")
     
-    genewidth <- 
+    genewidth <-
     sliderServer("plotwidthslider")
     
     
@@ -1040,8 +1041,8 @@ server <-
     #plot output
     output$VSTCDplot <-
       renderPlot(
-        width = function() geneheight(), #input$genewidthslider,
-        height = function() genewidth(), #input$geneheightslider,
+        width = function() genewidth(), #input$genewidthslider,
+        height = function() geneheight(), #input$geneheightslider,
         res = 120,
         {
           ggplot(datavst(),
@@ -1633,11 +1634,11 @@ Negative NES = Upregulated in Monocytic)",
     goiwidths <- 
       sliderServer("goiwidthslider")
     #reactive wrapper for js function to hide or show plot dimension options
-    observeEvent(goiheights(), {
-      toggle(id = "goiheightslider", condition = input$hidedimsGP)
-      toggle(id ="goiwidthslider", condition = input$hidedimsGP)
-    })
-    
+    # observeEvent(goiheights(), {
+    #   toggle(id = "goiheightslider", condition = input$hidedimsGP)
+    #   toggle(id ="goiwidthslider", condition = input$hidedimsGP)
+    # })
+    # 
     genecentricgseaplot <- reactive({
       #load chosen pathway file based on reactive input 
       genepathwaygsea <- (gene_gsea_file_values[[input$genefilechoice]])
