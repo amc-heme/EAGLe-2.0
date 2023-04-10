@@ -1,8 +1,11 @@
 ##Differential Expression ##
 library(tximport)
-base_dir <- "~/Documents/CD files/salmon"
-t2g_hs <- read.table(file = "~/Documents/CD files/HS_transcript_to_gene.txt", sep = "\t", header = T)
-metadata <- read.table(file = "~/Documents/CD files/SampleSheet.txt", header = TRUE, sep = "\t")
+source("~/Documents/GitHub/EAGLe-2.0/config.R")
+base_dir <- config$base_dir
+t2g_hs <- read.table(file = config$t2g_hs_file, sep = "\t", header = T)
+metadata <- read.table(file = config$metadata_file, header = TRUE, sep = "\t")
+sample_id <- config$sample_id
+samples <- config$samples
 
 DE_UI <- function(id) {
         tagList(
@@ -13,17 +16,14 @@ DE_UI <- function(id) {
 DE_Server <- function(id) {
   moduleServer(id, function(input, output, session) {
 
-  run_DE <- function(base_dir, t2g_hs, metadata) {
-    sample_id <- c("SRR9265370", "SRR9265373", "SRR9265371", "SRR9265372", "SRR9265363", "SRR9265364", "SRR9265366", "SRR9265367", "SRR9265369", "SRR9265365", "SRR9265368", "SRR9265374")
+  run_DE <- function() {
     salm_dirs <- sapply(sample_id, function(id) file.path(base_dir, id, 'quant.sf'))
-    samples <- data.frame(SRR = metadata$SRR, batch = metadata$batch, condition = metadata$sample_type, sample_name = metadata$DESeq_Sample_Name)
-    samples <- samples[order(samples$SRR),]
     tx2gene <- t2g_hs[,c(1,2)]
     colnames(tx2gene) <- c('TXNAME', 'GENEID')
     txi <- tximport(salm_dirs, type = 'salmon', tx2gene = tx2gene, ignoreTxVersion = TRUE)
     ddsTxi <- DESeqDataSetFromTximport(txi, colData = samples, design = ~ batch + condition)
     ddsTxi.filt <- ddsTxi[rowMins(counts(ddsTxi)) > 5, ]
-    dds <- DESeq(ddsTxi)
+    dds <- DESeq(ddsTxi.filt)
   
     dds.res<- data.frame(results(dds)) %>%
       rownames_to_column(., var = 'ensembl_gene_id') %>%
@@ -37,7 +37,7 @@ DE_Server <- function(id) {
   }
 
   output$results <- renderDataTable({
-    run_DE(base_dir, tx2geneFile, metadata)
+    run_DE()
   })
   })
 }
