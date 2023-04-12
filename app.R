@@ -254,16 +254,7 @@ ui <-
                ),#end title
                sidebarLayout(
                  sidebarPanel( #toggle buttons for choosing each plot type
-                   materialSwitch(
-                     inputId =
-                       "DESeqtable",
-                     label =
-                       "DE Table",
-                     value =
-                       FALSE,
-                     right =
-                       TRUE
-                   ), 
+                   DE_UI("DE1"),
                    materialSwitch(
                      inputId =
                        "singscorebutton",
@@ -382,14 +373,14 @@ ui <-
                      ),
                  
                  mainPanel(
-                   conditionalPanel( 
-                     condition = "input.DESeqtable == true",
-                     shinycssloaders::withSpinner( #add loading spinner
-                       DTOutput(
-                       "DETable"
-                     )
-                     )
-                   ),
+                   # conditionalPanel( 
+                   #   condition = "input.DESeqtable == true",
+                   #   shinycssloaders::withSpinner( #add loading spinner
+                   #     DTOutput(
+                   #     "DETable"
+                   #   )
+                   #   )
+                   # ),
                    conditionalPanel(
                      condition = "input.DESeqvolcano == true",
                      shinycssloaders::withSpinner( #add loading spinner
@@ -1074,9 +1065,11 @@ server <-
     )
     
     #DESEq #####
-    
+    DEres <- 
+      DE_Server("DE1")
+    DE_plots_Server("DE1", DEres)
     #function for sidebar input to create filtered DE table and associated volcano plot
-    CD_DE_DT <- 
+    CD_DE_DT <-
       reactive({
         if (input$padjbutton == "sigvar1") {
           dds.res %>%
@@ -1104,7 +1097,7 @@ server <-
         } else if (input$padjbutton == "sigvar5") {
           dds.res %>%
             dplyr::filter(padj <= 0.05)
-        } 
+        }
       })
     #function for filtering DE object with monocytic contribution regressed out based on padj value chosen by user 
     CD_DE_DT_sing <- 
@@ -1139,15 +1132,15 @@ server <-
       })
 
     #output DE table with adjustment for singscore reactive to toggle swich 
-    output$DETable <-
-      renderDataTable({
-        if(input$singscorebutton == TRUE) {
-          CD_DE_DT_sing()
-        } else if(input$singscorebutton == FALSE) {
-          CD_DE_DT()
-        }
-        
-      })
+    # output$DETable <-
+    #   renderDataTable({
+    #     if(input$singscorebutton == TRUE) {
+    #       CD_DE_DT_sing()
+    #     } else if(input$singscorebutton == FALSE) {
+    #       CD_DE_DT()
+    #     }
+    #     
+    #   })
     
     # download DE table
     output$downloadDEtable <- downloadHandler(
@@ -1159,7 +1152,8 @@ server <-
    
 
     #DE Volcano Plot ####
-    colorDE <- 
+    #create objects for color palettes from the palette module
+    colorDE <-  
       colorServer("color")
     
     color2DE <-
@@ -1167,8 +1161,8 @@ server <-
     
     output$DEVolcanoPlot <-
       renderPlotly({
-        colors <- c(colorDE(), "grey", color2DE()) #object for colors on volcano based on user input
-        p <- ggplot(dds.res, aes(
+        colors <- c(colorDE(), "grey",color2DE()) #object for colors on volcano based on user input
+       p<- ggplot(DEres(), aes(
           x = `log2FoldChange(Prim/Mono)`,
           y = -log10(padj),
           col = DiffExp,
@@ -1200,7 +1194,7 @@ server <-
     output$DEMAPlot <- renderPlotly ({
         colors <- c(color3DE(), "grey", color4DE()) #object for color choices dependent on user input
       ma <-
-        ggplot(dds.res,
+        ggplot(DEres(),
                aes(
                  x = log2(baseMean),
                  y = `log2FoldChange(Prim/Mono)`,

@@ -9,6 +9,16 @@ samples <- config$samples
 
 DE_UI <- function(id) {
         tagList(
+        materialSwitch(
+          inputId =
+            (NS(id,"DESeqtable")),
+          label =
+            "DE Table",
+          value =
+            FALSE,
+          right =
+            TRUE
+        ),
         DTOutput(NS(id,"results"))
         )
 }
@@ -37,7 +47,9 @@ DE_Server <- function(id) {
   }
 
   output$results <- renderDataTable({
+    if(input$DESeqtable == TRUE) {
     run_DE()
+    }
   })
   })
 }
