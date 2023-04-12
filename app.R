@@ -1067,7 +1067,7 @@ server <-
     #DESEq #####
     DEres <- 
       DE_Server("DE1")
-    DE_plots_Server("DE1", DEres)
+      DE_plots_Server("DE1", DEres)
     #function for sidebar input to create filtered DE table and associated volcano plot
     CD_DE_DT <-
       reactive({

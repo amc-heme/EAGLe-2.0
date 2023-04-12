@@ -51,6 +51,10 @@ DE_Server <- function(id) {
     run_DE()
     }
   })
+  DEres_reactive <- reactive({
+    run_DE()
+  })
+  list(dds.res = DEres_reactive)
   })
 }
 

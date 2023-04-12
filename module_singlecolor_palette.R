@@ -28,7 +28,7 @@ colorServer <- function(id) {
   })
 }
 
-
+ †
 colorApp <- function() {
   ui <- fluidPage(colorUI("color"))
   server <- function(input, output, session) {
