@@ -13,6 +13,7 @@ DE_plots_UI <- function(id) {
       right =
         TRUE
     ),
+    hr(),
       materialSwitch(
         inputId =
           (ns("DESeqMA")),

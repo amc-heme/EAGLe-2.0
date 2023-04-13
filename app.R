@@ -245,7 +245,7 @@ ui <-
               )
     ),
     
-    tabPanel("Differential Expression",# DESeq Menu ####
+      tabPanel("Differential Expression",# DESeq Menu ####
              fluidPage(
                theme =
                  shinytheme("flatly"),
