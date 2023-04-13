@@ -246,45 +246,20 @@ ui <-
     ),
     
       tabPanel("Differential Expression",# DESeq Menu ####
-             fluidPage(
-               theme =
-                 shinytheme("flatly"),
-               titlePanel(
-                 "Differential Expression Tables and Plots"
-               ),#end title
+             DE_UI("DEtab1"),
                sidebarLayout(
-                 sidebarPanel( #toggle buttons for choosing each plot type
-                   DE_UI("DE1"),
-                   materialSwitch(
-                     inputId =
-                       "singscorebutton",
-                     label =
-                       "DE Table without Monocytic Contribution",
-                     value =
-                       FALSE,
-                     right =
-                       TRUE
-                   ),
-                   materialSwitch(
-                     inputId =
-                       "DESeqvolcano",
-                     label =
-                       "Volcano Plot",
-                     value =
-                       FALSE,
-                     right =
-                       TRUE
-                   ),
-                   materialSwitch(
-                     inputId =
-                       "DESeqMA",
-                     label =
-                       "MA Plot",
-                     value =
-                       FALSE,
-                     right =
-                       TRUE
-                   ),
+                 sidebarPanel( 
+                   # materialSwitch(
+                   #   inputId =
+                   #     "singscorebutton",
+                   #   label =
+                   #     "DE Table without Monocytic Contribution",
+                   #   value =
+                   #     FALSE,
+                   #   right =
+                   #     TRUE
+                   # ),
+          
                    materialSwitch(
                      inputId =
                        "DESeqHeat",
@@ -295,50 +270,50 @@ ui <-
                      right =
                        TRUE
                    ),
-                   hr(),
-                   conditionalPanel(
-                     condition = "input.DESeqtable == true",
-                    h4("DE Table Specific Options"),
-                    #option to filter table by padj
-                   radioButtons("padjbutton", label = "Filter DE tables by padj", 
-                                choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
-                   hr(),
-                   downloadButton("downloadDEtable", label = "Download DE Table")
-                   ),
+
+                   # conditionalPanel(
+                   #   condition = "input.DESeqtable == true",
+                   #  h4("DE Table Specific Options"),
+                   #  #option to filter table by padj
+                   # radioButtons("padjbutton", label = "Filter DE tables by padj", 
+                   #              choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
+                   # hr(),
+                   # downloadButton("downloadDEtable", label = "Download DE Table")
+                   # ),
                    
-                   hr(),
- 
-                   conditionalPanel(
-                     condition = "input.DESeqvolcano == true",
-                     h4("Volcano Plot Specific Options"),
-                     #color palette choice for volcano plot
-                     colorUI("color", "Choose 1st color", "#0000FF"),
-                     colorUI("color2", "Choose 2nd color", "028a0f"),
-                     
-                     hr(),
-                     downloadButton(
-                       "downloadDEVolcano",
-                       label =
-                         "Download Volcano Plot"
-                     )
-                   ),
-                   hr(),
-                   
-                   conditionalPanel(
-                     condition = "input.DESeqMA ==true", 
-                     h4("MA Plot Specific Options"),
-                     #color palette choice for MA plot
-                     colorUI("color3", "Choose 1st color", "#0000FF"),
-                     colorUI("color4", "Choose 2nd color", "028a0f"),
-                    
-                     hr(),
-                     downloadButton(
-                       "downloadDEMA",
-                       label =
-                         "Download MA Plot"
-                     )
-                   ),
-                   hr(),
+                   # hr(),
+                   # 
+                   # conditionalPanel(
+                   #   condition = "input.DESeqvolcano == true",
+                   #   h4("Volcano Plot Specific Options"),
+                   #   #color palette choice for volcano plot
+                   #   colorUI("color", "Choose 1st color", "#0000FF"),
+                   #   colorUI("color2", "Choose 2nd color", "028a0f"),
+                   #   
+                   #   hr(),
+                   #   downloadButton(
+                   #     "downloadDEVolcano",
+                   #     label =
+                   #       "Download Volcano Plot"
+                   #   )
+                   # ),
+                   # hr(),
+                   # 
+                   # conditionalPanel(
+                   #   condition = "input.DESeqMA ==true", 
+                   #   h4("MA Plot Specific Options"),
+                   #   #color palette choice for MA plot
+                   #   colorUI("color3", "Choose 1st color", "#0000FF"),
+                   #   colorUI("color4", "Choose 2nd color", "028a0f"),
+                   #  
+                   #   hr(),
+                   #   downloadButton(
+                   #     "downloadDEMA",
+                   #     label =
+                   #       "Download MA Plot"
+                   #   )
+                   # ),
+                   # hr(),
                    
                    conditionalPanel(
                      condition = "input.DESeqHeat == true",
@@ -381,22 +356,22 @@ ui <-
                    #   )
                    #   )
                    # ),
-                   conditionalPanel(
-                     condition = "input.DESeqvolcano == true",
-                     shinycssloaders::withSpinner( #add loading spinner
-                       plotlyOutput(
-                       "DEVolcanoPlot"
-                     )
-                     )
-                   ),
-                   conditionalPanel(
-                     condition = "input.DESeqMA == true",
-                     shinycssloaders::withSpinner( #add loading spinner
-                       plotlyOutput(
-                       "DEMAPlot"
-                     )
-                     )
-                   ),
+                   # conditionalPanel(
+                   #   condition = "input.DESeqvolcano == true",
+                   #   shinycssloaders::withSpinner( #add loading spinner
+                   #     plotlyOutput(
+                   #     "DEVolcanoPlot"
+                   #   )
+                   #   )
+                   # ),
+                   # conditionalPanel(
+                   #   condition = "input.DESeqMA == true",
+                   #   shinycssloaders::withSpinner( #add loading spinner
+                   #     plotlyOutput(
+                   #     "DEMAPlot"
+                   #   )
+                   #   )
+                   # ),
                    conditionalPanel(
                      condition = "input.DESeqHeat == true",
                      InteractiveComplexHeatmapOutput(heatmap_id = 
@@ -405,8 +380,7 @@ ui <-
                    )
                  )
                )
-             )
-    ),
+             ),
     #GSEA menu ####
     tabPanel("GSEA",  ####GSEAtables
              fluidPage(
@@ -1065,40 +1039,8 @@ server <-
     )
     
     #DESEq #####
-    DEres <- 
-      DE_Server("DE1")
-      DE_plots_Server("DE1", DEres)
-    #function for sidebar input to create filtered DE table and associated volcano plot
-    CD_DE_DT <-
-      reactive({
-        if (input$padjbutton == "sigvar1") {
-          dds.res %>%
-            dplyr::filter(padj <= 0.01)
-        } else if (input$padjbutton == "sigvar5") {
-          dds.res %>%
-            dplyr::filter(padj <= 0.05)
-        } else if (input$padjbutton == "sigvar1") {
-          dds.res %>%
-            dplyr::filter(padj <= 0.01)
-        } else if (input$padjbutton == "sigvar5") {
-          dds.res %>%
-            dplyr::filter(padj <= 0.05)
-        } else if (input$padjbutton == "sigvar1") {
-          dds.res %>%
-            dplyr::filter(padj <= 0.01)
-        } else if (input$padjbutton == "sigvar5") {
-          dds.res %>%
-            dplyr::filter(padj <= 0.05)
-        } else if (input$padjbutton == "allvar") {
-          dds.res
-        } else if (input$padjbutton == "sigvar1") {
-          dds.res %>%
-            dplyr::filter(padj <= 0.01)
-        } else if (input$padjbutton == "sigvar5") {
-          dds.res %>%
-            dplyr::filter(padj <= 0.05)
-        }
-      })
+    DE_Server("DEtab1")
+ 
     #function for filtering DE object with monocytic contribution regressed out based on padj value chosen by user 
     CD_DE_DT_sing <- 
       reactive({
@@ -1159,23 +1101,23 @@ server <-
     color2DE <-
       colorServer("color2")
     
-    output$DEVolcanoPlot <-
-      renderPlotly({
-        colors <- c(colorDE(), "grey",color2DE()) #object for colors on volcano based on user input
-       p<- ggplot(DEres(), aes(
-          x = `log2FoldChange(Prim/Mono)`,
-          y = -log10(padj),
-          col = DiffExp,
-          text = Gene
-        )) +
-          geom_point(size = 1, alpha = 0.5) +
-          theme_light() +
-          scale_color_manual(values = colors) +
-          ggtitle("DE Volcano Plot") +
-          coord_cartesian(xlim = c(-10, 7))
-        ggplotly(p)
-      })
-    
+    # output$DEVolcanoPlot <-
+    #   renderPlotly({
+    #     colors <- c(colorDE(), "grey",color2DE()) #object for colors on volcano based on user input
+    #    p<- ggplot(DEres(), aes(
+    #       x = `log2FoldChange(Prim/Mono)`,
+    #       y = -log10(padj),
+    #       col = DiffExp,
+    #       text = Gene
+    #     )) +
+    #       geom_point(size = 1, alpha = 0.5) +
+    #       theme_light() +
+    #       scale_color_manual(values = colors) +
+    #       ggtitle("DE Volcano Plot") +
+    #       coord_cartesian(xlim = c(-10, 7))
+    #     ggplotly(p)
+    #   })
+    # 
     output$downloadDEVolcano <- downloadHandler(
       filename = function() { paste(input$sigvaluesbutton, '.png', sep='') },
       content = function(file) {
@@ -1191,30 +1133,30 @@ server <-
     color4DE <-
       colorServer("color4")
     
-    output$DEMAPlot <- renderPlotly ({
-        colors <- c(color3DE(), "grey", color4DE()) #object for color choices dependent on user input
-      ma <-
-        ggplot(DEres(),
-               aes(
-                 x = log2(baseMean),
-                 y = `log2FoldChange(Prim/Mono)`,
-                 col = DiffExp
-               )) +
-        geom_point(alpha = 0.8, size = 0.5) +
-        geom_hline(aes(yintercept = 0)) +
-        scale_color_manual(values = colors) +
-        theme_light() +
-        ylim(c(
-          min(dds.res$`log2FoldChange(Prim/Mono)`),
-          max(dds.res$`log2FoldChange(Prim/Mono)`)
-        )) +
-        ggtitle("DE MA Plot") +
-        xlab("log2 Mean Expression") +
-        ylab("Log2 Fold Change")
-      
-      ggplotly(ma)
-    })
-    
+    # output$DEMAPlot <- renderPlotly ({
+    #     colors <- c(color3DE(), "grey", color4DE()) #object for color choices dependent on user input
+    #   ma <-
+    #     ggplot(DEres(),
+    #            aes(
+    #              x = log2(baseMean),
+    #              y = `log2FoldChange(Prim/Mono)`,
+    #              col = DiffExp
+    #            )) +
+    #     geom_point(alpha = 0.8, size = 0.5) +
+    #     geom_hline(aes(yintercept = 0)) +
+    #     scale_color_manual(values = colors) +
+    #     theme_light() +
+    #     ylim(c(
+    #       min(dds.res$`log2FoldChange(Prim/Mono)`),
+    #       max(dds.res$`log2FoldChange(Prim/Mono)`)
+    #     )) +
+    #     ggtitle("DE MA Plot") +
+    #     xlab("log2 Mean Expression") +
+    #     ylab("Log2 Fold Change")
+    #   
+    #   ggplotly(ma)
+    # })
+    # 
     output$downloadDEMA <- downloadHandler(
       filename = function() { paste('DESeqMAplot', '.png', sep='') },
       content = function(file) {
@@ -1231,7 +1173,7 @@ server <-
       colorServer("color6")
     #interactive heatmap needs to be wrapped in a reactive function to work
     observe({
-      #filter DE object for only significantly differentially experessed genes
+      #filter DE object for only significantly differentially expressed genes
      dds.mat <- dds.res %>%
       dplyr::filter(padj < 0.05 & abs(`log2FoldChange(Prim/Mono)`) >= 2)
     #filter vst counts matrix by sig expressed genes
