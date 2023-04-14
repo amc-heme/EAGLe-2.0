@@ -1,5 +1,6 @@
 ##Differential Expression tab##
 library(tximport)
+#read in data from config file
 source("~/Documents/GitHub/EAGLe-2.0/config.R")
 base_dir <- config$base_dir
 t2g_hs <- read.table(file = config$t2g_hs_file, sep = "\t", header = T)
@@ -64,8 +65,7 @@ DE_UI <- function(id) {
 
 DE_Server <- function(id) {
   moduleServer(id, function(input, output, session) {
-
-  run_DE <- function() {
+    
     salm_dirs <- sapply(sample_id, function(id) file.path(base_dir, id, 'quant.sf'))
     tx2gene <- t2g_hs[,c(1,2)]
     colnames(tx2gene) <- c('TXNAME', 'GENEID')
@@ -74,10 +74,8 @@ DE_Server <- function(id) {
     ddsTxi.filt <- ddsTxi[rowMins(counts(ddsTxi)) > 5, ]
     dds <- DESeq(ddsTxi.filt)
 
-  }
-  
-  
-  dds.res<- data.frame(results(run_DE())) %>%
+
+  dds.res<- data.frame(results(dds)) %>%
     rownames_to_column(., var = 'ensembl_gene_id') %>%
     dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
     left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
@@ -116,7 +114,7 @@ DE_Server <- function(id) {
     renderGirafe ({
       colors <- c(magma(15)[9], "grey", viridis(15)[10] )#object for colors on volcano based on user input called from palette module
       if(input$DESeqMA == TRUE) { #only call plot if the MA plot switch is toggled
-        ma <- ggplot(dds.res, #call in the DE results from the DE module
+        ma <- ggplot(dds.res, 
                      aes(
                        x = log2(baseMean),
                        y = `log2FoldChange`,
@@ -138,11 +136,6 @@ DE_Server <- function(id) {
         girafe(code = print(ma))
       }
     })
-  
-  # DEres_reactive <- reactive({
-  #  run_DE()
-  # })
-  list(dds.res)
   })
 }
 
