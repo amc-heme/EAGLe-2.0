@@ -2,7 +2,10 @@
 library(viridis)
 library(ggplot2)
 library(DESeq2)
+library(TidyMultiqc)
+library(cowplot)
 source("~/Documents/GitHub/EAGLe-2.0/config.R")
+
 base_dir <- config$base_dir
 samples <- config$samples
 sample_id <- config$sample_id
@@ -13,6 +16,9 @@ salm_dirs <- sapply(sample_id, function(id) file.path(base_dir, id, 'quant.sf'))
 txi <- tximport(salm_dirs, type = 'salmon', tx2gene = tx2gene, ignoreTxVersion = TRUE)
 ddsTxi <- DESeqDataSetFromTximport(txi, colData = samples, design = ~batch + condition)
 vsd <- vst(ddsTxi, blind = F)
+qc<-load_multiqc("data/multiqc_data.json", sections="raw") 
+
+colnames(qc)
 
 QC_UI <- function(id) {
   ns <- NS(id)
@@ -87,11 +93,11 @@ QC_UI <- function(id) {
       ),
         mainPanel(
 
-            plotOutput(ns("PCAplot"))
+            plotOutput(ns("PCAplot")),
          
           #   plotOutput(ns("PCAvarplot")),
         
-          #   plotOutput(ns("QCplot"))
+            plotOutput(ns("QCplot"))
         )
       )
     )
@@ -156,6 +162,51 @@ QC_Server <- function(id, colorpaletteQC) {
         geom_text_repel(colour = "black", aes(label=sample_name),hjust=0, vjust=0)
       print(pca)
      }
+    })
+    
+    #reactive function for multiqc plot title
+    QC_title <- 
+      reactive({
+        if (input$QCvar == "% mapped reads") {
+          print("% mapped reads per sample")
+        } else if (input$QCvar == "# mapped reads") {
+          print("# mapped reads per sample")
+        } else if (input$QCvar == "% uniquely mapped reads") {
+          print("% uniquely mapped reads per sample")
+        } else if (input$QCvar == "# uniquely mapped reads") {
+          print("# uniquely mapped reads per sample")
+        }
+      })
+    
+    #create object for reactive data input based on user choice of multiqc test option
+    QCdata <- reactive ({
+      if(input$QCvar == "% mapped reads") {
+        qc$raw.salmon.percent_mapped
+      } else if(input$QCvar == "# mapped reads") {
+        qc$raw.salmon.num_mapped
+      } else if(input$QCvar == "% uniquely mapped reads") {
+        qc$raw.star.uniquely_mapped_percent
+      } else if(input$QCvar == "# uniquly mapped reads") {
+        qc$raw.star.uniquely_mapped
+      }
+    })
+    
+    Sample_ID <-qc$metadata.sample_id
+    
+    output$QCplot <- renderPlot ({
+      if(input$multiqc == TRUE) {
+        ggplot(
+          qc,
+          aes(
+            x = Sample_ID,
+            y = QCdata()
+          )) +
+          geom_point() +
+          theme_cowplot (font_size = 18) +
+          ggtitle(QC_title()) +
+          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) 
+      }
     })
   })
 }
