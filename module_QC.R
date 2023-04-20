@@ -95,7 +95,7 @@ QC_UI <- function(id) {
 
             plotOutput(ns("PCAplot")),
          
-          #   plotOutput(ns("PCAvarplot")),
+             plotOutput(ns("PCAvarplot")),
         
             plotOutput(ns("QCplot"))
         )
@@ -115,7 +115,7 @@ QC_Server <- function(id, colorpaletteQC) {
     #determine % variance of pc1 and pc2
     pc1var = round(vsd.pca.var[3,1] * 100, 1)
     pc2var = round(vsd.pca.var[3,2] * 100 - pc1var, 1)
-    
+    scree.pca <- prcomp(t(assay(vsd)))
     #batch corrected PCA
     assay(vsd) <- limma::removeBatchEffect(assay(vsd),
                                            batch = samples$batch, 
@@ -123,6 +123,8 @@ QC_Server <- function(id, colorpaletteQC) {
     bcvsd.pca <- data.frame(prcomp(t(assay(vsd)))$x) %>% 
       as_tibble(rownames = "SRR") %>% 
       left_join(., as_tibble(colData(vsd)))
+    
+    scree.bcpca <- prcomp(t(assay(vsd)))
     #call in color palette server for use in plot
     colorpaletteQC <- 
       paletteServer("palette")
@@ -206,6 +208,55 @@ QC_Server <- function(id, colorpaletteQC) {
           ggtitle(QC_title()) +
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
                   element_text(angle = 60, hjust = 1)) 
+      }
+    })
+    
+    # PCA Scree data ####
+    # VSD PCA variance
+    #write functions and store in object to calculate the % variance for each PC
+    PC_var_VST <- data.frame(PC =paste0("PC", 1:12),variance =(((scree.pca$sdev) ^ 2 / sum((scree.pca$sdev) ^ 2)) * 100))
+    lorder_VST <- as.vector(outer(c("PC"), 1:12, paste, sep = ""))
+    PC_var_VST$PC <-factor(PC_var_VST$PC,levels = lorder_VST)
+    
+    #batch corrected PCA variance
+    PC_var_bc <-data.frame(PC =paste0("PC", 1:12),variance =(((scree.bcpca$sdev) ^ 2 / sum((scree.bcpca$sdev) ^ 2)) * 100))
+    lorder_bc <-as.vector(outer(c("PC"), 1:12, paste, sep = ""))
+    PC_var_bc$PC <-factor(PC_var_bc$PC,levels = lorder_bc)
+    #function to tell ggplot which data set to use for the scree plots
+    PC_var_data <-
+      eventReactive(input$PCAvar, {
+        if (input$PCAvar == "VST PCA") {
+          PC_var_VST
+        } else if (input$PCAvar == "VST + batch corrected PCA") {
+          PC_var_bc
+        }
+      })
+    #reactive function for scree plots title
+    PCA_var_title <- 
+      reactive({
+        if (input$PCAvar == "VST PCA") {
+          print("VST PC variance")
+        } else if (input$PCAvar == "VST + batch corrected PCA") {
+          print("VST + batch corrected PC variance")
+        }
+      })
+    
+    # PCA scree plot ####
+    output$PCAvarplot <- renderPlot ({
+      if(input$PCAscreeplots == TRUE) {
+
+      ggplot(PC_var_data(),
+             aes(x = PC,
+                 y = variance,
+                 group = 2)) +
+        geom_point(size = 2) +
+        geom_line() +
+        theme_cowplot(font_size = 18) +
+        theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+        labs(x = "PC",
+             y = "% Variance") +
+        labs(title =
+               PCA_var_title()) #reactive title
       }
     })
   })
