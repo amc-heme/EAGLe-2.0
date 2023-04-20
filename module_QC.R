@@ -4,21 +4,8 @@ library(ggplot2)
 library(DESeq2)
 library(TidyMultiqc)
 library(cowplot)
-#source("~/Documents/GitHub/EAGLe-2.0/config.R")
-# 
-# base_dir <- config$base_dir
-# samples <- config$samples
-# sample_id <- config$sample_id
-# t2g_hs <- read.table(file = config$t2g_hs_file, sep = "\t", header = T)
-# tx2gene <- t2g_hs[,c(1,2)]
-# colnames(tx2gene) <- c('TXNAME', 'GENEID')
-# salm_dirs <- sapply(sample_id, function(id) file.path(base_dir, id, 'quant.sf'))
-# txi <- tximport(salm_dirs, type = 'salmon', tx2gene = tx2gene, ignoreTxVersion = TRUE)
-# ddsTxi <- DESeqDataSetFromTximport(txi, colData = samples, design = ~batch + condition)
-# vsd <- vst(ddsTxi, blind = F)
-# qc<-load_multiqc("data/multiqc_data.json", sections="raw") 
 
-colnames(qc)
+#colnames(qc)
 
 QC_UI <- function(id) {
   ns <- NS(id)
@@ -103,7 +90,7 @@ QC_UI <- function(id) {
     )
 }
 
-QC_Server <- function(id, colorpaletteQC) {
+QC_Server <- function(id, colorpaletteQC, vsd, qc) {
   moduleServer(id, function(input, output, session) {
     
    #run pca on vsd

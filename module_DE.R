@@ -1,15 +1,5 @@
 ##Differential Expression tab##
-library(tximport)
-#read in data from config file
-# source("~/Documents/GitHub/EAGLe-2.0/config.R")
-# base_dir <- config$base_dir
-# t2g_hs <- read.table(file = config$t2g_hs_file, sep = "\t", header = T)
-# metadata <- read.table(file = config$metadata_file, header = TRUE, sep = "\t")
-# sample_id <- config$sample_id
-# samples <- config$samples
-
-
-
+library(colorRamp2)
 DE_UI <- function(id) {
   ns <- NS(id)
   fluidPage(
@@ -53,21 +43,34 @@ DE_UI <- function(id) {
             FALSE,
           right =
             TRUE
+        ),
+        materialSwitch(
+          inputId =
+            ns("DESeqHeat"),
+          label =
+            "Heatmap",
+          value =
+            FALSE,
+          right =
+            TRUE
         )
         )
         ),
         mainPanel(
         DTOutput(ns("results")),
         girafeOutput(ns("volplot")),
-        girafeOutput(ns("MAplot"))
+        girafeOutput(ns("MAplot")),
+        InteractiveComplexHeatmapOutput(heatmap_id = 
+                                          ns("ht")
+        )
         )
       )
   )
 }
 
-DE_Server <- function(id, dds) {
+DE_Server <- function(id, dds, vsd) {
   moduleServer(id, function(input, output, session) {
-
+ #DE Table ####
     dds.res<- data.frame(results(dds)) %>%
       rownames_to_column(., var = 'ensembl_gene_id') %>%
       dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
@@ -82,7 +85,7 @@ DE_Server <- function(id, dds) {
     dds.res
     }
   })
-  
+  #Volcano Plot ####
   output$volplot <- 
     renderGirafe({
       colors <- c(magma(15)[9], "grey", viridis(15)[10] )#object for colors on volcano based on user input called from palette module
@@ -102,7 +105,7 @@ DE_Server <- function(id, dds) {
         girafe(code = print(p))
       }
     })
-  
+  #MA Plot ####
   output$MAplot <- 
     renderGirafe ({
       colors <- c(magma(15)[9], "grey", viridis(15)[10] )#object for colors on volcano based on user input called from palette module
@@ -129,6 +132,64 @@ DE_Server <- function(id, dds) {
         girafe(code = print(ma))
       }
     })
+  
+  #Heatmap ####
+  # color5DE <- 
+  #   colorServer("color5")
+  # 
+  # color6DE <-
+  #   colorServer("color6")
+  #object for batch corrected vsd matrix
+  assay(vsd) <-
+    limma::removeBatchEffect(assay(vsd),
+                             batch = samples$batch,
+                             design = model.matrix(~ condition, data = samples))
+  # data frame for batch corrected vsd matrix
+  vstlimma <-
+    data.frame(assay(vsd)) %>%
+    rownames_to_column(., var = "ensembl_gene_id") %>%
+    left_join(unique(dplyr::select(t2g_hs, c(
+      ensembl_gene_id, ext_gene
+    ))), ., by = 'ensembl_gene_id') %>% na.omit(.)
+  
+  #interactive heatmap needs to be wrapped in a reactive function to work
+  observe({
+    
+    #filter DE object for only significantly differentially expressed genes
+    dds.mat <- dds.res %>%
+      dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2)
+    
+    #filter vst counts matrix by sig expressed genes
+    vst.mat <- vstlimma %>%
+      dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
+      column_to_rownames(., var = "ensembl_gene_id") %>%
+      dplyr::select(.,-ext_gene) %>%
+      as.matrix()
+    
+    rownames(vst.mat) = dds.mat$Gene
+    vst.mat <- t(scale(t(vst.mat)))
+    #only show the first 100 genes for visualization in this example(can change)
+    vst.mat <- head(vst.mat, n = 100)
+    #create a colorRamp function based on user input in color palette choices
+    colors = colorRamp2(c(-2, 0, 2), c("red", "white", "blue"))
+    #create heatmap object
+    if(input$DESeqHeat == TRUE) {
+    ht = draw(ComplexHeatmap::Heatmap(
+      vst.mat,
+      name = "z scaled expression",
+      col = colors,
+      row_names_gp = gpar(fontsize = 4),
+      row_km = 2,
+      top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("white", "white")),
+                                                            labels = c("prim", "mono"), 
+                                                            labels_gp = gpar(col = "black", fontsize = 10))),
+      column_km = 2, 
+      column_title = NULL,
+      row_title = NULL
+    ))
+    makeInteractiveComplexHeatmap(input, output, session, ht, "ht")
+    }
+  })
   })
 }
 

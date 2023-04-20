@@ -27,6 +27,7 @@ library(ComplexHeatmap)
 library(InteractiveComplexHeatmap)
 library(circlize)
 library(colourpicker)
+library(colorRamp2)
 library(ggsci)
 library(scales)
 library(esquisse)
@@ -53,7 +54,6 @@ txi <- tximport(salm_dirs, type = 'salmon', tx2gene = tx2gene, ignoreTxVersion =
 ddsTxi <- DESeqDataSetFromTximport(txi, colData = samples, design = design)
 ddsTxi.filt <- ddsTxi[rowMins(counts(ddsTxi)) > 5, ]
 dds <- DESeq(ddsTxi.filt)
-
 vsd <- vst(ddsTxi, blind = F)
 qc<-load_multiqc("data/multiqc_data.json", sections="raw") 
 
@@ -157,9 +157,9 @@ ui <-
     ),
     
       tabPanel("Differential Expression",# DESeq Menu ####
-             DE_UI("DEtab1"),
-               sidebarLayout(
-                 sidebarPanel( 
+             DE_UI("DEtab1")
+               # sidebarLayout(
+               #   sidebarPanel( 
                    # materialSwitch(
                    #   inputId =
                    #     "singscorebutton",
@@ -171,16 +171,16 @@ ui <-
                    #     TRUE
                    # ),
           
-                   materialSwitch(
-                     inputId =
-                       "DESeqHeat",
-                     label =
-                       "Heatmap",
-                     value =
-                       FALSE,
-                     right =
-                       TRUE
-                   ),
+                   # materialSwitch(
+                   #   inputId =
+                   #     "DESeqHeat",
+                   #   label =
+                   #     "Heatmap",
+                   #   value =
+                   #     FALSE,
+                   #   right =
+                   #     TRUE
+                   # ),
 
                    # conditionalPanel(
                    #   condition = "input.DESeqtable == true",
@@ -226,12 +226,12 @@ ui <-
                    # ),
                    # hr(),
                    
-                   conditionalPanel(
-                     condition = "input.DESeqHeat == true",
-                     h4("Heatmap Specific Options"),
-                     #color palette choices for heatmap
-                     colorUI("color5","Choose 1st color", "#0000FF"),
-                     colorUI("color6", "Choose 2nd color", "#FF0000"),
+                   # conditionalPanel(
+                   #   condition = "input.DESeqHeat == true",
+                   #   h4("Heatmap Specific Options"),
+                   #   #color palette choices for heatmap
+                   #   colorUI("color5","Choose 1st color", "#0000FF"),
+                   #   colorUI("color6", "Choose 2nd color", "#FF0000"),
                      # colourInput(
                      #   "heatcolor1",
                      #   label = "Choose 1st color",
@@ -255,10 +255,10 @@ ui <-
                      #   closeOnClick = FALSE
                      # )
 
-                       )
-                     ),
-                 
-                 mainPanel(
+                 #       )
+                 #     ),
+                 # 
+                 # mainPanel(
                    # conditionalPanel( 
                    #   condition = "input.DESeqtable == true",
                    #   shinycssloaders::withSpinner( #add loading spinner
@@ -283,14 +283,14 @@ ui <-
                    #   )
                    #   )
                    # ),
-                   conditionalPanel(
-                     condition = "input.DESeqHeat == true",
-                     InteractiveComplexHeatmapOutput(heatmap_id = 
-                                                       "ht"
-                     )
-                   )
-                 )
-               )
+                   # conditionalPanel(
+                   #   condition = "input.DESeqHeat == true",
+                   #   InteractiveComplexHeatmapOutput(heatmap_id = 
+                   #                                     "ht"
+                   #   )
+                   # )
+               #   )
+               # )
              ),
     #GSEA menu ####
     tabPanel("GSEA",  ####GSEAtables
@@ -636,8 +636,9 @@ server <-
     print("Initializing renderPlots")
     
     options(shiny.reactlog = TRUE)
-  
-   QC_Server("QC1")
+  ## QC tab ####
+   QC_Server("QC1",colorpaletteQC, vsd, qc)
+    
     ##Gene Centric output ####
     updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
     #reactive function for for filtering vst data table based on user input 
@@ -774,7 +775,7 @@ server <-
     )
     
     #DESEq #####
-    DE_Server("DEtab1", dds)
+    DE_Server("DEtab1", dds, vsd)
  
     #function for filtering DE object with monocytic contribution regressed out based on padj value chosen by user 
   
@@ -833,11 +834,11 @@ server <-
     
     #DE MA Plot ####
     #call for module_singlcolor_palette
-    color3DE <- 
-      colorServer("color3")
-    
-    color4DE <-
-      colorServer("color4")
+    # color3DE <- 
+    #   colorServer("color3")
+    # 
+    # color4DE <-
+    #   colorServer("color4")
     
     # output$DEMAPlot <- renderPlotly ({
     #     colors <- c(color3DE(), "grey", color4DE()) #object for color choices dependent on user input
@@ -872,45 +873,45 @@ server <-
     
   
     #DE Heatmap ####
-    color5DE <- 
-      colorServer("color5")
-    
-    color6DE <-
-      colorServer("color6")
-    #interactive heatmap needs to be wrapped in a reactive function to work
-    observe({
-      #filter DE object for only significantly differentially expressed genes
-     dds.mat <- dds.res %>%
-      dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2)
-    #filter vst counts matrix by sig expressed genes
-    vst.mat <- vstlimma %>%
-      dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
-      column_to_rownames(., var = "ensembl_gene_id") %>%
-      dplyr::select(.,-ext_gene) %>%
-      as.matrix()
-    rownames(vst.mat) = dds.mat$Gene
-    vst.mat <- t(scale(t(vst.mat)))
-    #only show the first 100 genes for visualization in this example(can change)
-    vst.mat <- head(vst.mat, n = 100)
-    #create a colorRamp function based on user input in color palette choices
-    colors = colorRamp2(c(-2, 0, 2), c(color5DE(), "white", color6DE()))
-    #create heatmap object
-    ht = draw(ComplexHeatmap::Heatmap(
-      vst.mat,
-      name = "z scaled expression",
-      col = colors,
-      row_names_gp = gpar(fontsize = 4),
-      row_km = 2,
-      top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("white", "white")),
-                                                            labels = c("prim", "mono"), 
-                                                            labels_gp = gpar(col = "black", fontsize = 10))),
-      column_km = 2, 
-      column_title = NULL,
-      row_title = NULL
-    ))
-    makeInteractiveComplexHeatmap(input, output, session, ht, "ht")
-    })
-    
+    # color5DE <- 
+    #   colorServer("color5")
+    # 
+    # color6DE <-
+    #   colorServer("color6")
+    # #interactive heatmap needs to be wrapped in a reactive function to work
+    # observe({
+    #   #filter DE object for only significantly differentially expressed genes
+    #  dds.mat <- dds.res %>%
+    #   dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2)
+    # #filter vst counts matrix by sig expressed genes
+    # vst.mat <- vstlimma %>%
+    #   dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
+    #   column_to_rownames(., var = "ensembl_gene_id") %>%
+    #   dplyr::select(.,-ext_gene) %>%
+    #   as.matrix()
+    # rownames(vst.mat) = dds.mat$Gene
+    # vst.mat <- t(scale(t(vst.mat)))
+    # #only show the first 100 genes for visualization in this example(can change)
+    # vst.mat <- head(vst.mat, n = 100)
+    # #create a colorRamp function based on user input in color palette choices
+    # colors = colorRamp2(c(-2, 0, 2), c(color5DE(), "white", color6DE()))
+    # #create heatmap object
+    # ht = draw(ComplexHeatmap::Heatmap(
+    #   vst.mat,
+    #   name = "z scaled expression",
+    #   col = colors,
+    #   row_names_gp = gpar(fontsize = 4),
+    #   row_km = 2,
+    #   top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("white", "white")),
+    #                                                         labels = c("prim", "mono"), 
+    #                                                         labels_gp = gpar(col = "black", fontsize = 10))),
+    #   column_km = 2, 
+    #   column_title = NULL,
+    #   row_title = NULL
+    # ))
+    # makeInteractiveComplexHeatmap(input, output, session, ht, "ht")
+    # })
+    # 
     ####GSEA output ####
     #run GSEA for chosen pathway input
     
