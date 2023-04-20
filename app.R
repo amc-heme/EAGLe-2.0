@@ -35,24 +35,28 @@ library(shinycssloaders)
 library(patchwork)
 #Data ####
 #load in data and metadata
-meta_lut_ven <- readRDS("data/meta_lut_ven.Rds")
-qcdt<-load_multiqc("data/multiqc_data.json", sections="raw") 
+# load analysis functions 
+#meta_lut_ven <- readRDS("data/meta_lut_ven.Rds")
 vst.goi <- readRDS("data/vst.goi.rds")
-#DESeq data table
-dds.res <- readRDS("data/DEtable.rds")
-#sample metadata table
-metadata <- read.table(file = "data/SampleSheetJordanLab.txt")
-# DE table with singscore
-dds.resscore <- readRDS("data/dds.resscore.rds")
-#tables for PCA
-vsd.pca <- readRDS("data/vsd.pca.rds")
-bcvsd.pca <- readRDS("data/bcvsd.pca.rds")
-#tables for variance
-vsd.variance <- readRDS("data/vsd.variance.rds")
-bcvsd.variance <- readRDS("data/bcvsd.variance.rds")
+#read in data from config file
+source("~/Documents/GitHub/EAGLe-2.0/config.R")
+base_dir <- config$base_dir
+t2g_hs <- read.table(file = config$t2g_hs_file, sep = "\t", header = T)
+metadata <- read.table(file = config$metadata_file, header = TRUE, sep = "\t")
+sample_id <- config$sample_id
+samples <- config$samples
+design <- config$design_formula
+salm_dirs <- sapply(sample_id, function(id) file.path(base_dir, id, 'quant.sf'))
+tx2gene <- t2g_hs[,c(1,2)]
+colnames(tx2gene) <- c('TXNAME', 'GENEID')
+txi <- tximport(salm_dirs, type = 'salmon', tx2gene = tx2gene, ignoreTxVersion = TRUE)
+ddsTxi <- DESeqDataSetFromTximport(txi, colData = samples, design = design)
+ddsTxi.filt <- ddsTxi[rowMins(counts(ddsTxi)) > 5, ]
+dds <- DESeq(ddsTxi.filt)
 
-vsd2.pca <- readRDS("data/vsd2.pca.rds")
-bcvsd2.pca <- readRDS("data/bcvsd2.pca.rds")
+vsd <- vst(ddsTxi, blind = F)
+qc<-load_multiqc("data/multiqc_data.json", sections="raw") 
+
 #GSEA data table
 ranks <- readRDS("data/ranks.rds")
 #load molecular pathways for GSEA
@@ -81,100 +85,7 @@ ui <-
     "EAGLe: Cancer Discovery",
     tabPanel( #QC Menu ####
               "QC",
-              fluidPage(
-                theme =
-                  shinytheme(
-                    "flatly"
-                  ),
-                titlePanel(
-                  "QC Analysis Plots"
-                ), 
-                sidebarLayout(
-                  sidebarPanel( #create toggle switches for each plot
-                    materialSwitch(
-                      inputId =
-                        "PCAplots",
-                      label =
-                        "PCA",
-                      value =
-                        FALSE,
-                      right =
-                        TRUE
-                    ),
-                    materialSwitch(
-                      inputId =
-                        "PCAscreeplots",
-                      label =
-                        "Scree",
-                      value =
-                        FALSE,
-                      right =
-                        TRUE
-                    ),
-                    materialSwitch(
-                      inputId =
-                        "multiqc",
-                      label =
-                        "MultiQC",
-                      value =
-                        FALSE,
-                      right =
-                        TRUE
-                    ),  
-                    #palette choices for PCA plots
-                     paletteUI("palette"),
-                   
-                    conditionalPanel(
-                    condition = "input.PCAplots == true",
-                    radioButtons( #choose type of PCA plot
-                      "PCAvar",
-                      h4(
-                        "Choose PCA plot"
-                      ),
-                      choices =
-                        list("VST PCA", "VST + batch corrected PCA"),
-                      selected =
-                        "VST PCA"
-                    ), 
-                    downloadButton("downloadPlotPCA", label = "Download PCA Plot")
-                    ),
-                    
-                    hr(),
-                    
-                    conditionalPanel(
-                      condition = "input.PCAscreeplots == true",
-                      
-                      downloadButton("downloadPlotscree",
-                                     label =
-                                       "Download Scree Plot")
-                    ),
-                    hr(),
-                    conditionalPanel(
-                      condition = "input.multiqc == true",
-                      selectInput( #choose type of multiqc test to visualize
-                                "QCvar",
-                                label=
-                                  "Choose MultiQC test",
-                                choices =
-                                  c("% mapped reads", "# mapped reads", "% uniquely mapped reads", "# uniquely mapped reads"),
-                                selected =
-                                  "% mapped reads"
-                              ) #end selectInput
-                    )
-                  ),
-                  mainPanel(
-                    conditionalPanel(
-                      condition = "input.PCAplots == true",
-                                     plotOutput("PCAplot")),
-                    conditionalPanel(
-                      condition = "input.PCAscreeplots == true",
-                                     plotOutput("PCAvarplot")),
-                    conditionalPanel(
-                      condition = "input.multiqc == true",
-                                     plotOutput("QCplot"))
-                  )
-                )
-              )
+              QC_UI("QC1")
     ), 
     
     tabPanel( #Gene expression analysis ####
@@ -726,183 +637,7 @@ server <-
     
     options(shiny.reactlog = TRUE)
   
-   
-  ###QC-MultiQC plots####
-    #reactive function for multiqc plot title
-    QC_title <- 
-      reactive({
-        if (input$QCvar == "% mapped reads") {
-          print("% mapped reads per sample")
-        } else if (input$QCvar == "# mapped reads") {
-          print("# mapped reads per sample")
-        } else if (input$QCvar == "% uniquely mapped reads") {
-          print("% uniquely mapped reads per sample")
-        } else if (input$QCvar == "# uniquely mapped reads") {
-          print("# uniquely mapped reads per sample")
-        }
-      })
-    #multiQC plot
-    output$QCplot <- renderPlot({
-      #create object for reactive data input based on user choice of multiqc test option
-      QCdata <- switch(
-        input$QCvar,
-        "% mapped reads" = qcdt$raw.salmon.percent_mapped,
-        "# mapped reads" = qcdt$raw.salmon.num_mapped,
-        "% uniquely mapped reads" = qcdt$raw.star.uniquely_mapped_percent,
-        "# uniquely mapped reads" = qcdt$raw.star.uniquely_mapped,
-        "Sample_ID" = qcdt$metadata.sample_id
-      )
-     #need to make an object to tell the ggplot what the sample names are
-      Sample_ID <-qcdt$metadata.sample_id
-
-      ggplot(
-        qcdt,
-        aes(
-          x = Sample_ID,
-          y = QCdata
-        )) +
-        geom_point() +
-        theme_cowplot (font_size = 18) +
-        ggtitle(QC_title()) +
-        theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
-                element_text(angle = 60, hjust = 1)) 
-    }) #end renderPlot
-
-    # PCA plots ####
-#function to tell ggplot which data set to use depending on user input
-    PCAdata <-
-      eventReactive(input$PCAvar, {
-        if (input$PCAvar == "VST PCA") {
-          vsd.pca
-        } else if (input$PCAvar == "VST + batch corrected PCA") {
-          bcvsd.pca
-        }
-      })
-    
-    # PCA Scree data ####
-    # VSD PCA variance
-    #write functions and store in object to calculate the % variance for each PC
-    PC_var_VST <- data.frame(PC =paste0("PC", 1:12),variance =(((vsd2.pca$sdev) ^ 2 / sum((vsd2.pca$sdev) ^ 2)) * 100))
-    lorder_VST <- as.vector(outer(c("PC"), 1:12, paste, sep = ""))
-    PC_var_VST$PC <-factor(PC_var_VST$PC,levels = lorder_VST)
-    
-    #batch corrected PCA variance
-    PC_var_bc <-data.frame(PC =paste0("PC", 1:12),variance =(((bcvsd2.pca$sdev) ^ 2 / sum((bcvsd2.pca$sdev) ^ 2)) * 100))
-    lorder_bc <-as.vector(outer(c("PC"), 1:12, paste, sep = ""))
-    PC_var_bc$PC <-factor(PC_var_bc$PC,levels = lorder_bc)
-    #function to tell ggplot which data set to use for the scree plots
-    PC_var_data <-
-      eventReactive(input$PCAvar, {
-        if (input$PCAvar == "VST PCA") {
-          PC_var_VST
-        } else if (input$PCAvar == "VST + batch corrected PCA") {
-          PC_var_bc
-        }
-      })
-    # reactive function for PCA plot title
-    PCA_title <- 
-      reactive({
-        if (input$PCAvar == "VST PCA") {
-          print("VST PCA")
-        } else if (input$PCAvar == "VST + batch corrected PCA") {
-          print("VST + batch corrected PCA")
-        }
-      })
-    
-    #define objects for defining x label to include % variance of PC1
-    pc1varvsd <- paste("PC1", (round(vsd.variance[3, 1] * 100, 1)), "% variance")
-    pc1varbcvsd <- paste("PC1", (round(bcvsd.variance[3, 1] * 100, 1)), "% variance")
-    
-    # add reactive expression for x label for PC1 
-    variance_PC1 <-
-      eventReactive(input$PCAvar, {
-        if (input$PCAvar == "VST PCA") {
-          pc1varvsd
-        } else if (input$PCAvar == "VST + batch corrected PCA") {
-          pc1varbcvsd
-        }
-      })
-    #new objects with calculation only to use in calculation of PC2 % variance
-    
-    pc12 <- round(vsd.variance[3, 1] * 100, 1)
-    pc13 <- round(bcvsd.variance[3, 1] * 100, 1)
-    
-    #create objects for defining Y label of PC2
-    
-    pc2varvsd <-
-      paste("PC2", (round(vsd.variance[3, 2] * 100 - pc12, 1)), "% variance")
-    pc2varbcvsd <-
-      paste("PC2", (round(bcvsd.variance[3, 2] * 100 - pc13, 1)), "% variance")
-    
-    #reactive expression for adding y labels for pc2
-    variance_PC2 <-
-      reactive({
-        if (input$PCAvar == "VST PCA") {
-          pc2varvsd
-        } else if (input$PCAvar == "VST + batch corrected PCA") {
-          pc2varbcvsd
-        }
-      })
-    
-    colorpaletteQC <- 
-      paletteServer("palette")
-  
-    #PCA plot output
-    output$PCAplot <- renderPlot ({
-      ggplot(PCAdata(), aes(x = PC1, y = PC2, shape = condition, color = batch, fill = batch)) + 
-        geom_point(size = 5) + 
-        scale_shape_manual(values = c(21, 24), name = '') +
-        scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
-        scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
-        theme_cowplot(font_size = 18) + 
-        theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-        theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-        theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-        xlab(variance_PC1()) +  #reactive xlab
-        ylab(variance_PC2()) + #reactive y lab
-        ggtitle(PCA_title()) + #reactive title
-        geom_text_repel(colour = "black", aes(label=sample_name),hjust=0, vjust=0)
-      
-    })
-    
-    #PCA plots download ####
-    output$downloadPlotPCA <- downloadHandler(
-      filename = function() { paste(input$PCAvar, '.png', sep='') },
-      content = function(file) {
-        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
-      }
-    )
-    #reactive function for scree plots title
-    PCA_var_title <- 
-      reactive({
-        if (input$PCAvar == "VST PCA") {
-          print("VST PC variance")
-        } else if (input$PCAvar == "VST + batch corrected PCA") {
-          print("VST + batch corrected PC variance")
-        }
-      })
-    # PCA scree plot ####
-    output$PCAvarplot <- renderPlot ({
-      ggplot(PC_var_data(),
-             aes(x = PC,
-                 y = variance,
-                 group = 2)) +
-        geom_point(size = 2) +
-        geom_line() +
-        theme_cowplot(font_size = 18) +
-        theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-        labs(x = "PC",
-             y = "% Variance") +
-        labs(title =
-               PCA_var_title()) #reactive title
-    })
-    #PCA Scree download ####
-    output$downloadPlotscree <- downloadHandler(
-      filename = function() { paste(input$PCAvarscree, '.png', sep='') },
-      content = function(file) {
-        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
-      }
-    )
+   QC_Server("QC1")
     ##Gene Centric output ####
     updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
     #reactive function for for filtering vst data table based on user input 
@@ -1039,39 +774,10 @@ server <-
     )
     
     #DESEq #####
-    DE_Server("DEtab1")
+    DE_Server("DEtab1", dds)
  
     #function for filtering DE object with monocytic contribution regressed out based on padj value chosen by user 
-    CD_DE_DT_sing <- 
-      reactive({
-        if (input$padjbutton == "sigvar1" & input$singscorebutton == TRUE) {
-          dds.resscore %>%
-            dplyr::filter(padj <= 0.01)
-        } else if (input$padjbutton == "sigvar5" & input$singscorebutton == TRUE) {
-          dds.resscore %>%
-            dplyr::filter(padj <= 0.05)
-        } else if (input$padjbutton == "sigvar1" & input$singscorebutton == TRUE) {
-          dds.resscore %>%
-            dplyr::filter(padj <= 0.01)
-        } else if (input$padjbutton == "sigvar5" & input$singscorebutton == TRUE) {
-          dds.resscore %>%
-            dplyr::filter(padj <= 0.05)
-        } else if (input$padjbutton == "sigvar1" & input$singscorebutton == TRUE) {
-          dds.resscore %>%
-            dplyr::filter(padj <= 0.01)
-        } else if (input$padjbutton == "sigvar5" & input$singscorebutton == TRUE) {
-          dds.resscore %>%
-            dplyr::filter(padj <= 0.05)
-        } else if (input$padjbutton == "allvar" & input$singscorebutton == TRUE ) {
-          dds.resscore
-        } else if (input$padjbutton == "sigvar1" & input$singscorebutton == TRUE) {
-          dds.resscore %>%
-            dplyr::filter(padj <= 0.01)
-        } else if (input$padjbutton == "sigvar5" & input$singscorebutton == TRUE) {
-          dds.resscore %>%
-            dplyr::filter(padj <= 0.05)
-        }
-      })
+  
 
     #output DE table with adjustment for singscore reactive to toggle swich 
     # output$DETable <-
@@ -1175,7 +881,7 @@ server <-
     observe({
       #filter DE object for only significantly differentially expressed genes
      dds.mat <- dds.res %>%
-      dplyr::filter(padj < 0.05 & abs(`log2FoldChange(Prim/Mono)`) >= 2)
+      dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2)
     #filter vst counts matrix by sig expressed genes
     vst.mat <- vstlimma %>%
       dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%

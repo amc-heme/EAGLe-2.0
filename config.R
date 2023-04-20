@@ -6,5 +6,5 @@ config <- list(
   sample_id = c("SRR9265370", "SRR9265373", "SRR9265371", "SRR9265372", "SRR9265363", "SRR9265364", "SRR9265366", "SRR9265367", "SRR9265369", "SRR9265365", "SRR9265368", "SRR9265374"),
   samples = data.frame(SRR = metadata$SRR, batch = metadata$batch, condition = metadata$sample_type, sample_name = metadata$DESeq_Sample_Name),
   samples = samples[order(samples$SRR),],
-  design_formula = "~batch + condition"
+  design_formula = ~batch + condition
 )
