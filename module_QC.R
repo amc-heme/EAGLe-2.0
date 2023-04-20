@@ -4,8 +4,20 @@ library(ggplot2)
 library(DESeq2)
 library(TidyMultiqc)
 library(cowplot)
+#source("~/Documents/GitHub/EAGLe-2.0/config.R")
 
-#colnames(qc)
+# base_dir <- config$base_dir
+# samples <- config$samples
+# sample_id <- config$sample_id
+# t2g_hs <- read.table(file = config$t2g_hs_file, sep = "\t", header = T)
+# tx2gene <- t2g_hs[,c(1,2)]
+# colnames(tx2gene) <- c('TXNAME', 'GENEID')
+# salm_dirs <- sapply(sample_id, function(id) file.path(base_dir, id, 'quant.sf'))
+# txi <- tximport(salm_dirs, type = 'salmon', tx2gene = tx2gene, ignoreTxVersion = TRUE)
+# ddsTxi <- DESeqDataSetFromTximport(txi, colData = samples, design = ~batch + condition)
+# vsd <- vst(ddsTxi, blind = F)
+# qc<-load_multiqc("data/multiqc_data.json", sections="raw")
+
 
 QC_UI <- function(id) {
   ns <- NS(id)
@@ -47,10 +59,10 @@ QC_UI <- function(id) {
           right =
             TRUE
         ),
-
+        
         conditionalPanel(
           ns = ns,
-          condition = "input['PCAplots'] == TRUE", 
+          condition = "input['PCAplots'] == true", 
           radioButtons( #choose type of PCA plot
             ns("PCAvar"),
             h4(
@@ -65,7 +77,7 @@ QC_UI <- function(id) {
         
         conditionalPanel(
           ns = ns,
-          condition = "input['multiqc'] == TRUE",
+          condition = "input['multiqc'] == true",
           selectInput( #choose type of multiqc test to visualize
             ns("QCvar"),
             label=
@@ -78,44 +90,42 @@ QC_UI <- function(id) {
         ),
         paletteUI("palette")
       ),
-        mainPanel(
-
-            plotOutput(ns("PCAplot")),
-         
-             plotOutput(ns("PCAvarplot")),
+      mainPanel(
         
-            plotOutput(ns("QCplot"))
-        )
+        plotOutput(ns("PCAplot")),
+  
+        plotOutput(ns("PCAvarplot")),
+        
+        plotOutput(ns("QCplot"))
       )
     )
+  )
 }
 
-QC_Server <- function(id, colorpaletteQC, vsd, qc) {
+QC_Server <- function(id, colorpaletteQC) {
   moduleServer(id, function(input, output, session) {
     
-   #run pca on vsd
+    #run pca on vsd
     vsd.pca <- data.frame(prcomp(t(assay(vsd)))$x) %>% 
       as_tibble(rownames = "SRR") %>% 
       left_join(., as_tibble(colData(vsd)))
-    
     #data frame for variance
     vsd.pca.var <- data.frame(summary(prcomp(t(assay(vsd))))$importance) 
-    
     #determine % variance of pc1 and pc2
     pc1var = round(vsd.pca.var[3,1] * 100, 1)
     pc2var = round(vsd.pca.var[3,2] * 100 - pc1var, 1)
     
-    #pca for scree plot
     scree.pca <- prcomp(t(assay(vsd)))
-   
-     #batch corrected PCA
+    #batch corrected PCA
     assay(vsd) <- limma::removeBatchEffect(assay(vsd),
                                            batch = samples$batch, 
                                            design = model.matrix(~condition, data = samples))
     
-    bcvsd.pca <- data.frame(prcomp(t(assay(vsd)))$x) %>% 
-      as_tibble(rownames = "SRR") %>% 
-      left_join(., as_tibble(colData(vsd)))
+    bcvsd.pca <-
+      data.frame(prcomp(t(assay(vsd)))$x) %>%
+      as_tibble(rownames = "SRR") %>%
+      left_join(., as_tibble(colData(vsd))) %>%
+      dplyr::select(SRR, batch, condition, sample_name, everything())
     
     #data frame for variance
     bcpca.var <- data.frame(summary(prcomp(t(assay(vsd))))$importance)
@@ -126,6 +136,7 @@ QC_Server <- function(id, colorpaletteQC, vsd, qc) {
     
     #pca for batch corrected scree plot
     scree.bcpca <- prcomp(t(assay(vsd)))
+    
     # create functions for calling the batch corrected or vsd % variance for x and y labels
     xlab_PC1 <- reactive ({
       if(input$PCAvar == 'VST PCA') {
@@ -146,43 +157,41 @@ QC_Server <- function(id, colorpaletteQC, vsd, qc) {
     colorpaletteQC <- 
       paletteServer("palette")
     
-    #reactive function to choose which PCA plot is loaded
+    #reactive funtion to choose which PCA plot is loaded
     PCAdata <-
       eventReactive(input$PCAvar, {
-        if(input$PCAvar == "VST PCA") {
+        if (input$PCAvar == "VST PCA") {
           vsd.pca
-        } else if(input$PCAvar == "VST + batch corrected PCA") {
+        } else if (input$PCAvar == "VST + batch corrected PCA") {
           bcvsd.pca
         }
       })
     #reactive expression to change the title of the PCA plot based on which PCA is loaded
     PCA_title <- 
       reactive({
-        if(input$PCAvar == "VST PCA") {
+        if (input$PCAvar == "VST PCA") {
           print("VST PCA")
-        } else if(input$PCAvar == "VST + batch corrected PCA") {
+        } else if (input$PCAvar == "VST + batch corrected PCA") {
           print("VST + batch corrected PCA")
         }
       })
-    
-    #PCA plot
     output$PCAplot <- renderPlot ({
-     if(input$PCAplots == TRUE) {
-     pca <- ggplot(PCAdata(), aes(x = PC1, y = PC2, shape = condition, color = batch, fill = batch)) + 
-        geom_point(size = 5) + 
-        scale_shape_manual(values = c(21, 24), name = '') +
-        scale_fill_viridis_d(option = "viridis") + #scale_fill_manual reactive function
-        scale_color_viridis_d(option = "viridis") + #scale_color manual reactive function
-        theme_cowplot(font_size = 18) + 
-        theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-        theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-        theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-        xlab(paste('PC1 =', xlab_PC1(), '% variance')) + #reactive x lab for % variance
-        ylab(paste('PC2 =', ylab_PC2(), '% variance')) + #reactive y lab for % variance
-        ggtitle(PCA_title()) + #reactive title
-        geom_text_repel(colour = "black", aes(label=sample_name),hjust=0, vjust=0)
-      print(pca)
-     }
+      if(input$PCAplots == TRUE) {
+        pca <- ggplot(PCAdata(), aes(x = PC1, y = PC2, shape = condition, color = batch, fill = batch)) + 
+          geom_point(size = 5) + 
+          scale_shape_manual(values = c(21, 24), name = '') +
+          scale_fill_viridis_d(option = "viridis") + #scale_fill_manual reactive function
+          scale_color_viridis_d(option = "viridis") + #scale_color manual reactive function
+          theme_cowplot(font_size = 18) + 
+          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          xlab(paste('PC1 =', xlab_PC1(), '% variance')) + #reactive x lab for % variance
+          ylab(paste('PC2 =', ylab_PC2(), '% variance')) + #reactive y lab for % variance
+          ggtitle(PCA_title()) + #reactive title
+          geom_text_repel(colour = "black", aes(label=sample_name),hjust=0, vjust=0)
+        print(pca)
+      }
     })
     
     #reactive function for multiqc plot title
@@ -207,15 +216,13 @@ QC_Server <- function(id, colorpaletteQC, vsd, qc) {
         qc$raw.salmon.num_mapped
       } else if(input$QCvar == "% uniquely mapped reads") {
         qc$raw.star.uniquely_mapped_percent
-      } else if(input$QCvar == "# uniquely mapped reads") {
+      } else if(input$QCvar == "# uniquly mapped reads") {
         qc$raw.star.uniquely_mapped
       }
     })
     
-    #object for sample ids from qc table
     Sample_ID <-qc$metadata.sample_id
     
-    #multiqc plot
     output$QCplot <- renderPlot ({
       if(input$multiqc == TRUE) {
         ggplot(
@@ -243,7 +250,6 @@ QC_Server <- function(id, colorpaletteQC, vsd, qc) {
     PC_var_bc <-data.frame(PC =paste0("PC", 1:12),variance =(((scree.bcpca$sdev) ^ 2 / sum((scree.bcpca$sdev) ^ 2)) * 100))
     lorder_bc <-as.vector(outer(c("PC"), 1:12, paste, sep = ""))
     PC_var_bc$PC <-factor(PC_var_bc$PC,levels = lorder_bc)
-    
     #function to tell ggplot which data set to use for the scree plots
     PC_var_data <-
       eventReactive(input$PCAvar, {
@@ -253,7 +259,6 @@ QC_Server <- function(id, colorpaletteQC, vsd, qc) {
           PC_var_bc
         }
       })
-    
     #reactive function for scree plots title
     PCA_var_title <- 
       reactive({
@@ -267,19 +272,19 @@ QC_Server <- function(id, colorpaletteQC, vsd, qc) {
     # PCA scree plot ####
     output$PCAvarplot <- renderPlot ({
       if(input$PCAscreeplots == TRUE) {
-
-      ggplot(PC_var_data(),
-             aes(x = PC,
-                 y = variance,
-                 group = 2)) +
-        geom_point(size = 2) +
-        geom_line() +
-        theme_cowplot(font_size = 18) +
-        theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-        labs(x = "PC",
-             y = "% Variance") +
-        labs(title =
-               PCA_var_title()) #reactive title
+        
+        ggplot(PC_var_data(),
+               aes(x = PC,
+                   y = variance,
+                   group = 2)) +
+          geom_point(size = 2) +
+          geom_line() +
+          theme_cowplot(font_size = 18) +
+          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+          labs(x = "PC",
+               y = "% Variance") +
+          labs(title =
+                 PCA_var_title()) #reactive title
       }
     })
   })
@@ -295,4 +300,3 @@ QC_App <- function() {
   shinyApp(ui, server)
 }
 QC_App()
-  

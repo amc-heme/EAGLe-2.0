@@ -1,5 +1,6 @@
 ##Differential Expression tab##
 library(colorRamp2)
+
 DE_UI <- function(id) {
   ns <- NS(id)
   fluidPage(
@@ -13,7 +14,7 @@ DE_UI <- function(id) {
         tagList(
         materialSwitch(
           inputId =
-            (NS(id,"DESeqtable")),
+            (ns("DESeqtable")),
           label =
             "DE Table",
           value =
@@ -46,16 +47,68 @@ DE_UI <- function(id) {
         ),
         materialSwitch(
           inputId =
-            ns("DESeqHeat"),
+            (ns("DESeqHeat")),
           label =
             "Heatmap",
           value =
             FALSE,
           right =
             TRUE
-        )
-        )
         ),
+         conditionalPanel(
+           ns = ns,
+           condition = "input.DESeqtable == true",
+          h4("DE Table Specific Options"),
+          #option to filter table by padj
+         radioButtons(ns("padjbutton"), label = "Filter DE tables by padj",
+                      choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
+         hr(),
+         downloadButton(ns("downloadDEtable"), label = "Download DE Table")
+         ),
+
+         hr(),
+        conditionalPanel(
+          ns = ns,
+          condition = "input.DESeqvolcano == true",
+          h4("Volcano Plot Specific Options"),
+          #color palette choice for volcano plot
+          colorUI("color", "Choose 1st color", "#0000FF"),
+          colorUI("color2", "Choose 2nd color", "028a0f"),
+
+          hr(),
+          downloadButton(
+            ns("downloadDEVolcano"),
+            label =
+              "Download Volcano Plot"
+          )
+        ),
+        hr(),
+        conditionalPanel(
+          ns = ns,
+          condition = "input.DESeqMA == true",
+          h4("MA Plot Specific Options"),
+          #color palette choice for MA plot
+          colorUI("color3", "Choose 1st color", "#0000FF"),
+          colorUI("color4", "Choose 2nd color", "028a0f"),
+
+          hr(),
+          downloadButton(
+            ns("downloadDEMA"),
+            label =
+              "Download MA Plot"
+          )
+        ),
+        hr(),
+        conditionalPanel(
+          ns = ns,
+          condition = "input.DESeqHeat == true",
+          h4("Heatmap Specific Options"),
+          #color palette choices for heatmap
+          colorUI("color5","Choose 1st color", "#0000FF"),
+          colorUI("color6", "Choose 2nd color", "#FF0000"),
+              )
+        )
+             ),
         mainPanel(
         DTOutput(ns("results")),
         girafeOutput(ns("volplot")),
@@ -64,14 +117,15 @@ DE_UI <- function(id) {
                                           ns("ht")
         )
         )
-      )
+      
+  )
   )
 }
 
 DE_Server <- function(id, dds, vsd) {
   moduleServer(id, function(input, output, session) {
  #DE Table ####
-    dds.res<- data.frame(results(dds)) %>%
+    dds.res <- data.frame(results(dds)) %>%
       rownames_to_column(., var = 'ensembl_gene_id') %>%
       dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
       left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
@@ -85,10 +139,18 @@ DE_Server <- function(id, dds, vsd) {
     dds.res
     }
   })
+  
+  #create objects for color palettes from the palette module
+  colorDE <-  
+    colorServer("color")
+  
+  color2DE <-
+    colorServer("color2")
   #Volcano Plot ####
   output$volplot <- 
     renderGirafe({
-      colors <- c(magma(15)[9], "grey", viridis(15)[10] )#object for colors on volcano based on user input called from palette module
+      #colors <- c(colorDE(), "grey",color2DE()) #object for colors on volcano based on user input
+      colors <- c(magma(15)[9], "grey", viridis(15)[10] )
       if(input$DESeqvolcano == TRUE) { #only create plot if the  volcano switch is toggled
         p<- ggplot(dds.res, aes( #call in the DE results from the DE module
           x = `log2FoldChange`,
@@ -106,8 +168,15 @@ DE_Server <- function(id, dds, vsd) {
       }
     })
   #MA Plot ####
+  color3DE <-
+    colorServer("color3")
+  
+  color4DE <-
+    colorServer("color4")
+  
   output$MAplot <- 
     renderGirafe ({
+      #colors <- c(color3DE(), "grey",color4DE()) #object for colors on volcano based on user input
       colors <- c(magma(15)[9], "grey", viridis(15)[10] )#object for colors on volcano based on user input called from palette module
       if(input$DESeqMA == TRUE) { #only call plot if the MA plot switch is toggled
         ma <- ggplot(dds.res, 
@@ -133,7 +202,8 @@ DE_Server <- function(id, dds, vsd) {
       }
     })
   
-  #Heatmap ####
+
+    #Heatmap ####
   # color5DE <- 
   #   colorServer("color5")
   # 
@@ -154,7 +224,6 @@ DE_Server <- function(id, dds, vsd) {
   
   #interactive heatmap needs to be wrapped in a reactive function to work
   observe({
-    
     #filter DE object for only significantly differentially expressed genes
     dds.mat <- dds.res %>%
       dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2)
@@ -174,22 +243,46 @@ DE_Server <- function(id, dds, vsd) {
     colors = colorRamp2(c(-2, 0, 2), c("red", "white", "blue"))
     #create heatmap object
     if(input$DESeqHeat == TRUE) {
-    ht = draw(ComplexHeatmap::Heatmap(
-      vst.mat,
-      name = "z scaled expression",
-      col = colors,
-      row_names_gp = gpar(fontsize = 4),
-      row_km = 2,
-      top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("white", "white")),
-                                                            labels = c("prim", "mono"), 
-                                                            labels_gp = gpar(col = "black", fontsize = 10))),
-      column_km = 2, 
-      column_title = NULL,
-      row_title = NULL
-    ))
-    makeInteractiveComplexHeatmap(input, output, session, ht, "ht")
+      ht = draw(ComplexHeatmap::Heatmap(
+        vst.mat,
+        name = "z scaled expression",
+        col = colors,
+        row_names_gp = gpar(fontsize = 4),
+        row_km = 2,
+        top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("white", "white")),
+                                                              labels = c("prim", "mono"), 
+                                                              labels_gp = gpar(col = "black", fontsize = 10))),
+        column_km = 2, 
+        column_title = NULL,
+        row_title = NULL
+      ))
+      makeInteractiveComplexHeatmap(input, output, session, ht, "ht")
     }
   })
+  
+  # download DE table
+  output$downloadDEtable <- downloadHandler(
+    filename = function() { paste("DESeqTable", '.csv', sep='') },
+    content = function(file) {
+      write.csv(CD_DE_DT(),file)
+    }
+  )
+
+  #download Volcano
+  output$downloadDEVolcano <- downloadHandler(
+    filename = function() { paste(input$sigvaluesbutton, '.png', sep='') },
+    content = function(file) {
+      ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+    }
+  )
+  
+  #download MA
+  output$downloadDEMA <- downloadHandler(
+    filename = function() { paste('DESeqMAplot', '.png', sep='') },
+    content = function(file) {
+      ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+    }
+  )
   })
 }
 
@@ -198,7 +291,7 @@ DE_App <- function() {
     DE_UI("DE1")
   )
   server <- function(input, output, session) {
-    DE_Server("DE1")
+    DE_Server("DE1", dds, vsd)
   }
   shinyApp(ui, server)
 }

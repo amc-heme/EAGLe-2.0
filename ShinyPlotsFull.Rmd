@@ -1,0 +1,761 @@
+---
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '6'
+params:
+  gene: NA
+editor_options: 
+  chunk_output_type: console
+---
+
+#### Gene centric plot
+```{r, echo=F, message=F, warning=F}
+library(dplyr)
+library(tidyverse)
+library(data.table)
+library(ggpubr)
+#merge with deseq results and add a column for prim and mono with case_when after tidy it to long form
+dds.res.ens <- dds.res %>%
+  dplyr::mutate(ext_gene_ensembl = case_when(Gene == "" ~ ensembl_gene_id,
+                                             TRUE ~ Gene)) %>%
+  dplyr::select(-c(ensembl_gene_id, Gene))
+#join DE res and VST counts matrix
+res.limma <- vstlimma %>%
+  dplyr::filter(ext_gene %in% dds.res$Gene) %>%
+  dplyr::rename(Gene = ext_gene) %>%
+  left_join(unique(dplyr::select(dds.res, c(Gene, padj))), ., by = 'Gene')
+#rename columns to match and name any blank gene name with ensembl id
+vstlimma2 <- vstlimma %>%
+  dplyr::rename(Gene = ext_gene) %>%
+  dplyr::mutate(ext_gene_ensembl = case_when(Gene == "" ~ ensembl_gene_id,
+                                             TRUE ~ Gene)) %>%
+  #dplyr::select(ext_gene_ensembl, contains("SRR"))
+  dplyr::select(-c(ensembl_gene_id, Gene)) %>%
+  dplyr::select(ext_gene_ensembl, everything()) # might be cleaner with relocate
+#create a data table filtered for only mono sample type
+res <- (samples) %>%
+  mutate(., class = condition) %>%
+  dplyr::select(., SRR, class) %>%
+  filter(., class == "mono")
+
+#create data table with class, padj, and gene expression values for each sample
+vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., class = ifelse(variable %in% res$SRR, 'mono', 'prim')) %>%
+  dplyr::filter(ext_gene_ensembl %in% dds.res.ens$ext_gene_ensembl) %>%
+  left_join(unique(dplyr::select(dds.res.ens, c(
+    ext_gene_ensembl, padj
+  ))), ., by = 'ext_gene_ensembl') %>%
+  dplyr::rename(ext_gene = ext_gene_ensembl)
+
+#factor class and variable(sample id)
+vst.goi$class <-
+  factor(vst.goi$class, levels = c('prim', 'mono'))
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+#save file for use in shiny app
+saveRDS(vst.goi, file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vst.goi.rds")
+
+#create sample boxplot using three genes from vst.goi
+colors <- c("#008080", "#DB4331", "red")
+datavst <-
+  vst.goi[vst.goi$ext_gene == ("LSM14B") |
+            vst.goi$ext_gene == ("KLF6") |
+            vst.goi$ext_gene == ("BCL2"),]
+
+
+ggplot(datavst, aes(x = ext_gene, y = value, fill = class)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = class)) +
+  theme_light() +
+  geom_text(aes(
+    y = max(value),
+    label = format(padj, digit = 1, scientific = T)
+  ), check_overlap = T) +  #padj displayed in scientific notation
+  ylab("Batch Corrected Variance Stabilized Data") +
+  xlab("Gene") +
+  ggtitle("Gene Expression:Sensitive vs Resistant")
+
+
+```
+
+#### PCA plots
+```{r, echo=F, message=F, warning=F}
+##PCA Plot
+#generate counts PCA data frame
+samples <-
+  data.frame(
+    SRR = metadata$SRR,
+    batch = metadata$batch,
+    condition = metadata$sample_type,
+    sample_name = metadata$DESeq_Sample_Name
+  )
+#order sample id's
+samples <-
+  samples[order(samples$SRR),]
+#import salmon counts
+txi <-
+  tximport(
+    salm_dirs,
+    type = 'salmon',
+    tx2gene = tx2gene,
+    ignoreTxVersion = TRUE
+  )
+#deseq2 analysis using salmon counts
+ddsTxi <-
+  DESeqDataSetFromTximport(txi, colData = samples, design = ~ batch + condition)
+
+#create tibble of results
+nonvsd.pca <-
+  data.frame(prcomp(t(assay(ddsTxi)))$x) %>%
+  as_tibble(rownames = "SRR") %>%
+  left_join(., as_tibble(colData(ddsTxi))) %>%
+  dplyr::select(SRR, batch, condition, sample_name, everything())
+#str(nonvsd.pca)
+
+#save file for use in shiny app
+#saveRDS(nonvsd.pca, file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/nonvsd.pca.rds")
+#stats for varaince
+nonvsd2.pca <- prcomp(t(assay(ddsTxi)))
+nonvsd.pca.var <- data.frame(summary(nonvsd2.pca)$importance)
+#save file for scree plot
+#saveRDS(nonvsd.pca.var, file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/nonvsd.variance.rds")
+pc1var <- round(nonvsd.pca.var[3, 1] * 100, 1)
+pc2var = round(nonvsd.pca.var[3, 2] * 100 - pc1var, 1)
+```
+
+
+```{r}
+#scree plot VST
+#
+#scree plot using VST counts matrix
+PC_var_VST <-
+  data.frame(PC =
+               paste0("PC", 1:12),
+             variance =
+               (((vsd2.pca$sdev) ^ 2 / sum((
+                 vsd2.pca$sdev
+               ) ^ 2)) * 100))
+lorder_VST <-
+  as.vector(outer(c("PC"), 1:12, paste, sep = ""))
+PC_var_VST$PC <-
+  factor(PC_var_VST$PC,
+         levels = lorder_VST)
+ggplot(PC_var_VST,
+       aes(x = PC,
+           y = variance,
+           group = 2)) +
+  geom_point(size = 2) +
+  geom_line() +
+  theme_cowplot() +
+  labs(x = "PC",
+       y = "% Variance") +
+  labs(title =
+         "VST PCA variance")
+#save file for use in shiny app
+#saveRDS(vsd2.pca, file = "/Users/stephanie/Documents/GitHub/CancerDiscovery-Bulk/vsd2.pca.rds")
+```
+
+```{r}
+#scree plot for batch corrected VST PCA
+
+PC_var_bc <-
+  data.frame(PC =
+               paste0("PC", 1:12),
+             variance =
+               (((bcvsd2.pca$sdev) ^ 2 / sum((bcvsd2.pca$sdev) ^ 2
+               )) * 100))
+lorder_bc <-
+  as.vector(outer(c("PC"), 1:12, paste, sep = ""))
+PC_var_bc$PC <-
+  factor(PC_var_bc$PC,
+         levels = lorder_bc)
+ggplot(PC_var_bc,
+       aes(x = PC,
+           y = variance,
+           group = 2)) +
+  geom_point(size = 2) +
+  geom_line() +
+  theme_cowplot() +
+  labs(x = "PC",
+       y = "% Variance") +
+  labs(title =
+         "VST+ batch corrected PCA variance")
+#save file for use in shiny app
+#saveRDS(bcvsd2.pca, file = "/Users/stephanie/Documents/GitHub/CancerDiscovery-Bulk/bcvsd2.pca.rds")
+```
+
+```{r, Counts PCA, echo= FALSE, fig.width=6, fig.height=4.5 }}
+#generate counts PCA graph
+colors <-
+  c(viridis(15)[6], cividis(15)[9])
+ggplot(nonvsd.pca, aes(
+  x = PC1,
+  y = PC2,
+  fill = batch,
+  shape = condition
+)) +
+  geom_point(size = 5) +
+  scale_shape_manual(values = c(21, 24), name = '') +
+  scale_fill_manual(values = colors) +
+  theme_classic(16) + xlab(paste('PC1')) +
+  ylab(paste('PC2')) +
+  ggtitle("Non VSD") +
+  guides(fill = guide_legend(override.aes = list(color = colors))) +
+  geom_text_repel(aes(label = sample_name), hjust = 0, vjust = 0)
+
+```
+
+```{r, echo=F, message=F, warning=F}
+# generate VST PCA
+#using DE object to create vst counts matrix
+vsd <- vst(ddsTxi, blind = F)
+#creat a data frame
+vsd.pca <-
+  data.frame(prcomp(t(assay(vsd)))$x) %>%
+  as_tibble(rownames = "SRR") %>%
+  left_join(., as_tibble(colData(vsd))) %>%
+  dplyr::select(SRR, batch, condition, sample_name, everything())
+
+#str(vsd.pca)
+#save file for use in shiny app
+#saveRDS(vsd.pca, file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.pca.rds")
+# stats
+vsd2.pca <- prcomp(t(assay(vsd)))
+#saveRDS(vsd2.pca, file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd2.pca.rds")
+vsd2.pca.var <- data.frame(summary(vsd2.pca)$importance)
+#saveRDS(vsd2.pca.var, file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vsd.variance.rds")
+pc1var = round(vsd2.pca.var[3, 1] * 100, 1)
+pc2var = round(vsd2.pca.var[3, 2] * 100 - pc1var, 1)
+```
+
+
+```{r, VST PCA, echo=FALSE, fig.width=6, fig.height=4.5}
+#VST PCA plot
+#specifiy sample name from metadata
+DESeq_Sample_Name <- metadata$DESeq_Sample_Name
+#specify sample type from metadata
+sample_type <- metadata$sample_type
+colors <- c(viridis(15)[6], cividis(15)[9])
+ggplot(vsd.pca, aes(
+  x = PC1,
+  y = PC2,
+  fill = sample_type,
+  shape = condition
+)) +
+  geom_point(size = 5) +
+  scale_shape_manual(values = c(21, 24), name = '') +
+  scale_fill_manual(values = colors) +
+  theme_classic(16) + xlab(paste('PC1')) +
+  ylab(paste('PC2')) +
+  ggtitle("VST PCA") +
+  guides(fill = guide_legend(override.aes = list(color = colors))) +
+  geom_text_repel(aes(label = DESeq_Sample_Name),
+                  hjust = 0,
+                  vjust = 0)
+
+```
+
+```{r, echo=F, message=F, warning=F}
+#VST + batch corrected PCA
+#perform batch correction
+assay(vsd) <-
+  limma::removeBatchEffect(assay(vsd),
+                           batch = samples$batch,
+                           design = model.matrix(~ condition, data = samples))
+# save the batch corrected vst data
+vstlimmaPCA <-
+  data.frame(assay(vsd)) %>%
+  rownames_to_column(., var = "ensembl_gene_id") %>%
+  left_join(unique(dplyr::select(t2g_hs, c(
+    ensembl_gene_id, ext_gene
+  ))), ., by = 'ensembl_gene_id') %>% na.omit(.)
+#batch corrected bsd.pca data table
+bcvsd.pca <-
+  data.frame(prcomp(t(assay(vsd)))$x) %>%
+  as_tibble(rownames = "SRR") %>%
+  left_join(., as_tibble(colData(vsd))) %>%
+  dplyr::select(SRR, batch, condition, sample_name, everything())
+
+bcvsd2.pca <- (prcomp(t(assay(vsd))))
+#saveRDS(bcvsd2.pca, file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd2.pca.rds")
+bcvsd2.pca.var <- data.frame(summary(bcvsd2.pca)$importance)
+#saveRDS(bcvsd2.pca.var, file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.variance.rds")
+pc1var = round(bcvsd2.pca.var[3, 1] * 100, 1)
+pc2var = round(bcvsd2.pca.var[3, 2] * 100 - pc1var, 1)
+
+
+#saveRDS(bcvsd.pca, file= "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/bcvsd.pca.rds")
+```
+
+```{r, Batch Corrected VST PCA, echo=F, fig.width=6, fig.height=4.5}
+#VST + batch corrected PCA
+colors <- c(viridis(15)[6], cividis(15)[9])
+ggplot(bcvsd.pca, aes(
+  x = PC1,
+  y = PC2,
+  fill = batch,
+  shape = condition
+)) +
+  geom_point(size = 5) +
+  scale_shape_manual(values = c(21, 24), name = '') +
+  scale_fill_manual(values = colors) +
+  theme_classic(16) + xlab(paste('PC1')) +
+  ylab(paste('PC2')) +
+  ggtitle("Limma:VSD") +
+  guides(fill = guide_legend(override.aes = list(color = colors))) +
+  geom_text_repel(aes(label = sample_name), hjust = 0, vjust = 0)
+saveRDS(vsd, file = "/Users/stephanie/Documents/GitHub/CancerDiscovery-Bulk/vsd")
+#variance
+
+plotPCA(vsd, intgroup = c("batch", "condition"))
+exp.pca.summary <- summary(bcvsd.pca)
+pc1var = round(exp.pca.summary[3, 1] * 100, 1)
+pc2var = round(exp.pca.summary[3, 2] * 100 - pc1var, 1)
+
+
+```
+#### DE tables
+```{r, include=F, message=F}
+#DE Seq analysis
+ddsTxi.filt <- ddsTxi[rowMins(counts(ddsTxi)) > 5, ]
+dds <- DESeq(ddsTxi.filt)
+# add in gene names
+dds.res <- data.frame(results(dds)) %>%
+  rownames_to_column(., var = 'ensembl_gene_id') %>%
+  dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+  left_join(unique(dplyr::select(t2g_hs, c(
+    ensembl_gene_id, ext_gene
+  ))), ., by = 'ensembl_gene_id') %>%
+  mutate(., DiffExp = ifelse(
+    padj < 0.05 & log2FoldChange >= 0.5,
+    'up',
+    ifelse(padj < 0.05 &
+             log2FoldChange <= -0.5, 'down', 'no')
+  )) %>%
+  dplyr::rename(., Gene = ext_gene, `log2FoldChange(Prim/Mono)` = log2FoldChange) %>%
+  na.omit(.)
+
+#how many DEGs?
+sum(dds.res$DiffExp == "yes")
+sum(dds.res$DiffExp == "no")
+sig.up <-
+  dds.res[dds.res$DiffExp == 'yes' &
+            dds.res$'log2FoldChange(Prim/Mono)' > 1,]
+sig.down <-
+  dds.res[dds.res$DiffExp == 'yes' &
+            dds.res$'log2FoldChange(Prim/Mono)' < 1,]
+
+# create Table
+dds.res %>%
+  dplyr::select(-baseMean) %>%
+  arrange(padj) %>%
+  DT::datatable()
+#save file for use in shiny app
+#saveRDS(dds.res, file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/DEtable.rds")
+
+```
+####DE Plot
+```{r}
+# Volcano
+colors <-
+  c(magma(15)[9], "grey", viridis(15)[10]) #use colorRampPalette for shiny
+ggplot(data = dds.res,
+       aes(
+         x = `log2FoldChange(Prim/Mono)`,
+         y = -log10(padj),
+         col = DiffExp
+       )) +
+  geom_point() +
+  theme_light() +
+  scale_colour_manual(values = colors) +
+  coord_cartesian(xlim = c(-10, 7))
+
+```
+
+```{r}
+#overlay pathways on volcano plot for matching genes
+#this needs to be reactive to the chosen gene lists from the interactive table and then plotted on the volcano plot
+#data table that specifies if genes are in the selected pathway or not
+dds.res.upr <- dds.res %>%
+  mutate(., GOBP_UPR = ifelse(
+    Gene %in% c(
+      pathways.GObio$GOBP_ENDOPLASMIC_RETICULUM_UNFOLDED_PROTEIN_RESPONSE,
+      pathways.GObio$GOBP_IRE1_MEDIATED_UNFOLDED_PROTEIN_RESPONSE
+    ),
+    'yes',
+    'no'
+  ))
+dds.res.upr$GOBP_UPR <-
+  factor(dds.res.upr$GOBP_UPR, levels = c('no', 'yes'))
+# volcano plot
+ggplot(
+  data = (dds.res.upr %>% arrange(., (GOBP_UPR))),
+  aes(
+    x = `log2FoldChange(Prim/Mono)`,
+    y = -log10(padj),
+    col = GOBP_UPR
+  )
+) +
+  theme_light() +
+  geom_point() +
+  scale_colour_brewer(palette = 'Dark2') +
+  geom_text_repel(
+    max.overlaps = 1500,
+    aes(
+      label = ifelse(
+        Gene %in% c(
+          pathways.GObio$GOBP_ENDOPLASMIC_RETICULUM_UNFOLDED_PROTEIN_RESPONSE,
+          pathways.GObio$GOBP_IRE1_MEDIATED_UNFOLDED_PROTEIN_RESPONSE
+        ) & `log2FoldChange(Prim/Mono)` > 1.5,
+        as.character(Gene),
+        ""
+      )
+    ),
+    hjust = 0,
+    vjust = 0
+  ) +
+  ggtitle("") +
+  xlab("log2foldchange")  
+
+```
+
+
+#### DE MA Plot
+```{r}
+#generate ma plot in ggplot for use in shiny
+ggplot(dds.res,
+       aes(
+         x = log2(baseMean),
+         y = `log2FoldChange(Prim/Mono)`,
+         col = DiffExp
+       )) +
+  geom_point(alpha = 0.8, size = 1) +
+  geom_hline(aes(yintercept = 0)) +
+  scale_color_manual(values = c(viridis(15)[10], "grey", magma(15)[9])) +
+  theme_light() +
+  ylim(c(
+    min(dds.res$`log2FoldChange(Prim/Mono)`),
+    max(dds.res$`log2FoldChange(Prim/Mono)`)
+  )) +
+  xlab("log2 Mean Expression") +
+  ylab("Log2 Fold Change")
+```
+####DE HM
+```{r}
+
+library(ComplexHeatmap)
+library(circlize)
+#saveRDS(vstlimma, "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/vstlimma.rds")
+#filter DE object for sig genes
+dds.mat <- dds.res %>%
+  dplyr::filter(padj < 0.05 & abs(`log2FoldChange(Prim/Mono)`) >= 2)
+#create matrix for use in heatmap using sig genes from DE
+vst.mat <- vstlimma %>%
+  dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
+  column_to_rownames(., var = "ensembl_gene_id") %>%
+  dplyr::select(., -ext_gene) %>%
+  as.matrix()
+rownames(vst.mat) = dds.mat$Gene
+#z scale matrix
+vst.mat <- t(scale(t(vst.mat)))
+#choose first 100 genes for easy visualization for example purpose
+vst.mat <- head(vst.mat, n = 100)
+#create colorRamp palette
+f1 = colorRamp2(seq(min(vst.mat), max(vst.mat), length = 3), c("blue", "#EEEEEE", "red"))
+#heatmap object
+ht = ComplexHeatmap::Heatmap(
+  vst.mat,
+  name = "z scaled expression",
+  col = f1,
+  row_names_gp = gpar(fontsize = 4),
+  row_km = 2,
+  top_annotation = HeatmapAnnotation(class = anno_block(
+    gp = gpar(fill = 2:5),
+    labels = c("prim", "mono"),
+    labels_gp = gpar(col = "white", fontsize = 10)
+  )),
+  column_km = 2,
+  column_title = NULL,
+  row_title = NULL
+)
+ht
+
+```
+#GSEA heatmap
+```{r}
+#filter DE object for sig genes
+dds.sig <- dds.res %>%
+  dplyr::filter(padj < 0.05 &
+                  abs(`log2FoldChange(Prim/Mono)`) >= 0.5)
+#filter genes that are found in the chosen pathway
+vst.myc <- vstlimma %>%
+  mutate(
+    .,
+    Hallmark_myc = ifelse(
+      ext_gene %in% pathways.hallmark$HALLMARK_MYC_TARGETS_V2,
+      'yes',
+      'no'
+    )
+  ) %>%
+  dplyr::filter(Hallmark_myc == "yes")
+#create matrix
+vstgsea.mat <- vst.myc %>%
+  dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
+  column_to_rownames(., var = "ext_gene") %>%
+  dplyr::select(.,-ensembl_gene_id, -Hallmark_myc) %>%
+  as.matrix()
+#z scale
+vstgsea.mat <- t(scale(t(vstgsea.mat)))
+#create colorRamp palette
+f1 = colorRamp2(seq(min(vstgsea.mat), max(vstgsea.mat), length = 3), c("blue", "#EEEEEE", "red"))
+#create heatmap object
+ht = ComplexHeatmap::Heatmap(
+  vstgsea.mat,
+  name = "HALLMARK_MYC_TARGETS_V2",
+  col = f1,
+  row_names_gp = gpar(fontsize = 6),
+  row_km = 2,
+  column_km = 2,
+  column_title = c("prim", "mono"))
+
+ht
+```
+
+####GSEA plots
+Positive NES == Upregulated in Primitive
+Negative NEW == Upregulated in Monocytic
+```{r}
+# Extract the dds results in a tidy format
+res <- results(dds, tidy = TRUE)
+
+# Add the human name of the gene to the last column, because that's what all of the pathways are annotated using
+res <- inner_join(res, ens2gene_HS, by = c("row" = "ensembl_gene_id"))
+colnames(res)[8] <- 'HS_Symbol'
+
+# Select only the human gene symbol and the 'stat' from the results, remove NAs, and average the test stat for duplicate gene symbols
+res2 <- res %>%
+  dplyr::select(HS_Symbol, stat) %>%
+  na.omit() %>%
+  distinct() %>%
+  group_by(HS_Symbol) %>%
+  summarize(stat = mean(stat))
+
+# Reconfigure the data
+ranks <- deframe(res2)
+ranks <- sort(ranks)
+#save file for use in shiny app
+saveRDS(ranks, file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/ranks.rds")
+fgseaRes <- fgsea::fgsea(pathways = pathways.hallmark, stats = ranks)
+fgseaResTidy <- fgseaRes %>%
+  as_tibble() %>%
+  arrange(desc(NES))
+#moustache plot
+toplotMoustache <-
+  cbind.data.frame(fgseaResTidy$pathway,
+                   fgseaResTidy$NES,
+                   fgseaResTidy$padj,
+                   fgseaResTidy$pval) #need to make this for each pathway
+colnames(toplotMoustache) <- c("pathway", "NES", "padj", "pval")
+toplotMoustache <- toplotMoustache %>%
+  mutate(., sig = ifelse(padj <= 0.05, 'yes', 'no'))
+
+colors <- c("black", "red")
+ggplot(toplotMoustache, aes(x = NES, y = padj, color = sig)) + #reactive for each pathway
+  geom_point() +
+  theme_minimal() +
+  xlab('NES') +
+  scale_colour_manual(values = colors) +
+  ylab('BH adjusted p-value') +
+  ggtitle("Hallmark pathways from GSEA") + #reactive
+  geom_text_repel(aes(label = ifelse(padj < 0.05, as.character(pathway), "")), hjust =
+                    0, vjust = 0) +
+  coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1))
+#top up and down rankings
+topPathwaysUp <- fgseaRes[ES > 0][head(order(pval), n = 10), pathway]
+topPathwaysDown <-
+  fgseaRes[ES < 0][head(order(pval), n = 10), pathway]
+topPathways <- c(topPathwaysUp, rev(topPathwaysDown))
+# top up and down ranked pathways plotted
+plotGseaTable(pathways.hallmark[topPathways], ranks, fgseaRes,
+              gseaParam = 0.5)
+#top ranked up pathway
+top.UP.path <- as.character(fgseaResTidy[1, 1])
+plotEnrichment(pathways.hallmark[[top.UP.path]],
+               ranks) + labs(title = top.UP.path)
+
+#top ranked down pathway
+top.DOWN.path <- as.character(fgseaResTidy[nrow(fgseaResTidy), 1])
+plotEnrichment(pathways.hallmark[[top.DOWN.path]],
+               ranks) + labs(title = top.DOWN.path)
+```
+DE + SingScore Regression analysis 
+
+```{r}
+# Set up the vst batch corrected expression matrix to have rownames be ENSG without the suffix
+vstlimma.sing <- as_tibble(vstlimmaPCA) %>%
+  dplyr::select(., -ext_gene) %>%
+  column_to_rownames(., var = "ensembl_gene_id")
+# Convert the gene sets from Gene Name to ENSG
+#filter for genes in Mono and Prim pathways
+monoset <- pathways.aeg$PM_Monocytic_Blast
+monoset <- as_tibble(monoset)
+colnames(monoset) <- "ext_gene"
+monoset <- monoset %>%
+  na.omit(.) %>%
+  left_join(unique(dplyr::select(t2g_hs, c(
+    ensembl_gene_id, ext_gene
+  ))), ., by = 'ext_gene') %>%
+  na.omit(.) %>%
+  filter(ext_gene %in% pathways.aeg$PM_Monocytic_Blast)
+primset <- pathways.aeg$PM_Primitive_Blast
+primset <- as_tibble(primset)
+colnames(primset) <- "ext_gene"
+primset <- primset %>%
+  na.omit(.) %>%
+  left_join(unique(dplyr::select(t2g_hs, c(
+    ensembl_gene_id, ext_gene
+  ))), ., by = 'ext_gene') %>%
+  na.omit(.) %>%
+  filter(ext_gene %in% pathways.aeg$PM_Primitive_Blast)
+ 
+# Rank the BEAT AML with the mono gene set
+
+library(singscore)
+rankData <- rankGenes(vstlimma.sing)
+scoreData <-
+  simpleScore(rankData, upSet = monoset$ensembl_gene_id) %>%
+  rownames_to_column(., "id")
+
+# Rank the BEAT AML with only prim gene sets
+scoreprim <-
+  simpleScore(rankData, upSet = primset$ensembl_gene_id) %>%
+  rownames_to_column(., "id")
+
+
+metadata.sing <- metadata %>%
+  dplyr::left_join(.,
+                   scoreData %>% dplyr::select(id,  MonoScore = TotalScore),
+                   by = c("SRR" = "id")) %>%
+  dplyr::left_join(.,
+                   scoreprim %>% dplyr::select(id,  PrimScore = TotalScore),
+                   by = c("SRR" = "id")) %>%
+  left_join(
+    .,
+    dplyr::select(
+      as.data.frame(t(vstlimma)) %>% janitor::row_to_names(row_number = 1),
+      starts_with(genes)
+    ) %>% dplyr::slice(.,-1) %>% rownames_to_column(., var = "SRR"),
+    by = c("SRR" = "SRR")
+  ) 
+```
+
+
+
+```{r, include = F, message = F}
+txi <-
+  tximport(
+    salm_dirs,
+    type = 'salmon',
+    tx2gene = tx2gene,
+    ignoreTxVersion = TRUE
+  )
+ddsTxi <-
+  DESeqDataSetFromTximport(txi,
+                           colData = metadata.sing,
+                           design = ~ sample_type  + batch + MonoScore)
+ddsTxi.filt <- ddsTxi[rowMins(counts(ddsTxi)) > 5,]
+dds <- DESeq(ddsTxi.filt)
+```
+
+
+Manipulate the data frame to include the Gene names and annotate if a gene is significantly DE (log2 fold change >= 1 and adj pvalue <0.05)
+```{r, message = FALSE, include = TRUE}
+dds.resscore <- data.frame(results(dds)) %>%
+  rownames_to_column(., var = 'ensembl_gene_id') %>%
+  dplyr::select(., ensembl_gene_id, baseMean, stat, log2FoldChange, padj) %>%
+  left_join(unique(dplyr::select(t2g_hs, c(
+    ensembl_gene_id, ext_gene
+  ))), ., by = 'ensembl_gene_id') %>%
+  mutate(., DiffExp = ifelse(
+    padj < 0.05 & log2FoldChange >= 0.5,
+    'up',
+    ifelse(padj < 0.05 &
+             log2FoldChange <= -0.5, 'down', 'no')
+  )) %>%
+  dplyr::rename(., Gene = ext_gene, `log2FoldChange(Prim/Mono)` = log2FoldChange) %>%
+  na.omit(.)
+
+```
+
+
+How many DEG's?
+```{r, message = TRUE, include = TRUE}
+sum(dds.resscore$DiffExp == "up")
+sum(dds.resscore$DiffExp == "down")
+sig.up <-
+  dds.resscore[dds.resscore$DiffExp == 'yes' &
+                 dds.resscore$log2FoldChange > 1, ]
+sig.down <-
+  dds.res[dds.resscore$DiffExp == 'yes' &
+            dds.resscore$log2FoldChange < 1, ]
+#write.table(dds.res, file = "/Users/Stephanie/Desktop/InformaticsProjectfiles/dds.res.MonoReg.txt", sep = "\t", row.names = F, quote = F)
+```
+
+<br>
+
+### Table
+-> log2FoldChange = Prim/Mono
+```{r}
+
+dds.resscore %>%
+  dplyr::select(-baseMean) %>%
+  arrange(padj) %>%
+  DT::datatable()
+#save file for use in shiny app
+saveRDS(dds.resscore, file = "/Users/stephanie/Documents/GitHub/EAGLe-2.0/data/dds.resscore.rds")
+
+```
+#Gene or genes of interest in pathways
+```{r}
+#gene of interest from drop down list chosen by user
+#search chosen pathways file to determine which pathways include that gene
+#create object for storing pathways that contain the chosen gene 
+goi_paths <-
+  pathways.hallmark %>% keep(grepl('BCL2', pathways.hallmark))
+goi_paths <- list(grep("BCL2", pathways.hallmark))
+#filter gsea table for pathways in which the GOI is in the leading edge
+goi_paths <- fgseaResTidy %>%
+  dplyr::filter(grepl('BCL2', leadingEdge)) %>%
+  mutate(., class = ifelse(NES < 0, 'prim', 'mono'))
+
+#make a column that says yes if goi in that pathway
+goi_paths$BCL2 <- "yes"
+
+#filter gsea table to find pathways that do not include the GOI in the leading edge
+nongoi_paths <- fgseaResTidy %>%
+  dplyr::filter(!grepl('BCL2', leadingEdge)) %>%
+  mutate(., class = ifelse(NES < 0, 'prim', 'mono'))
+#put no for pathways that do not contain the goi
+nongoi_paths$BCL2 <- "no"
+#bind the two filtered data frames into one for plotting
+allgoi_paths <- rbind.data.frame(goi_paths, nongoi_paths)
+
+colors <- c("blue", "yellow", "green")
+ggplot(allgoi_paths, aes(
+  x = class,
+  y = NES,
+  color = (padj < 0.05)
+)) +
+  geom_boxplot()  +
+  facet_wrap(~ BCL2, scales = "free") +
+  theme_light() +
+  geom_hline(yintercept = 0, linetype = "dashed")
+```
+
