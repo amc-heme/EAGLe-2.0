@@ -1,5 +1,7 @@
 ##Differential Expression tab##
 library(colorRamp2)
+source("~/Documents/GitHub/EAGLe-2.0/config.R")
+
 
 DE_UI <- function(id) {
   ns <- NS(id)
@@ -72,8 +74,8 @@ DE_UI <- function(id) {
           condition = "input.DESeqvolcano == true",
           h4("Volcano Plot Specific Options"),
           #color palette choice for volcano plot
-          colorUI("color", "Choose 1st color", "#0000FF"),
-          colorUI("color2", "Choose 2nd color", "028a0f"),
+          colorUI(ns("color"), "Choose 1st color", "#0000FF"),
+          colorUI(ns("color2"), "Choose 2nd color", "028a0f"),
 
           hr(),
           downloadButton(
@@ -88,8 +90,8 @@ DE_UI <- function(id) {
           condition = "input.DESeqMA == true",
           h4("MA Plot Specific Options"),
           #color palette choice for MA plot
-          colorUI("color3", "Choose 1st color", "#0000FF"),
-          colorUI("color4", "Choose 2nd color", "028a0f"),
+          colorUI(ns("color3"), "Choose 1st color", "#0000FF"),
+          colorUI(ns("color4"), "Choose 2nd color", "028a0f"),
 
           hr(),
           downloadButton(
@@ -110,9 +112,18 @@ DE_UI <- function(id) {
         )
              ),
         mainPanel(
-        DTOutput(ns("results")),
-        girafeOutput(ns("volplot")),
-        girafeOutput(ns("MAplot")),
+          conditionalPanel(
+            condition = "input.DESeqtable == true",
+            DTOutput(ns("results"))
+          ),
+          conditionalPanel(
+            girafeOutput(ns("volplot"))
+          ),
+          conditionalPanel(
+            girafeOutput(ns("MAplot"))
+          ),
+        
+        
         InteractiveComplexHeatmapOutput(heatmap_id = 
                                           ns("ht")
         )
@@ -125,6 +136,7 @@ DE_UI <- function(id) {
 DE_Server <- function(id, dds, vsd) {
   moduleServer(id, function(input, output, session) {
  #DE Table ####
+ 
     dds.res <- data.frame(results(dds)) %>%
       rownames_to_column(., var = 'ensembl_gene_id') %>%
       dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
@@ -176,8 +188,11 @@ DE_Server <- function(id, dds, vsd) {
   
   output$MAplot <- 
     renderGirafe ({
+      print("values of colors in DE module")
+      print(color3DE())
+      print(color4DE())
       #colors <- c(color3DE(), "grey",color4DE()) #object for colors on volcano based on user input
-      colors <- c(magma(15)[9], "grey", viridis(15)[10] )#object for colors on volcano based on user input called from palette module
+      colors <- c(color3DE(), "grey", color4DE())#object for colors on volcano based on user input called from palette module
       if(input$DESeqMA == TRUE) { #only call plot if the MA plot switch is toggled
         ma <- ggplot(dds.res, 
                      aes(

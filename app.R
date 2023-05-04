@@ -41,7 +41,7 @@ library(patchwork)
 # load analysis functions 
 #meta_lut_ven <- readRDS("data/meta_lut_ven.Rds")
 vst.goi <- readRDS("data/vst.goi.rds")
-bcvsd.pca <- readRDS("data/bcvsd.pca.rds")
+#bcvsd.pca <- readRDS("data/bcvsd.pca.rds")
 #read in data from config file
 source("~/Documents/GitHub/EAGLe-2.0/config.R")
 base_dir <- config$base_dir
