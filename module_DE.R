@@ -106,27 +106,35 @@ DE_UI <- function(id) {
           condition = "input.DESeqHeat == true",
           h4("Heatmap Specific Options"),
           #color palette choices for heatmap
-          colorUI("color5","Choose 1st color", "#0000FF"),
-          colorUI("color6", "Choose 2nd color", "#FF0000"),
+          colorUI(ns("color5"),"Choose 1st color", "#0000FF"),
+          colorUI(ns("color6"), "Choose 2nd color", "#FF0000"),
               )
         )
              ),
         mainPanel(
           conditionalPanel(
+            ns = ns,
             condition = "input.DESeqtable == true",
             DTOutput(ns("results"))
           ),
           conditionalPanel(
+            ns = ns,
+            condition = "input.DESeqvolcano == true",
             girafeOutput(ns("volplot"))
           ),
           conditionalPanel(
+            ns = ns,
+            condition = "input.DESeqMA == true",
             girafeOutput(ns("MAplot"))
           ),
-        
-        
-        InteractiveComplexHeatmapOutput(heatmap_id = 
-                                          ns("ht")
-        )
+          conditionalPanel(
+            ns = ns,
+            condition = "input.DESeqHeat == true",
+            InteractiveComplexHeatmapOutput(heatmap_id = 
+                                              ns("ht")
+            )
+          )
+     
         )
       
   )
@@ -162,7 +170,7 @@ DE_Server <- function(id, dds, vsd) {
   output$volplot <- 
     renderGirafe({
       #colors <- c(colorDE(), "grey",color2DE()) #object for colors on volcano based on user input
-      colors <- c(magma(15)[9], "grey", viridis(15)[10] )
+      colors <- c(colorDE(), "grey", color2DE())
       if(input$DESeqvolcano == TRUE) { #only create plot if the  volcano switch is toggled
         p<- ggplot(dds.res, aes( #call in the DE results from the DE module
           x = `log2FoldChange`,
@@ -219,11 +227,11 @@ DE_Server <- function(id, dds, vsd) {
   
 
     #Heatmap ####
-  # color5DE <- 
-  #   colorServer("color5")
-  # 
-  # color6DE <-
-  #   colorServer("color6")
+  color5DE <-
+    colorServer("color5")
+
+  color6DE <-
+    colorServer("color6")
   #object for batch corrected vsd matrix
   assay(vsd) <-
     limma::removeBatchEffect(assay(vsd),
@@ -255,7 +263,7 @@ DE_Server <- function(id, dds, vsd) {
     #only show the first 100 genes for visualization in this example(can change)
     vst.mat <- head(vst.mat, n = 100)
     #create a colorRamp function based on user input in color palette choices
-    colors = colorRamp2(c(-2, 0, 2), c("red", "white", "blue"))
+    colors = colorRamp2(c(-2, 0, 2), c(color5DE(), "white", color6DE()))
     #create heatmap object
     if(input$DESeqHeat == TRUE) {
       ht = draw(ComplexHeatmap::Heatmap(
@@ -311,3 +319,4 @@ DE_App <- function() {
   shinyApp(ui, server)
 }
 DE_App()
+
