@@ -1,6 +1,6 @@
 ##Differential Expression tab##
 library(colorRamp2)
-source("~/Documents/GitHub/EAGLe-2.0/config.R")
+library(InteractiveComplexHeatmap)
 
 
 DE_UI <- function(id) {
@@ -108,9 +108,9 @@ DE_UI <- function(id) {
           #color palette choices for heatmap
           colorUI(ns("color5"),"Choose 1st color", "#0000FF"),
           colorUI(ns("color6"), "Choose 2nd color", "#FF0000"),
-              )
+          )
         )
-             ),
+      ),
         mainPanel(
           conditionalPanel(
             ns = ns,
@@ -130,14 +130,10 @@ DE_UI <- function(id) {
           conditionalPanel(
             ns = ns,
             condition = "input.DESeqHeat == true",
-            InteractiveComplexHeatmapOutput(heatmap_id = 
-                                              ns("ht")
-            )
-          )
-     
+            InteractiveComplexHeatmapOutput(heatmap_id = (ns("ht")))
         )
-      
-  )
+      )
+    )
   )
 }
 
@@ -227,26 +223,27 @@ DE_Server <- function(id, dds, vsd) {
   
 
     #Heatmap ####
-  color5DE <-
-    colorServer("color5")
-
-  color6DE <-
-    colorServer("color6")
-  #object for batch corrected vsd matrix
-  assay(vsd) <-
-    limma::removeBatchEffect(assay(vsd),
-                             batch = samples$batch,
-                             design = model.matrix(~ condition, data = samples))
-  # data frame for batch corrected vsd matrix
-  vstlimma <-
-    data.frame(assay(vsd)) %>%
-    rownames_to_column(., var = "ensembl_gene_id") %>%
-    left_join(unique(dplyr::select(t2g_hs, c(
-      ensembl_gene_id, ext_gene
-    ))), ., by = 'ensembl_gene_id') %>% na.omit(.)
-  
   #interactive heatmap needs to be wrapped in a reactive function to work
   observe({
+    color5DE <-
+      colorServer("color5")
+    
+    color6DE <-
+      colorServer("color6")
+    #object for batch corrected vsd matrix
+    assay(vsd) <-
+      limma::removeBatchEffect(assay(vsd),
+                               batch = samples$batch,
+                               design = model.matrix(~ condition, data = samples))
+    # data frame for batch corrected vsd matrix
+    vstlimma <-
+      data.frame(assay(vsd)) %>%
+      rownames_to_column(., var = "ensembl_gene_id") %>%
+      left_join(unique(dplyr::select(t2g_hs, c(
+        ensembl_gene_id, ext_gene
+      ))), ., by = 'ensembl_gene_id') %>%
+      na.omit(.)
+    
     #filter DE object for only significantly differentially expressed genes
     dds.mat <- dds.res %>%
       dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2)
@@ -259,6 +256,7 @@ DE_Server <- function(id, dds, vsd) {
       as.matrix()
     
     rownames(vst.mat) = dds.mat$Gene
+    
     vst.mat <- t(scale(t(vst.mat)))
     #only show the first 100 genes for visualization in this example(can change)
     vst.mat <- head(vst.mat, n = 100)
