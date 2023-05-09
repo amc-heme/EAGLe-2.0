@@ -39,9 +39,7 @@ library(patchwork)
 #Data ####
 #load in data and metadata
 # load analysis functions 
-#meta_lut_ven <- readRDS("data/meta_lut_ven.Rds")
 vst.goi <- readRDS("data/vst.goi.rds")
-#bcvsd.pca <- readRDS("data/bcvsd.pca.rds")
 #read in data from config file
 source("~/Documents/GitHub/EAGLe-2.0/config.R")
 base_dir <- config$base_dir
@@ -86,7 +84,7 @@ pathways.Positional <-gmtPathways("data/gmt_pathway_files copy/c1.all.v2022.1.Hs
 pathways.Biocarta <-gmtPathways("data/gmt_pathway_files copy/c2.cp.biocarta.v2022.1.Hs.symbols.gmt")
 pathways.lsc <- gmtPathways("data/gmt_pathway_files copy/lsc_sigs.gmt")
 pathways.aeg <- gmtPathways("data/gmt_pathway_files copy/aeg_genesets_20220602.gmt")
-vstlimma <- readRDS("data/vstlimma.rds")
+#vstlimma <- readRDS("data/vstlimma.rds")
 
 names(pathways.aeg)[10] <- "PM_Primitive_Blast"
 names(pathways.aeg)[9] <- "PM_Monocytic_Blast"
@@ -95,31 +93,23 @@ names(pathways.aeg)[9] <- "PM_Monocytic_Blast"
 ui <-
   navbarPage(
     "EAGLe: Cancer Discovery",
-    tabPanel( #QC Menu ####
+    #QC Menu ####
+    tabPanel( 
               "QC",
               QC_UI("QC1")
     ), 
     
-    tabPanel( #Gene expression analysis ####
+    #Gene expression analysis ####
+    tabPanel( 
               "Gene Expression",
               goi_UI("GOI1")
     ),
     
-      tabPanel("Differential Expression",# DESeq Menu ####
+    #DESeq Menu ####
+      tabPanel("Differential Expression",
              DE_UI("DEtab1")
-              
-                   # materialSwitch(
-                   #   inputId =
-                   #     "singscorebutton",
-                   #   label =
-                   #     "DE Table without Monocytic Contribution",
-                   #   value =
-                   #     FALSE,
-                   #   right =
-                   #     TRUE
-                   # ),
-                   
              ),
+    
     #GSEA menu ####
     tabPanel("GSEA",  
              GSEA_UI("GSEA1")
@@ -130,6 +120,8 @@ ui <-
      pathway_UI("pathway1")
   )
   )
+
+
 #Server ####
 server <- 
   function(input, output, session) {
@@ -138,34 +130,22 @@ server <-
     
     options(shiny.reactlog = TRUE)
   ## QC tab ####
-   QC_Server("QC1",colorpaletteQC)
+    QC_Server("QC1",colorpaletteQC)
     
   ## GOI tab####  
-   goi_Server("GOI1", vst.goi)
+    goi_Server("GOI1", vst.goi)
     
   ##DESEq #####
-   DE_Server("DEtab1", dds, vsd)
- 
+    DE_Server("DEtab1", dds, vsd)
    
-    #output DE table with adjustment for singscore reactive to toggle switch 
-    # output$DETable <-
-    #   renderDataTable({
-    #     if(input$singscorebutton == TRUE) {
-    #       CD_DE_DT_sing()
-    #     } else if(input$singscorebutton == FALSE) {
-    #       CD_DE_DT()
-    #     }
-    #     
-    #   })
-  
-   
-####GSEA output ####
-    
-  GSEA_Server("GSEA1", dds, ens2gene_HS)
+  ##GSEA output ####
+    GSEA_Server("GSEA1", dds, ens2gene_HS, dds.res, vsd)
    
     
-##GOI pathway output ####
+  ##GOI pathway output ####
     pathway_Server("pathway1", dds, ens2gene_HS, dds.res)
+    
   } #end server
+
 # Run the application 
 shinyApp(ui = ui, server = server)

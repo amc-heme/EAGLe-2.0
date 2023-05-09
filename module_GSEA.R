@@ -299,7 +299,7 @@ GSEA_UI <- function(id) {
 }
 
 
-GSEA_Server <- function(id, dds, ens2gene_HS) {
+GSEA_Server <- function(id, dds, ens2gene_HS, dds.res, vsd) {
   moduleServer(id, function(input, output, session) {
     #run GSEA for chosen pathway input
     #make an object to hold the values of the selectInput for gsea pathway choices
@@ -620,7 +620,20 @@ Negative NES = Upregulated in Monocytic)",
         p <- unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylistht]))
         #filter DE object for significance 
         dds.sig <- dds.res %>%
-          dplyr::filter(padj < 0.05 & abs(`log2FoldChange(Prim/Mono)`) >= 0.5)
+          dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
+        #object for batch corrected vsd matrix
+        assay(vsd) <-
+          limma::removeBatchEffect(assay(vsd),
+                                   batch = samples$batch,
+                                   design = model.matrix(~ condition, data = samples))
+        # data frame for batch corrected vsd matrix
+        vstlimma <-
+          data.frame(assay(vsd)) %>%
+          rownames_to_column(., var = "ensembl_gene_id") %>%
+          left_join(unique(dplyr::select(t2g_hs, c(
+            ensembl_gene_id, ext_gene
+          ))), ., by = 'ensembl_gene_id') %>%
+          na.omit(.)
         #filter vst counts matrix for genes in pathway
         vst.myc <- vstlimma %>% 
           mutate(., pathwayheat = ifelse(ext_gene %in% p, 'yes', 'no')) %>% 
