@@ -225,6 +225,8 @@ DE_Server <- function(id, dds, vsd) {
     #Heatmap ####
   #interactive heatmap needs to be wrapped in a reactive function to work
   observe({
+    req(input$DESeqHeat)
+    
     color5DE <-
       colorServer("color5")
     
@@ -263,7 +265,7 @@ DE_Server <- function(id, dds, vsd) {
     #create a colorRamp function based on user input in color palette choices
     colors = colorRamp2(c(-2, 0, 2), c(color5DE(), "white", color6DE()))
     #create heatmap object
-    if(input$DESeqHeat == TRUE) {
+    # if (isTruthy(input$DESeqHeat)) {
       ht = draw(ComplexHeatmap::Heatmap(
         vst.mat,
         name = "z scaled expression",
@@ -278,7 +280,7 @@ DE_Server <- function(id, dds, vsd) {
         row_title = NULL
       ))
       makeInteractiveComplexHeatmap(input, output, session, ht, "ht")
-    }
+    #}
   })
   
   # download DE table

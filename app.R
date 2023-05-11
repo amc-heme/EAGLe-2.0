@@ -36,6 +36,9 @@ library(esquisse)
 library(ggprism)
 library(shinycssloaders)
 library(patchwork)
+options(
+  shiny.fullstacktrace = TRUE
+)
 #Data ####
 #load in data and metadata
 # load analysis functions 
