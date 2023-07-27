@@ -130,7 +130,7 @@ DE_UI <- function(id) {
           conditionalPanel(
             ns = ns,
             condition = "input.DESeqHeat == true",
-            InteractiveComplexHeatmapOutput(heatmap_id = (ns("ht")))
+            InteractiveComplexHeatmapOutput(heatmap_id = ns("ht"))
         )
       )
     )
@@ -226,6 +226,7 @@ DE_Server <- function(id, dds, vsd) {
   #interactive heatmap needs to be wrapped in a reactive function to work
   observe({
     req(input$DESeqHeat)
+    ns <- NS(id)
     
     color5DE <-
       colorServer("color5")
@@ -279,7 +280,7 @@ DE_Server <- function(id, dds, vsd) {
         column_title = NULL,
         row_title = NULL
       ))
-      makeInteractiveComplexHeatmap(input, output, session, ht, "ht")
+      makeInteractiveComplexHeatmap(input, output, session, ht, heatmap_id = ns("ht"))
     #}
   })
   

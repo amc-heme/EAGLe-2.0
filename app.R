@@ -2,6 +2,8 @@
 library(shinythemes)
 library(thematic)
 library(shiny)
+library(kableExtra)
+library(viridisLite)
 library(magrittr)
 library(ggplot2)
 library(tidyr)
@@ -46,7 +48,6 @@ vst.goi <- readRDS("data/vst.goi.rds")
 #read in data from config file
 source("~/Documents/GitHub/EAGLe-2.0/config.R")
 base_dir <- config$base_dir
-ens2gene_hs <- 
 t2g_hs <- read.table(file = config$t2g_hs_file, sep = "\t", header = T)
 ens2gene_HS <- t2g_hs[,c(2,3)]
 metadata <- read.table(file = config$metadata_file, header = TRUE, sep = "\t")

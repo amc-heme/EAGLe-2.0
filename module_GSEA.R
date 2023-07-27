@@ -314,7 +314,7 @@ GSEA_Server <- function(id, dds, ens2gene_HS, dds.res, vsd) {
                              "reactome" = pathways.Reactome,
                              "KEGG" = pathways.KEGG,
                              "positional" = pathways.Positional,
-                             "biocarta" = pathways.Positional,
+                             "biocarta" = pathways.Biocarta,
                              "lsc" = pathways.lsc,
                              "aeg" = pathways.aeg)
    
@@ -338,7 +338,7 @@ GSEA_Server <- function(id, dds, ens2gene_HS, dds.res, vsd) {
     ranks <- sort(ranks)
     #reactive expression to run fgsea and load results table for each chosen pathway
     gseafile <-
-      reactive({
+      eventReactive(input$filechoice,{
         pathwaygsea <- gsea_file_values[[input$filechoice]]
         fgseaRes <- fgsea::fgsea(pathways = pathwaygsea, stats = ranks, nproc = 10)
         fgseaResTidy <- fgseaRes %>%
@@ -546,7 +546,7 @@ Negative NES = Upregulated in Monocytic)",
       
       dds.res.pathways <- dds.res %>%
         mutate(., genes_in_pathway = ifelse(Gene %in% p, 'yes', 'no'))
-      print(dds.res.pathways)
+      #print(dds.res.pathways)
     })
     #reactive title for volcano based on specific pathway choice
     gseavol_title <-
@@ -564,7 +564,7 @@ Negative NES = Upregulated in Monocytic)",
         ggplot(
           data = (dds.res.pathways() %>% arrange(., (genes_in_pathway))),
           aes(
-            x = `log2FoldChange(Prim/Mono)`,
+            x = log2FoldChange,
             y = -log10(padj),
             col = genes_in_pathway[]
           )
@@ -578,7 +578,7 @@ Negative NES = Upregulated in Monocytic)",
             colour = "black",
             aes( #only label is gene is in pathway and sig expression 
               label = ifelse(
-                genes_in_pathway == 'yes' & `log2FoldChange(Prim/Mono)` > 1.5,
+                genes_in_pathway == 'yes' & log2FoldChange > 1.5,
                 as.character(Gene),
                 ""
               )
