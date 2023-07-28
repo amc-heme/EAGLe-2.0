@@ -44,9 +44,8 @@ options(
 #Data ####
 #load in data and metadata
 # load analysis functions 
-vst.goi <- readRDS("data/vst.goi.rds")
 #read in data from config file
-source("~/Documents/GitHub/EAGLe-2.0/config.R")
+source("~/Documents/GitHub/EAGLe-2.0/config_CD.R")
 base_dir <- config$base_dir
 t2g_hs <- read.table(file = config$t2g_hs_file, sep = "\t", header = T)
 ens2gene_HS <- t2g_hs[,c(2,3)]
@@ -76,6 +75,7 @@ dds.res <- read_rds(config$dds_res_file)
 vsd <- read_rds(config$vsd_file)
 vsd.pca <- read_rds(config$vsd.pca_file)
 vst <- read_rds(config$vst_file)
+vst.goi <- read_rds(config$vst.goi_file)
 # vsd <- vst(ddsTxi, blind = F)
 qc<-load_multiqc(config$qc, sections="raw") 
 var_1 <- config$var_1
@@ -105,6 +105,11 @@ var_2 <- config$var_2
 ui <-
   navbarPage(
     "EAGLe: Cancer Discovery",
+    #Dataset tab ####
+    tabPanel(
+      "Dataset",
+      data_UI("data1")
+    ),
     #QC Menu ####
     tabPanel( 
               "QC",
@@ -151,7 +156,7 @@ server <-
     DE_Server("DEtab1", dds.res, vst) #ready for new data
    
   ##GSEA output ####
-    GSEA_Server("GSEA1", dds, ens2gene_HS, dds.res, vst)
+    GSEA_Server("GSEA1", dds, ens2gene_HS, dds.res, vst) #ready for new data
    
     
   ##GOI pathway output ####

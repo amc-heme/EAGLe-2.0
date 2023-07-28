@@ -192,7 +192,3 @@ pathway_Server <- function(id, dds, ens2gene_HS, dds.res) {
     
   })
 }
-
-
-
-}

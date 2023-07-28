@@ -1,5 +1,5 @@
 # Gene centric module
-vst.goi <- readRDS("data/vst.goi.rds")
+#vst.goi <- readRDS("data/vst.goi.rds")
 goi_UI <- function(id) {
   ns <- NS(id)
   fluidPage(
@@ -30,8 +30,8 @@ goi_UI <- function(id) {
         radioButtons(ns("FillVar_CDgene"), h4("color by:"),
                      choices = list("Gene" = "fillgene",
                                     "Class" = "fillclass"),selected = "fillclass"),
-        radioButtons(ns("PrimMonobutton"), h4("Show only prim or mono gene expression"),
-                     choices = list("Show Comparison" = "comparison", "Prim" = "prim", "Mono" = "mono"), selected = "comparison"),
+        # radioButtons(ns("PrimMonobutton"), h4("Show only prim or mono gene expression"),
+        #              choices = list("Show Comparison" = "comparison", "Prim" = "prim", "Mono" = "mono"), selected = "comparison"),
         hr(),
         #add a facet toggle switch
         materialSwitch(ns("genefacetbutton"), label = "Facet", value = FALSE, right = TRUE),
@@ -75,18 +75,20 @@ goi_Server <- function(id, vst.goi) {
     #reactive function for for filtering vst data table based on user input 
     datavst <-
       reactive({
-        if(input$PrimMonobutton == "comparison") {
-          vst.goi %>% 
-            dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
-        } else if(input$PrimMonobutton == "prim") {
-          vst.goi %>%
-            dplyr::filter(ext_gene %in% input$VSTCDgenechoice) %>%
-            dplyr::filter(class == "prim")
-        } else if(input$PrimMonobutton == "mono") {
-          vst.goi %>%
-            dplyr::filter(ext_gene %in% input$VSTCDgenechoice) %>%
-            dplyr::filter(class == "mono")
-        }
+        vst.goi %>% 
+             dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
+        # if(input$PrimMonobutton == "comparison") {
+        #   vst.goi %>% 
+        #     dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
+        # } else if(input$PrimMonobutton == "prim") {
+        #   vst.goi %>%
+        #     dplyr::filter(ext_gene %in% input$VSTCDgenechoice) %>%
+        #     dplyr::filter(class == "prim")
+        # } else if(input$PrimMonobutton == "mono") {
+        #   vst.goi %>%
+        #     dplyr::filter(ext_gene %in% input$VSTCDgenechoice) %>%
+        #     dplyr::filter(class == "mono")
+        # }
       })
     
     
@@ -189,7 +191,7 @@ goi_Server <- function(id, vst.goi) {
             sig_label_position() + # function for adjusted pvalues position and format on plot
             ylab("") +
             xlab("") +
-            ggtitle("Gene Expression: Prim vs Mono")
+            ggtitle("Gene Expression")
         }) #end render plot
     
     output$downloadGenePlot <- downloadHandler(
