@@ -139,7 +139,7 @@ GSEA_UI <- function(id) {
           downloadButton(
             ns("downloadranks"),
             label =
-              "Download Waterfall Plot"
+              "Download Waterfall"
           )
         ),
         hr(),
@@ -155,12 +155,12 @@ GSEA_UI <- function(id) {
           colorUI(ns("color8"), "Choose color for plot", "#FF0000"),
           
           hr(), 
-          
-          downloadButton(
-            ns("downloadmoustache"),
-            label =
-              "Download Moustache Plot"
-          )
+          # 
+          # downloadButton(
+          #   ns("downloadmoustache"),
+          #   label =
+          #     "Download Moustache Plot"
+          # )
         ),
         
         hr(),
@@ -189,7 +189,7 @@ GSEA_UI <- function(id) {
           downloadButton(
             ns("downloadeplot"),
             label =
-              "Download Enrichment Plot"
+              "Download Enrich. Plot"
           )
         ),
         hr(),
@@ -212,11 +212,11 @@ GSEA_UI <- function(id) {
           #color palette choices for volcano plot
           colorUI(ns("color9"), "Choose color for plot", "#FF0000"),
           
-          downloadButton(
-            ns("downloadvolcano"),
-            label =
-              "Download Volcano Plot"
-          )
+          # downloadButton(
+          #   ns("downloadvolcano"),
+          #   label =
+          #     "Download Volcano Plot"
+          # )
         ),
         hr(),
         #GSEA Heatmap ####
@@ -265,7 +265,7 @@ GSEA_UI <- function(id) {
           ns = ns,
           condition = "input.moustache == true",
           shinycssloaders::withSpinner( #add loading spinners
-            plotOutput(
+            girafeOutput(
               ns("GSEAMoustache")
             )
           )
@@ -283,7 +283,7 @@ GSEA_UI <- function(id) {
           ns = ns,
           condition = "input.volcanoplot == true",
           shinycssloaders::withSpinner( #add loading spinners
-            plotOutput(
+            girafeOutput(
               ns("GSEAvolcano")
             )
           )
@@ -299,7 +299,7 @@ GSEA_UI <- function(id) {
 }
 
 
-GSEA_Server <- function(id, dds, ens2gene_HS, dds.res, vsd) {
+GSEA_Server <- function(id, dds, ens2gene_HS, dds.res, vst) {
   moduleServer(id, function(input, output, session) {
     #run GSEA for chosen pathway input
     #make an object to hold the values of the selectInput for gsea pathway choices
@@ -401,18 +401,17 @@ GSEA_Server <- function(id, dds, ens2gene_HS, dds.res, vsd) {
           #color object reactive to user choice from palette
           colors <- c("grey", colorWF())
           
-          ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
+            ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
             geom_col(aes(fill = padj < 0.05)) +
             scale_fill_manual(values = colors) +
             coord_flip() +
             labs(
               x = "Pathway",
-              y = "Normalized Enrichment Score (Positive NES = Upregulated in Primitive
-Negative NES = Upregulated in Monocytic)",
+              y = "Normalized Enrichment Score",
               title = "Pathway NES from GSEA"
             ) +
             theme_minimal(base_size = 16) +
-            theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) 
+            theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"))
         }
       }
     )
@@ -464,14 +463,14 @@ Negative NES = Upregulated in Monocytic)",
     #call in singlecolor_module for plot
     colorM <- 
       colorServer("color8")
-    output$GSEAMoustache <- renderPlot(
+    output$GSEAMoustache <- renderGirafe(
       {
         if (input$moustache == TRUE) {
           #color object reactive to user input from plalette choice
           colors <- c('grey', colorM())
-          m <-
-            ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) +
-            geom_point() +
+          ma <-
+            ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig, tooltip = pathway)) +
+            geom_point_interactive(alpha = 0.8, size = 0.5) +
             theme_minimal(base_size = 18) +
             theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
             xlab('NES') +
@@ -479,19 +478,19 @@ Negative NES = Upregulated in Monocytic)",
             ylab('adjusted p-value') +
             ggtitle("Pathways from GSEA") +
             #only label pathways that sig
-            geom_text_repel(colour = "black", aes(label= ifelse(padj <0.05, as.character(pathway), ""), hjust=0,vjust=0)) +
+            #geom_text_repel(colour = "black", aes(label= ifelse(padj <0.05, as.character(pathway), ""), hjust=0,vjust=0)) +
             coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1)) 
-          print(m)
+          girafe(code = print(ma))
         }
       }
     )
     #download button output= moustache plot 
-    output$downloadmoustache <- downloadHandler(
-      filename = function() { paste("Moustache Plot", '.png', sep='') },
-      content = function(file) {
-        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
-      }
-    )
+    # output$downloadmoustache <- downloadHandler(
+    #   filename = function() { paste("Moustache Plot", '.png', sep='') },
+    #   content = function(file) {
+    #     ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+    #   }
+    # )
     #GSEA Enrichment Plots ####
     #reactive expression for specific pathway choice
     observe({
@@ -556,47 +555,49 @@ Negative NES = Upregulated in Monocytic)",
     #call in singlecolor_module for plot
     colorVol <- 
       colorServer("color9")
-    output$GSEAvolcano <- renderPlot ({
+    output$GSEAvolcano <- renderGirafe ({
       #color object reactive to user input from palette chpice
       colors <- 
         c("grey", colorVol())
       if (input$volcanoplot == TRUE) {
-        ggplot(
+       v <- ggplot(
           data = (dds.res.pathways() %>% arrange(., (genes_in_pathway))),
           aes(
             x = log2FoldChange,
             y = -log10(padj),
-            col = genes_in_pathway[]
+            col = genes_in_pathway[],
+            tooltip = Gene
           )
         ) +
           theme_light(base_size = 14) +
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-          geom_point() +
+          geom_point_interactive(size = 1, alpha = 0.5) +
           scale_color_manual(values = colors) +
-          geom_text_repel(
-            max.overlaps = 1500,
-            colour = "black",
-            aes( #only label is gene is in pathway and sig expression 
-              label = ifelse(
-                genes_in_pathway == 'yes' & log2FoldChange > 1.5,
-                as.character(Gene),
-                ""
-              )
-            ),
-            hjust = 0,
-            vjust = 0
-          ) +
+          # geom_text_repel(
+          #   max.overlaps = 1500,
+          #   colour = "black",
+          #   aes( #only label is gene is in pathway and sig expression 
+          #     label = ifelse(
+          #       genes_in_pathway == 'yes' & log2FoldChange > 1.5,
+          #       as.character(Gene),
+          #       ""
+          #     )
+          #   ),
+          #   hjust = 0,
+          #   vjust = 0
+          # ) +
           ggtitle(gseavol_title()) + #reactive title
           xlab("log2foldchange")
+        girafe(code = print(v))
       }
     })
     #download button output- gsea volcano plot
-    output$downloadvolcano <- downloadHandler(
-      filename = function() { paste("Volcano Plot", '.png', sep='') },
-      content = function(file) {
-        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
-      }
-    )
+    # output$downloadvolcano <- downloadHandler(
+    #   filename = function() { paste("Volcano Plot", '.png', sep='') },
+    #   content = function(file) {
+    #     ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+    #   }
+    # )
     #GSEA heatmap ####
     #reactive expression for selected pathway choice for heatmap
     observe({
@@ -622,20 +623,20 @@ Negative NES = Upregulated in Monocytic)",
         dds.sig <- dds.res %>%
           dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
         #object for batch corrected vsd matrix
-        assay(vsd) <-
-          limma::removeBatchEffect(assay(vsd),
-                                   batch = samples$batch,
-                                   design = model.matrix(~ condition, data = samples))
-        # data frame for batch corrected vsd matrix
-        vstlimma <-
-          data.frame(assay(vsd)) %>%
-          rownames_to_column(., var = "ensembl_gene_id") %>%
-          left_join(unique(dplyr::select(t2g_hs, c(
-            ensembl_gene_id, ext_gene
-          ))), ., by = 'ensembl_gene_id') %>%
-          na.omit(.)
+        # assay(vsd) <-
+        #   limma::removeBatchEffect(assay(vsd),
+        #                            batch = samples$batch,
+        #                            design = model.matrix(~ condition, data = samples))
+        # # data frame for batch corrected vsd matrix
+        # vstlimma <-
+        #   data.frame(assay(vsd)) %>%
+        #   rownames_to_column(., var = "ensembl_gene_id") %>%
+        #   left_join(unique(dplyr::select(t2g_hs, c(
+        #     ensembl_gene_id, ext_gene
+        #   ))), ., by = 'ensembl_gene_id') %>%
+        #   na.omit(.)
         #filter vst counts matrix for genes in pathway
-        vst.myc <- vstlimma %>% 
+        vst.myc <- vst %>% 
           mutate(., pathwayheat = ifelse(ext_gene %in% p, 'yes', 'no')) %>% 
           dplyr::filter(pathwayheat == "yes")
         #create matrix for heatmap using genes in significant DE that are in pathway of choice

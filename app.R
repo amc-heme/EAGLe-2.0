@@ -77,7 +77,9 @@ vsd <- read_rds(config$vsd_file)
 vsd.pca <- read_rds(config$vsd.pca_file)
 vst <- read_rds(config$vst_file)
 # vsd <- vst(ddsTxi, blind = F)
-qc<-load_multiqc("data/multiqc_data.json", sections="raw") 
+qc<-load_multiqc(config$qc, sections="raw") 
+var_1 <- config$var_1
+var_2 <- config$var_2
 
 #load molecular pathways for GSEA
 # pathways.hallmark <- gmtPathways("data/gmt_pathway_files copy/h.all.v7.4.symbols.gmt")
@@ -140,16 +142,16 @@ server <-
     
     options(shiny.reactlog = TRUE)
   ## QC tab ####
-    QC_Server("QC1", vsd, vsd.pca, metadata)
+    QC_Server("QC1", vsd, vsd.pca, metadata, var_1, batch) #ready for new data
     
   ## GOI tab####  
     goi_Server("GOI1", vst.goi)
     
   ##DESEq #####
-    DE_Server("DEtab1", dds.res, vst)
+    DE_Server("DEtab1", dds.res, vst) #ready for new data
    
   ##GSEA output ####
-    GSEA_Server("GSEA1", dds, ens2gene_HS, dds.res, vsd)
+    GSEA_Server("GSEA1", dds, ens2gene_HS, dds.res, vst)
    
     
   ##GOI pathway output ####

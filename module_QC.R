@@ -98,7 +98,7 @@ QC_UI <- function(id) {
   )
 }
 
-QC_Server <- function(id, vsd, vsd.pca, metadata) {
+QC_Server <- function(id, vsd, vsd.pca, metadata, var_1, var_2) {
   moduleServer(id, function(input, output, session) {
     
     #run pca on vsd
@@ -173,7 +173,7 @@ QC_Server <- function(id, vsd, vsd.pca, metadata) {
     #   })
     output$PCAplot <- renderPlot ({
       if(input$PCAplots == TRUE) {
-        pca <- ggplot(vsd.pca, aes(x = PC1, y = PC2, shape = condition, color = batch, fill = batch)) + 
+        pca <- ggplot(vsd.pca, aes(x = PC1, y = PC2, shape = var_1, color = batch, fill = batch)) + 
           geom_point(size = 5) + 
           scale_shape_manual(values = c(21, 24), name = '') +
           scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
