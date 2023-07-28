@@ -1,3 +1,4 @@
+config.CD <- "config_CD.R"
 
 
 data_UI <- function(id) {
@@ -5,7 +6,7 @@ data_UI <- function(id) {
   fluidPage(
     theme =
       shinytheme("flatly"),
-    titlePanel("Load Dataset"
+    titlePanel("Choose a Dataset"
                ),
     sidebarLayout(
       sidebarPanel(
@@ -29,3 +30,16 @@ data_UI <- function(id) {
     )
   )
 }
+
+data_Server <- function(id) {
+  moduleServer(id, function(input, output, session){
+    data_file_values <- list(
+      "CancerDiscovery" = config.CD
+    )
+    
+    config <- eventReactive(input$datainput, {
+      data_file_values[[input$dataunput]]
+    })
+    return(config)
+  })
+  }

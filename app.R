@@ -45,7 +45,7 @@ options(
 #load in data and metadata
 # load analysis functions 
 #read in data from config file
-source("~/Documents/GitHub/EAGLe-2.0/config_CD.R")
+#source(config)
 base_dir <- config$base_dir
 t2g_hs <- read.table(file = config$t2g_hs_file, sep = "\t", header = T)
 ens2gene_HS <- t2g_hs[,c(2,3)]
@@ -146,6 +146,8 @@ server <-
     print("Initializing renderPlots")
     
     options(shiny.reactlog = TRUE)
+  ##Data tab ####
+    data_Server("data1")
   ## QC tab ####
     QC_Server("QC1", vsd, vsd.pca, metadata, var_1, batch) #ready for new data
     
