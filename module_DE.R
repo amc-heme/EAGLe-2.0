@@ -137,18 +137,18 @@ DE_UI <- function(id) {
   )
 }
 
-DE_Server <- function(id, dds, vsd) {
+DE_Server <- function(id, dds.res, vst) {
   moduleServer(id, function(input, output, session) {
  #DE Table ####
  
-    dds.res <- data.frame(results(dds)) %>%
-      rownames_to_column(., var = 'ensembl_gene_id') %>%
-      dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-      left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
-      dplyr::rename(., Gene = ext_gene) %>%
-      mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
-                                 ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
-      na.omit(.)
+    # dds.res <- data.frame(results(dds)) %>%
+    #   rownames_to_column(., var = 'ensembl_gene_id') %>%
+    #   dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+    #   left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+    #   dplyr::rename(., Gene = ext_gene) %>%
+    #   mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
+    #                              ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
+    #   na.omit(.)
     
   output$results <- renderDataTable({
     if(input$DESeqtable == TRUE) {
@@ -234,25 +234,25 @@ DE_Server <- function(id, dds, vsd) {
     color6DE <-
       colorServer("color6")
     #object for batch corrected vsd matrix
-    assay(vsd) <-
-      limma::removeBatchEffect(assay(vsd),
-                               batch = samples$batch,
-                               design = model.matrix(~ condition, data = samples))
-    # data frame for batch corrected vsd matrix
-    vstlimma <-
-      data.frame(assay(vsd)) %>%
-      rownames_to_column(., var = "ensembl_gene_id") %>%
-      left_join(unique(dplyr::select(t2g_hs, c(
-        ensembl_gene_id, ext_gene
-      ))), ., by = 'ensembl_gene_id') %>%
-      na.omit(.)
+    # assay(vsd) <-
+    #   limma::removeBatchEffect(assay(vsd),
+    #                            batch = samples$batch,
+    #                            design = model.matrix(~ condition, data = samples))
+    # # data frame for batch corrected vsd matrix
+    # vstlimma <-
+    #   data.frame(assay(vsd)) %>%
+    #   rownames_to_column(., var = "ensembl_gene_id") %>%
+    #   left_join(unique(dplyr::select(t2g_hs, c(
+    #     ensembl_gene_id, ext_gene
+    #   ))), ., by = 'ensembl_gene_id') %>%
+    #   na.omit(.)
     
     #filter DE object for only significantly differentially expressed genes
     dds.mat <- dds.res %>%
       dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2)
     
     #filter vst counts matrix by sig expressed genes
-    vst.mat <- vstlimma %>%
+    vst.mat <- vst %>%
       dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
       column_to_rownames(., var = "ensembl_gene_id") %>%
       dplyr::select(.,-ext_gene) %>%
@@ -315,7 +315,7 @@ DE_App <- function() {
     DE_UI("DE1")
   )
   server <- function(input, output, session) {
-    DE_Server("DE1", dds, vsd)
+    DE_Server("DE1", dds.res, vst)
   }
   shinyApp(ui, server)
 }
