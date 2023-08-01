@@ -5,7 +5,6 @@ library(DESeq2)
 library(TidyMultiqc)
 library(cowplot)
 
-
 QC_UI <- function(id) {
   ns <- NS(id)
   fluidPage(
@@ -26,16 +25,16 @@ QC_UI <- function(id) {
           right =
             TRUE
         ),
-        materialSwitch(
-          inputId =
-            ns("PCAscreeplots"),
-          label =
-            "Scree",
-          value =
-            FALSE,
-          right =
-            TRUE
-        ),
+        # materialSwitch(
+        #   inputId =
+        #     ns("PCAscreeplots"),
+        #   label =
+        #     "Scree",
+        #   value =
+        #     FALSE,
+        #   right =
+        #     TRUE
+        # ),
         materialSwitch(
           inputId =
             ns("multiqc"),
@@ -83,11 +82,11 @@ QC_UI <- function(id) {
           condition = "input['PCAplots'] == true",
           plotOutput(ns("PCAplot")) 
         ),
-        conditionalPanel(
-          ns = ns,
-          condition = "input['PCAscreeplots'] == true",
-          plotOutput(ns("PCAvarplot"))
-        ),
+        # conditionalPanel(
+        #   ns = ns,
+        #   condition = "input['PCAscreeplots'] == true",
+        #   plotOutput(ns("PCAvarplot"))
+        # ),
         conditionalPanel(
           ns = ns,
           condition = "input['multiqc'] == true",
@@ -98,7 +97,7 @@ QC_UI <- function(id) {
   )
 }
 
-QC_Server <- function(id, vsd, vsd.pca, metadata, var_1, var_2) {
+QC_Server <- function(id, vsd, vsd.pca, metadata, batch, var_1, var_2) {
   moduleServer(id, function(input, output, session) {
     
     #run pca on vsd
@@ -183,7 +182,7 @@ QC_Server <- function(id, vsd, vsd.pca, metadata, var_1, var_2) {
           theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
           theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
           xlab(paste('PC1 =', pc1var, '% variance')) + #reactive x lab for % variance
-          ylab(paste('PC2 =',pc2var, '% variance')) + #reactive y lab for % variance
+          ylab(paste('PC2 =', pc2var, '% variance')) + #reactive y lab for % variance
           ggtitle("PCA") + 
           geom_text_repel(colour = "black", aes(label=sample_name),hjust=0, vjust=0)
         print(pca)
@@ -238,9 +237,9 @@ QC_Server <- function(id, vsd, vsd.pca, metadata, var_1, var_2) {
     # PCA Scree data ####
     # VSD PCA variance
     #write functions and store in object to calculate the % variance for each PC
-    PC_var_VST <- data.frame(PC =paste0("PC", 1:12),variance =(((scree.pca$sdev) ^ 2 / sum((scree.pca$sdev) ^ 2)) * 100))
-    lorder_VST <- as.vector(outer(c("PC"), 1:12, paste, sep = ""))
-    PC_var_VST$PC <-factor(PC_var_VST$PC,levels = lorder_VST)
+    # PC_var_VST <- data.frame(PC =paste0("PC", 1:num_PCs),variance =(((scree.pca$sdev) ^ 2 / sum((scree.pca$sdev) ^ 2)) * 100))
+    # lorder_VST <- as.vector(outer(c("PC"), 1:num_PCs, paste, sep = ""))
+    # PC_var_VST$PC <-factor(PC_var_VST$PC,levels = lorder_VST)
     
     #batch corrected PCA variance
     # PC_var_bc <-data.frame(PC =paste0("PC", 1:12),variance =(((scree.bcpca$sdev) ^ 2 / sum((scree.bcpca$sdev) ^ 2)) * 100))
@@ -266,23 +265,23 @@ QC_Server <- function(id, vsd, vsd.pca, metadata, var_1, var_2) {
     #   })
     
     # PCA scree plot ####
-    output$PCAvarplot <- renderPlot ({
-      if(input$PCAscreeplots == TRUE) {
-        
-        ggplot(PC_var_VST,
-               aes(x = PC,
-                   y = variance,
-                   group = 2)) +
-          geom_point(size = 2) +
-          geom_line() +
-          theme_cowplot(font_size = 18) +
-          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-          labs(x = "PC",
-               y = "% Variance") +
-          labs(title =
-                 "PCA variability plot")
-      }
-    })
+    # output$PCAvarplot <- renderPlot ({
+    #   if(input$PCAscreeplots == TRUE) {
+    #     
+    #     ggplot(PC_var_VST,
+    #            aes(x = PC,
+    #                y = variance,
+    #                group = 2)) +
+    #       geom_point(size = 2) +
+    #       geom_line() +
+    #       theme_cowplot(font_size = 18) +
+    #       theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+    #       labs(x = "PC",
+    #            y = "% Variance") +
+    #       labs(title =
+    #              "PCA variability plot")
+    #   }
+    # })
   })
 }
 

@@ -45,13 +45,9 @@ options(
 #load in data and metadata
 # load analysis functions 
 #read in data from config file
-#source(config)
-base_dir <- config$base_dir
-t2g_hs <- read.table(file = config$t2g_hs_file, sep = "\t", header = T)
-ens2gene_HS <- t2g_hs[,c(2,3)]
-metadata <- read_rds(config$metadata_file)
-batch <- config$batch
-sample_id <- config$sample_id
+ 
+
+#sample_id <- config$sample_id
 # samples <- data.frame(SRR = metadata$SRR, batch = metadata$batch, condition = metadata$sample_type, sample_name = metadata$DESeq_Sample_Name)
 # samples <- samples[order(samples$SRR),]
 # design <- config$design_formula
@@ -70,37 +66,8 @@ sample_id <- config$sample_id
 #   mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
 #                              ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
 #   na.omit(.)
-dds <- read_rds(config$dds_file)
-dds.res <- read_rds(config$dds_res_file)
-vsd <- read_rds(config$vsd_file)
-vsd.pca <- read_rds(config$vsd.pca_file)
-vst <- read_rds(config$vst_file)
-vst.goi <- read_rds(config$vst.goi_file)
-# vsd <- vst(ddsTxi, blind = F)
-qc<-load_multiqc(config$qc, sections="raw") 
-var_1 <- config$var_1
-var_2 <- config$var_2
 
-#load molecular pathways for GSEA
-# pathways.hallmark <- gmtPathways("data/gmt_pathway_files copy/h.all.v7.4.symbols.gmt")
-# pathways.GOall <- gmtPathways("data/gmt_pathway_files copy/c5.go.v2022.1.Hs.symbols.gmt")
-# pathways.GOmolec <- gmtPathways("data/gmt_pathway_files copy/c5.go.mf.v7.4.symbols.gmt")
-# pathways.GOcellcomp <- gmtPathways("data/gmt_pathway_files copy/c5.go.cc.v2022.1.Hs.symbols.gmt") 
-# pathways.GObio <- gmtPathways("data/gmt_pathway_files copy/c5.go.bp.v7.4.symbols.gmt")
-# pathways.TFtargets <-gmtPathways("data/gmt_pathway_files copy/c3.tft.v2022.1.Hs.symbols.gmt")
-# pathways.allReg <- gmtPathways("data/gmt_pathway_files copy/c3.all.v2022.1.Hs.symbols.gmt")
-# pathways.Wiki <- gmtPathways("data/gmt_pathway_files copy/c2.cp.wikipathways.v2022.1.Hs.symbols.gmt")
-# pathways.Reactome <-gmtPathways("data/gmt_pathway_files copy/c2.cp.reactome.v2022.1.Hs.symbols.gmt")
-# pathways.KEGG <- gmtPathways("data/gmt_pathway_files copy/c2.cp.kegg.v2022.1.Hs.symbols.gmt")
-# pathways.Positional <-gmtPathways("data/gmt_pathway_files copy/c1.all.v2022.1.Hs.symbols.gmt")
-# pathways.Biocarta <-gmtPathways("data/gmt_pathway_files copy/c2.cp.biocarta.v2022.1.Hs.symbols.gmt")
-# pathways.lsc <- gmtPathways("data/gmt_pathway_files copy/lsc_sigs.gmt")
-# pathways.aeg <- gmtPathways("data/gmt_pathway_files copy/aeg_genesets_20220602.gmt")
-#vstlimma <- readRDS("data/vstlimma.rds")
 
-# names(pathways.aeg)[10] <- "PM_Primitive_Blast"
-# names(pathways.aeg)[9] <- "PM_Monocytic_Blast"
-#pathways.aegGOBP <- c(pathways.aeg, pathways.GObio)
 # UI ####
 ui <-
   navbarPage(
@@ -128,12 +95,12 @@ ui <-
              ),
     
     #GSEA menu ####
-    tabPanel("GSEA",  
+    tabPanel("GSEA",
              GSEA_UI("GSEA1")
     ),
-    
+
     #GOI plots ####
-    tabPanel("GSEA Pathway/Gene Visualization", 
+    tabPanel("GSEA Pathway/Gene Visualization",
      pathway_UI("pathway1")
   )
   )
@@ -147,9 +114,27 @@ server <-
     
     options(shiny.reactlog = TRUE)
   ##Data tab ####
-    data_Server("data1")
+    config <- data_Server("data1")
+    
+    observe({
+      t2g <- config$t2g
+      metadata <- config$metadata
+      batch <- config$batch
+      #samples <- config$samples
+      num_PCs <- config$num_PCs
+      dds <- config$dds
+      dds.res <- config$dds_res
+      vsd <- config$vsd
+      vsd.pca <- config$vsd.pca
+      vst <- config$vst
+      vst.goi <- config$vst.goi
+      qc <- config$qc 
+      var_1 <- config$var_1
+      var_2 <- config$var_2 
+    })
+    
   ## QC tab ####
-    QC_Server("QC1", vsd, vsd.pca, metadata, var_1, batch) #ready for new data
+    QC_Server("QC1", vsd, vsd.pca, metadata, batch, var_1, var_2) #ready for new data
     
   ## GOI tab####  
     goi_Server("GOI1", vst.goi)
@@ -158,11 +143,11 @@ server <-
     DE_Server("DEtab1", dds.res, vst) #ready for new data
    
   ##GSEA output ####
-    GSEA_Server("GSEA1", dds, ens2gene_HS, dds.res, vst) #ready for new data
+    GSEA_Server("GSEA1", dds, t2g, dds.res, vst) #ready for new data
    
     
   ##GOI pathway output ####
-    pathway_Server("pathway1", dds, ens2gene_HS, dds.res)
+   pathway_Server("pathway1", dds, t2g, dds.res)
     
   } #end server
 
