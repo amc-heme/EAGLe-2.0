@@ -38,30 +38,30 @@ data_Server <- function(id) {
       "Ye16" = config.Ye16
     )
     
-    config_x <- eventReactive(input$datainput, {
+    config <- eventReactive(input$datainput, {
       data_file_values[[input$datainput]]
     })
     #reactive_config <- reactiveValues()
     
     ## load in data files
-    observe({
-      config_choice <- config_x()
-      #load objects for the chosen config file
-      t2g <- read_rds(config_choice$t2g_file)
-      metadata <- read_rds(config_choice$metadata_file)
-      batch <- config_choice$batch
-      #samples <- config$samples
-      num_PCs <- nrow(metadata)
-      dds <- read_rds(config_choice$dds_file)
-      dds.res <- read_rds(config_choice$dds_res_file)
-      vsd <- read_rds(config_choice$vsd_file)
-      vsd.pca <- read_rds(config_choice$vsd.pca_file)
-      vst <- read_rds(config_choice$vst_file)
-      vst.goi <- read_rds(config_choice$vst.goi_file)
-      qc <-load_multiqc(config_choice$qc, sections="raw") 
-      var_1 <- config_choice$var_1
-      var_2 <- config_choice$var_2
-    })
-    return(config_x)
+    # observe({
+    #   config_choice <- config_x()
+    #   #load objects for the chosen config file
+    #   t2g <- read_rds(config_choice$t2g_file)
+    #   metadata <- read_rds(config_choice$metadata_file)
+    #   batch <- config_choice$batch
+    #   #samples <- config$samples
+    #   num_PCs <- nrow(metadata)
+    #   dds <- read_rds(config_choice$dds_file)
+    #   dds.res <- read_rds(config_choice$dds_res_file)
+    #   vsd <- read_rds(config_choice$vsd_file)
+    #   vsd.pca <- read_rds(config_choice$vsd.pca_file)
+    #   vst <- read_rds(config_choice$vst_file)
+    #   vst.goi <- read_rds(config_choice$vst.goi_file)
+    #   qc <-load_multiqc(config_choice$qc, sections="raw")
+    #   var_1 <- config_choice$var_1
+    #   var_2 <- config_choice$var_2
+    # })
+    return(config)
   })
   }
