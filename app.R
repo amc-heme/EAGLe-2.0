@@ -114,25 +114,25 @@ server <-
     
     options(shiny.reactlog = TRUE)
   ##Data tab ####
-    config <- data_Server("data1")
-    
-    observeEvent(config,{
-      t2g <- config$t2g
-      metadata <- config$metadata
-      batch <- config$batch
-      #samples <- config$samples
-      num_PCs <- config$num_PCs
-      dds <- config$dds
-      dds.res <- config$dds_res
-      vsd <- config$vsd
-      vsd.pca <- config$vsd.pca
-      vst <- config$vst
-      vst.goi <- config$vst.goi
-      qc <- config$qc
-      var_1 <- config$var_1
-      var_2 <- config$var_2
-    })
-    # 
+   data_Server("data1")
+  #   
+
+      # t2g <- config()$t2g
+      # metadata <- config()$metadata
+      # batch <- config()$batch
+      # #samples <- config$samples
+      # num_PCs <- config()$num_PCs
+      # dds <- config()$dds
+      # dds.res <- config()$dds_res
+      # vsd <- config()$vsd
+      # vsd.pca <- config()$vsd.pca
+      # vst <- config()$vst
+      # vst.goi <- config()$vst.goi
+      # qc <- config()$qc
+      # var_1 <- config()$var_1
+      # var_2 <- config()$var_2
+  
+
   ## QC tab ####
     QC_Server("QC1", vsd, vsd.pca, metadata, batch, var_1, var_2) #ready for new data
     

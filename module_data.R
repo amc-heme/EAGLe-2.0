@@ -33,35 +33,53 @@ data_UI <- function(id) {
 
 data_Server <- function(id) {
   moduleServer(id, function(input, output, session){
-    data_file_values <- list(
-      "CancerDiscovery" = config.CD,
-      "Ye16" = config.Ye16
-    )
     
-    config <- eventReactive(input$datainput, {
-      data_file_values[[input$datainput]]
+    observe({
+      config <- create_config(input$datainput)
+      
+      t2g <- read_rds(config$t2g_file)
+      metadata <- read_rds(config$metadata_file)
+      dds <- read_rds(config$dds_file)
+      dds.res <- read_rds(config$dds_res_file)
+      vsd <- read_rds(config$vsd_file)
+      vsd.pca <- read_rds(config$vsd.pca_file)
+      vst <- read_rds(config$vst_file)
+      vst.goi <- read_rds(config$vst.goi_file)
+      qc <-load_multiqc(config$qc, sections="raw")
     })
-    #reactive_config <- reactiveValues()
     
-    ## load in data files
-    # observe({
-    #   config_choice <- config_x()
-    #   #load objects for the chosen config file
-    #   t2g <- read_rds(config_choice$t2g_file)
-    #   metadata <- read_rds(config_choice$metadata_file)
-    #   batch <- config_choice$batch
-    #   #samples <- config$samples
-    #   num_PCs <- nrow(metadata)
-    #   dds <- read_rds(config_choice$dds_file)
-    #   dds.res <- read_rds(config_choice$dds_res_file)
-    #   vsd <- read_rds(config_choice$vsd_file)
-    #   vsd.pca <- read_rds(config_choice$vsd.pca_file)
-    #   vst <- read_rds(config_choice$vst_file)
-    #   vst.goi <- read_rds(config_choice$vst.goi_file)
-    #   qc <-load_multiqc(config_choice$qc, sections="raw")
-    #   var_1 <- config_choice$var_1
-    #   var_2 <- config_choice$var_2
+  
+    # data_file_values <- list(
+    #   "CancerDiscovery" = config.CD,
+    #   "Ye16" = config.Ye16
+    # )
+    # 
+    # config_choice <- eventReactive(input$datainput, {
+    #   data_file_values[[input$datainput]]
+    #   
     # })
-    return(config)
+    # 
+    # return(config_choice)
   })
   }
+#config_files <- reactiveValues()
+
+## load in data files
+# observe({
+#   config_choice <- config()
+#   #load objects for the chosen config file
+#   t2g <- read_rds(config_choice$t2g_file)
+#   metadata <- read_rds(config_choice$metadata_file)
+#   batch <- config_choice$batch
+#   #samples <- config$samples
+#   num_PCs <- nrow(metadata)
+#   dds <- read_rds(config_choice$dds_file)
+#   dds.res <- read_rds(config_choice$dds_res_file)
+#   vsd <- read_rds(config_choice$vsd_file)
+#   vsd.pca <- read_rds(config_choice$vsd.pca_file)
+#   vst <- read_rds(config_choice$vst_file)
+#   vst.goi <- read_rds(config_choice$vst.goi_file)
+#   qc <-load_multiqc(config_choice$qc, sections="raw")
+#   var_1 <- config_choice$var_1
+#   var_2 <- config_choice$var_2
+# })
