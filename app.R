@@ -114,41 +114,70 @@ server <-
     
     options(shiny.reactlog = TRUE)
   ##Data tab ####
-   data_Server("data1")
-  #   
-
-      # t2g <- config()$t2g
-      # metadata <- config()$metadata
-      # batch <- config()$batch
-      # #samples <- config$samples
-      # num_PCs <- config()$num_PCs
-      # dds <- config()$dds
-      # dds.res <- config()$dds_res
-      # vsd <- config()$vsd
-      # vsd.pca <- config()$vsd.pca
-      # vst <- config()$vst
-      # vst.goi <- config()$vst.goi
-      # qc <- config()$qc
-      # var_1 <- config()$var_1
-      # var_2 <- config()$var_2
-  
+   config <- reactive({
+     data_Server("data1")
+   })
+    
+    t2g <- reactive({
+        config()$t2g
+      })
+      
+    metadata <- reactive({
+        config()$metadata
+      })
+    batch <- reactive({
+        config()$batch
+      })
+    num_PCs <- reactive({
+        config()$num_PCs
+      })
+    dds <- reactive({
+        config()$dds
+      })
+    dds.res <- reactive({
+        config()$dds_res
+      })
+    vsd <- reactive({
+        config()$vsd
+      })
+      
+    vsd.pca <- reactive({
+        config()$vsd.pca
+      })
+    vst <- reactive({
+        config()$vst
+      })
+    vst.goi <- reactive({
+         config()$vst.goi
+       })
+    qc <- reactive({
+        config()$qc
+      })
+      
+    var_1 <- reactive({
+        config()$var_1
+      })
+    var_2 <- reactive({
+        config()$var_2
+      })
+      
 
   ## QC tab ####
-    QC_Server("QC1", vsd, vsd.pca, metadata, batch, var_1, var_2) #ready for new data
+    QC_Server("QC1", vsd, vsd.pca, metadata, batch, var_1, qc) #ready for new data
     
   ## GOI tab####  
-    goi_Server("GOI1", vst.goi)
-    
-  ##DESEq #####
-    DE_Server("DEtab1", dds.res, vst) #ready for new data
-   
-  ##GSEA output ####
-    GSEA_Server("GSEA1", dds, t2g, dds.res, vst) #ready for new data
-   
-    
-  ##GOI pathway output ####
-   pathway_Server("pathway1", dds, t2g, dds.res)
-    
+  #   goi_Server("GOI1", vst.goi)
+  #   
+  # ##DESEq #####
+  #   DE_Server("DEtab1", dds.res, vst) #ready for new data
+  #  
+  # ##GSEA output ####
+  #   GSEA_Server("GSEA1", dds, t2g, dds.res, vst) #ready for new data
+  #  
+  #   
+  # ##GOI pathway output ####
+  #  pathway_Server("pathway1", dds, t2g, dds.res)
+  #   
   } #end server
 
 # Run the application 

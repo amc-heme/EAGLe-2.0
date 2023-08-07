@@ -1,4 +1,4 @@
-config_Pei <- list(
+config_CD <- list(
   t2g_file = "data_rds_files/t2g_hs.rds",
   metadata_file = "data_rds_files/CD_ROSlow_metadata.rds",
   #samples = data.frame(SRR = metadata$SRR, batch = metadata$batch, condition = metadata$sample_type, sample_name = metadata$DESeq_Sample_Name),

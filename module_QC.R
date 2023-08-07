@@ -97,20 +97,27 @@ QC_UI <- function(id) {
   )
 }
 
-QC_Server <- function(id, vsd, vsd.pca, metadata, batch, var_1, var_2) {
+QC_Server <- function(id, vsd, vsd.pca, metadata, batch, var_1, qc) {
   moduleServer(id, function(input, output, session) {
     
     #run pca on vsd
-    # vsd.pca <- data.frame(prcomp(t(assay(vsd)))$x) %>% 
-    #   as_tibble(rownames = "SRR") %>% 
+    # vsd.pca <- reactive({
+    #   data.frame(prcomp(t(assay(vsd())))$x) %>%
+    #   as_tibble(rownames = "SRR") %>%
     #   left_join(., as_tibble(colData(vsd)))
+    # })
     #data frame for variance
-    vsd.pca.var <- data.frame(summary(prcomp(t(assay(vsd))))$importance) 
+    vsd.pca.var <- reactive({
+      data.frame(summary(prcomp(t(assay(vsd()))))$importance) 
+    })
     #determine % variance of pc1 and pc2
-    pc1var = round(vsd.pca.var[3,1] * 100, 1)
-    pc2var = round(vsd.pca.var[3,2] * 100 - pc1var, 1)
     
-    scree.pca <- prcomp(t(assay(vsd)))
+    pc1var = reactive({round(vsd.pca.var()[3,1] * 100, 1)})
+    pc2var = reactive({round(vsd.pca.var()[3,2] * 100 - pc1var, 1)})
+    
+    scree.pca <- reactive({
+      prcomp(t(assay(vsd())))
+    })
     #batch corrected PCA
     # assay(vsd) <- limma::removeBatchEffect(assay(vsd),
     #                                        batch = batch, 
@@ -172,7 +179,7 @@ QC_Server <- function(id, vsd, vsd.pca, metadata, batch, var_1, var_2) {
     #   })
     output$PCAplot <- renderPlot ({
       if(input$PCAplots == TRUE) {
-        pca <- ggplot(vsd.pca, aes(x = PC1, y = PC2, shape = var_1, color = batch, fill = batch)) + 
+        pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2, shape = var_1(), color = batch(), fill = batch())) + 
           geom_point(size = 5) + 
           scale_shape_manual(values = c(21, 24), name = '') +
           scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
@@ -181,8 +188,8 @@ QC_Server <- function(id, vsd, vsd.pca, metadata, batch, var_1, var_2) {
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
           theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
           theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          xlab(paste('PC1 =', pc1var, '% variance')) + #reactive x lab for % variance
-          ylab(paste('PC2 =', pc2var, '% variance')) + #reactive y lab for % variance
+          xlab(paste('PC1 =', pc1var(), '% variance')) + #reactive x lab for % variance
+          ylab(paste('PC2 =', pc2var(), '% variance')) + #reactive y lab for % variance
           ggtitle("PCA") + 
           geom_text_repel(colour = "black", aes(label=sample_name),hjust=0, vjust=0)
         print(pca)
@@ -206,22 +213,24 @@ QC_Server <- function(id, vsd, vsd.pca, metadata, batch, var_1, var_2) {
     #create object for reactive data input based on user choice of multiqc test option
     QCdata <- reactive ({
       if(input$QCvar == "% mapped reads") {
-        qc$raw.salmon.percent_mapped
+        qc()$raw.salmon.percent_mapped
       } else if(input$QCvar == "# mapped reads") {
-        qc$raw.salmon.num_mapped
+        qc()$raw.salmon.num_mapped
       } else if(input$QCvar == "% uniquely mapped reads") {
-        qc$raw.star.uniquely_mapped_percent
+        qc()$raw.star.uniquely_mapped_percent
       } else if(input$QCvar == "# uniquly mapped reads") {
-        qc$raw.star.uniquely_mapped
+        qc()$raw.star.uniquely_mapped
       }
     })
     
-    Sample_ID <-qc$metadata.sample_id
+    Sample_ID <-reactive({
+      qc()$metadata.sample_id
+    })
     
     output$QCplot <- renderPlot ({
       if(input$multiqc == TRUE) {
         ggplot(
-          qc,
+          qc(),
           aes(
             x = Sample_ID,
             y = QCdata()
