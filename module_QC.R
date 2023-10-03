@@ -97,7 +97,7 @@ QC_UI <- function(id) {
   )
 }
 
-QC_Server <- function(id, vsd, vsd.pca, metadata, batch, var_1, qc) {
+QC_Server <- function(id, GlobalData) {
   moduleServer(id, function(input, output, session) {
     
     #run pca on vsd

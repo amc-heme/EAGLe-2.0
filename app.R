@@ -116,12 +116,14 @@ server <-
 
   ##Data tab ####
    
-    data_Server("data1")
+   data_config <- reactive({
+     data_Server("data1", input$datainput)
+   }) 
   
     
     ##Global Data module ####
-    GlobalData <- reactive({
-      globalDataServer("global1")
+    GlobalData <- reactive({ 
+      globalDataServer("global1", data_config())
     })
     
   #build a function for reading in rds files for each object
@@ -174,7 +176,7 @@ server <-
     QC_Server("QC1", GlobalData) 
     
   ## GOI tab####  
-     goi_Server("GOI1", GlobalData)
+    # goi_Server("GOI1", GlobalData)
   #   
   # ##DESEq #####
   #   DE_Server("DEtab1", GlobalData) 
