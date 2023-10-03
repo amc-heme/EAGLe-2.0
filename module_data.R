@@ -33,7 +33,7 @@ data_UI <- function(id) {
 
 data_Server <- function(id) {
   moduleServer(id, function(input, output, session){
-    
+    #all of this needs to be changed. Read in dataset info from dataset yaml
     data_file_values <- list(
       "CancerDiscovery" = config.CD,
       "Ye16" = config.Ye16

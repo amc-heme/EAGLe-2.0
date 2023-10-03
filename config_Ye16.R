@@ -15,3 +15,4 @@ config_ye16 <- list(
   var_2 = NULL)
 
 
+##make these return as reactives for use in the modules

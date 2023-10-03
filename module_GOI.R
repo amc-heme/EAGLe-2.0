@@ -1,5 +1,5 @@
 # Gene centric module
-#vst.goi <- readRDS("data/vst.goi.rds")
+vst.goi <- readRDS("data/vst.goi.rds")
 goi_UI <- function(id) {
   ns <- NS(id)
   fluidPage(
@@ -207,14 +207,14 @@ goi_Server <- function(id, vst.goi) {
     
   })
 }
-
-goi_App <- function() {
-  ui <- fluidPage(
-    goi_UI("GOI1")
-  )
-  server <- function(input, output, session) {
-    goi_Server("GOI1", vst.goi)
-  }
-  shinyApp(ui, server)
-}
-goi_App()
+# 
+# goi_App <- function() {
+#   ui <- fluidPage(
+#     goi_UI("GOI1")
+#   )
+#   server <- function(input, output, session) {
+#     goi_Server("GOI1", vst.goi)
+#   }
+#   shinyApp(ui, server)
+# }
+# goi_App()

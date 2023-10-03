@@ -67,7 +67,6 @@ options(
 #                              ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
 #   na.omit(.)
 
-
 # UI ####
 ui <-
   navbarPage(
@@ -113,70 +112,79 @@ server <-
     print("Initializing renderPlots")
     
     options(shiny.reactlog = TRUE)
+  
+
   ##Data tab ####
-   config <- reactive({
-     data_Server("data1")
-   })
+   
+    data_Server("data1")
+  
     
-    t2g <- reactive({
-        config()$t2g
-      })
-      
-    metadata <- reactive({
-        config()$metadata
-      })
-    batch <- reactive({
-        config()$batch
-      })
-    num_PCs <- reactive({
-        config()$num_PCs
-      })
-    dds <- reactive({
-        config()$dds
-      })
-    dds.res <- reactive({
-        config()$dds_res
-      })
-    vsd <- reactive({
-        config()$vsd
-      })
-      
-    vsd.pca <- reactive({
-        config()$vsd.pca
-      })
-    vst <- reactive({
-        config()$vst
-      })
-    vst.goi <- reactive({
-         config()$vst.goi
-       })
-    qc <- reactive({
-        config()$qc
-      })
-      
-    var_1 <- reactive({
-        config()$var_1
-      })
-    var_2 <- reactive({
-        config()$var_2
-      })
-      
+    ##Global Data module ####
+    GlobalData <- reactive({
+      globalDataServer("global1")
+    })
+    
+  #build a function for reading in rds files for each object
+    
+    # t2g <- reactive({
+    #     config()$t2g
+    #   })
+    #   
+    # metadata <- reactive({
+    #     config()$metadata
+    #   })
+    # batch <- reactive({
+    #     config()$batch
+    #   })
+    # num_PCs <- reactive({
+    #     config()$num_PCs
+    #   })
+    # dds <- reactive({
+    #     config()$dds
+    #   })
+    # dds.res <- reactive({
+    #     config()$dds_res
+    #   })
+    # vsd <- reactive({
+    #     config()$vsd
+    #   })
+    #   
+    # vsd.pca <- reactive({
+    #     config()$vsd.pca
+    #   })
+    # vst <- reactive({
+    #     config()$vst
+    #   })
+    # vst.goi <- reactive({
+    #      config()$vst.goi
+    #    })
+    # qc <- reactive({
+    #     config()$qc
+    #   })
+    #   
+    # var_1 <- reactive({
+    #     config()$var_1
+    #   })
+    # var_2 <- reactive({
+    #     config()$var_2
+    #   })
+    #   
 
   ## QC tab ####
-    QC_Server("QC1", vsd, vsd.pca, metadata, batch, var_1, qc) #ready for new data
+    QC_Server("QC1", GlobalData) 
     
   ## GOI tab####  
-  #   goi_Server("GOI1", vst.goi)
+     goi_Server("GOI1", GlobalData)
   #   
   # ##DESEq #####
-  #   DE_Server("DEtab1", dds.res, vst) #ready for new data
+  #   DE_Server("DEtab1", GlobalData) 
   #  
   # ##GSEA output ####
-  #   GSEA_Server("GSEA1", dds, t2g, dds.res, vst) #ready for new data
+  #   GSEA_Server("GSEA1", GlobalData) 
   #  
   #   
   # ##GOI pathway output ####
-  #  pathway_Server("pathway1", dds, t2g, dds.res)
+  #  pathway_Server("pathway1", GlobalData)
   #   
   } #end server
 
