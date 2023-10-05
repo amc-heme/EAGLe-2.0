@@ -350,7 +350,7 @@ GSEA_Server <- function(id, dds, t2g, dds.res, vst) {
       })
     
     output$downloadfgsea <- downloadHandler(
-      filename = function() { paste("GSEATable", '.csv', sep='') },
+      filename = function() { paste("GSEATable", '.csv', sep='')},
       content = function(file) {
         write.csv(gseafile(),file)
       }
@@ -670,15 +670,15 @@ GSEA_Server <- function(id, dds, t2g, dds.res, vst) {
   })
 }
 
-GSEA_App <- function() {
-  ui <- fluidPage(
-    GSEA_UI("GSEA1")
-  )
-  server <- function(input, output, session) {
-    GSEA_Server("GSEA1", dds, ens2gene_HS)
-  }
-  shinyApp(ui, server)
-}
-GSEA_App()
+# GSEA_App <- function() {
+#   ui <- fluidPage(
+#     GSEA_UI("GSEA1")
+#   )
+#   server <- function(input, output, session) {
+#     GSEA_Server("GSEA1", dds, ens2gene_HS)
+#   }
+#   shinyApp(ui, server)
+# }
+# GSEA_App()
 
   

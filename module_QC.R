@@ -97,18 +97,19 @@ QC_UI <- function(id) {
   )
 }
 
-QC_Server <- function(id, GlobalData) {
+QC_Server <- function(id, vsd, vsd.pca) {
   moduleServer(id, function(input, output, session) {
-    
+
+   
     #run pca on vsd
-    # vsd.pca <- reactive({
-    #   data.frame(prcomp(t(assay(vsd())))$x) %>%
-    #   as_tibble(rownames = "SRR") %>%
-    #   left_join(., as_tibble(colData(vsd)))
-    # })
+    vsd.pca <- reactive({
+      data.frame(prcomp(t(assay(vsd())))$x) %>%
+      as_tibble(rownames = "SRR") %>%
+      left_join(., as_tibble(colData(vsd)))
+    })
     #data frame for variance
     vsd.pca.var <- reactive({
-      data.frame(summary(prcomp(t(assay(vsd()))))$importance) 
+      data.frame(summary(prcomp(t(assay(vsd()))$importance))) 
     })
     #determine % variance of pc1 and pc2
     
@@ -179,11 +180,13 @@ QC_Server <- function(id, GlobalData) {
     #   })
     output$PCAplot <- renderPlot ({
       if(input$PCAplots == TRUE) {
-        pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2, shape = var_1(), color = batch(), fill = batch())) + 
+       
+        pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2)) +
+          #, shape = var_1(), color = batch(), fill = batch())) + 
           geom_point(size = 5) + 
           scale_shape_manual(values = c(21, 24), name = '') +
-          scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
-          scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
+          # scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
+          # scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
           theme_cowplot(font_size = 18) + 
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
           theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
@@ -294,14 +297,14 @@ QC_Server <- function(id, GlobalData) {
   })
 }
 
-QC_App <- function() {
-  ui <- fluidPage(
-    QC_UI("QC1")
-  )
-  server <- function(input, output, session) {
-    QC_Server("QC1")
-  }
-  shinyApp(ui, server)
-}
-
-QC_App()
+# QC_App <- function() {
+#   ui <- fluidPage(
+#     QC_UI("QC1")
+#   )
+#   server <- function(input, output, session) {
+#     QC_Server("QC1")
+#   }
+#   shinyApp(ui, server)
+# }
+# 
+# QC_App()

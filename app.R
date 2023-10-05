@@ -122,9 +122,14 @@ server <-
   
     
     ##Global Data module ####
-    GlobalData <- reactive({ 
-      globalDataServer("global1", data_config())
+    vsd <- reactive({ 
+      globalDataServer("global1", stash()$vsd) #add data_config() when other datasets are added
     })
+    
+    vsd.pca <- reactive({
+      globalDataServer("global2", stash()$vsd.pca)
+    })
+    
     
   #build a function for reading in rds files for each object
     
@@ -147,13 +152,14 @@ server <-
     # dds.res <- reactive({
     #     config()$dds_res
     #   })
-    # vsd <- reactive({
-    #     config()$vsd
-    #   })
-    #   
-    # vsd.pca <- reactive({
-    #     config()$vsd.pca
-    #   })
+    # reactive({
+    #   vsd <- 
+    #     GlobalData()$get_vsd
+    #   vsd.pca <- 
+    #     GlobalData()$get_vsd.pca 
+    # })
+  
+      
     # vst <- reactive({
     #     config()$vst
     #   })
@@ -173,7 +179,7 @@ server <-
     #   
 
   ## QC tab ####
-    QC_Server("QC1", GlobalData) 
+    QC_Server("QC1",vsd, vsd.pca) 
     
   ## GOI tab####  
     # goi_Server("GOI1", GlobalData)

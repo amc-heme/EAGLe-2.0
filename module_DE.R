@@ -136,7 +136,8 @@ DE_UI <- function(id) {
     )
   )
 }
-
+#dds <- readRDS("/Users/stephaniegipson/Documents/GitHub/EAGLe-2.0/data_rds_files/CD_ROSlow_dds.rds")
+#dds.res <- readRDS("/Users/stephaniegipson/Documents/GitHub/EAGLe-2.0/data_rds_files/CD_ROSlow_dds.res.rds")
 DE_Server <- function(id, dds.res, vst) {
   moduleServer(id, function(input, output, session) {
  #DE Table ####
@@ -310,13 +311,13 @@ DE_Server <- function(id, dds.res, vst) {
   })
 }
 
-DE_App <- function() {
-  ui <- fluidPage(
-    DE_UI("DE1")
-  )
-  server <- function(input, output, session) {
-    DE_Server("DE1", dds.res, vst)
-  }
-  shinyApp(ui, server)
-}
-DE_App()
+# DE_App <- function() {
+#   ui <- fluidPage(
+#     DE_UI("DE1")
+#   )
+#   server <- function(input, output, session) {
+#     DE_Server("DE1", dds.res, vst)
+#   }
+#   shinyApp(ui, server)
+# }
+# DE_App()

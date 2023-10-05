@@ -1,7 +1,8 @@
 #each config is a glabalData module that returns the appropriate data files when chosemn
 
-config.CD <- source("~/Documents/GitHub/EAGLe-2.0/config_CD.R")
-config.Ye16 <- source("~/Documents/GitHub/EAGLe-2.0/config_Ye16.R")
+#need to use global config for paths to dds files
+# config.CD <- source("~/Documents/GitHub/EAGLe-2.0/config_CD.R")
+# config.Ye16 <- source("~/Documents/GitHub/EAGLe-2.0/config_Ye16.R")
 
 data_UI <- function(id) {
   ns <- NS(id)
