@@ -35,19 +35,24 @@ data_UI <- function(id) {
 data_Server <- function(id) {
   moduleServer(id, function(input, output, session){
     #all of this needs to be changed. Read in dataset info from dataset yaml
-reactive({
-  if(datainput == "CancerDiscovery") {
-    return(config.CD)
-  } else if(datainput == "Ye16") {
-    return(config.Ye16)
-  } else {
-    return(NULL)
-  }
-})
-    # config_choice <- eventReactive(input$datainput, {
-    #   data_file_values[[input$datainput]]
-    #   
-    # })
+# reactive({
+#   if(datainput == "CancerDiscovery") {
+#     return(config.CD)
+#   } else if(datainput == "Ye16") {
+#     return(config.Ye16)
+#   } else {
+#     return(NULL)
+#   }
+# })
+    
+    data_file_values <- list(
+      "Cancer_Discovery" = ,
+      "Ye_16" = 
+    )
+    config_choice <- eventReactive(input$datainput, {
+      data_file_values[[input$datainput]]
+
+    })
    #  print("what is config_choice")
    # print(config_choice)
     #return(config_choice)

@@ -119,80 +119,22 @@ server <-
    data_config <- reactive({
      data_Server("data1", input$datainput)
    }) 
-  
-    
-    ##Global Data module ####
-    vsd <- reactive({ 
-      globalDataServer("global1", stash()$vsd) #add data_config() when other datasets are added
-    })
-    
-    vsd.pca <- reactive({
-      globalDataServer("global2", stash()$vsd.pca)
-    })
-    
-    
-  #build a function for reading in rds files for each object
-    
-    # t2g <- reactive({
-    #     config()$t2g
-    #   })
-    #   
-    # metadata <- reactive({
-    #     config()$metadata
-    #   })
-    # batch <- reactive({
-    #     config()$batch
-    #   })
-    # num_PCs <- reactive({
-    #     config()$num_PCs
-    #   })
-    # dds <- reactive({
-    #     config()$dds
-    #   })
-    # dds.res <- reactive({
-    #     config()$dds_res
-    #   })
-    # reactive({
-    #   vsd <- 
-    #     GlobalData()$get_vsd
-    #   vsd.pca <- 
-    #     GlobalData()$get_vsd.pca 
-    # })
-  
-      
-    # vst <- reactive({
-    #     config()$vst
-    #   })
-    # vst.goi <- reactive({
-    #      config()$vst.goi
-    #    })
-    # qc <- reactive({
-    #     config()$qc
-    #   })
-    #   
-    # var_1 <- reactive({
-    #     config()$var_1
-    #   })
-    # var_2 <- reactive({
-    #     config()$var_2
-    #   })
-    #   
 
   ## QC tab ####
-    QC_Server("QC1",vsd, vsd.pca) 
+    QC_Server("QC1", dds) 
     
   ## GOI tab####  
-    # goi_Server("GOI1", GlobalData)
+    # goi_Server("GOI1", dds, t2g)
   #   
   # ##DESEq #####
-  #   DE_Server("DEtab1", GlobalData) 
+  #   DE_Server("DEtab1", dds, t2g) 
   #  
   # ##GSEA output ####
-  #   GSEA_Server("GSEA1", GlobalData) 
+  #   GSEA_Server("GSEA1", dds, t2g) 
   #  
   #   
   # ##GOI pathway output ####
-  #  pathway_Server("pathway1", GlobalData)
+  #  pathway_Server("pathway1", dds, t2g)
   #   
   } #end server
 

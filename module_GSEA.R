@@ -299,10 +299,12 @@ GSEA_UI <- function(id) {
 }
 
 
-GSEA_Server <- function(id, dds, t2g, dds.res, vst) {
+GSEA_Server <- function(id, dds, t2g) {
   moduleServer(id, function(input, output, session) {
     #run GSEA for chosen pathway input
-    ens2gene <- t2g[,c(2,3)]
+    ens2gene <- reactive({
+      t2g[,c(2,3)]
+    })
     #make an object to hold the values of the selectInput for gsea pathway choices
     gsea_file_values <- list("hallmark" = pathways.hallmark,
                              "goall" = pathways.GOall,
@@ -318,13 +320,15 @@ GSEA_Server <- function(id, dds, t2g, dds.res, vst) {
                              "biocarta" = pathways.Biocarta,
                              "lsc" = pathways.lsc,
                              "aeg" = pathways.aeg)
-   
+
     # Extract the dds results in a tidy format
-    res <- results(dds, tidy = TRUE)
+    res <- reactive({
+      results(dds, tidy = TRUE)
+    })
     
     # Add the human name of the gene to the last column, because that's what all of the pathways are annotated using
-    res <- inner_join(res, ens2gene, by = c("row" = "ensembl_gene_id"))
-    colnames(res)[8] <- 'HS_Symbol'
+    res <- inner_join(res(), ens2gene(), by = c("row" = "ensembl_gene_id"))
+    colnames(res())[8] <- 'HS_Symbol'
     
     # Select only the human gene symbol and the 'stat' from the results, remove NAs, and average the test stat for duplicate gene symbols
     res2 <- res %>%

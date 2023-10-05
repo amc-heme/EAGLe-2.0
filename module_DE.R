@@ -138,18 +138,18 @@ DE_UI <- function(id) {
 }
 #dds <- readRDS("/Users/stephaniegipson/Documents/GitHub/EAGLe-2.0/data_rds_files/CD_ROSlow_dds.rds")
 #dds.res <- readRDS("/Users/stephaniegipson/Documents/GitHub/EAGLe-2.0/data_rds_files/CD_ROSlow_dds.res.rds")
-DE_Server <- function(id, dds.res, vst) {
+DE_Server <- function(id, dds) {
   moduleServer(id, function(input, output, session) {
  #DE Table ####
  
-    # dds.res <- data.frame(results(dds)) %>%
-    #   rownames_to_column(., var = 'ensembl_gene_id') %>%
-    #   dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-    #   left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
-    #   dplyr::rename(., Gene = ext_gene) %>%
-    #   mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
-    #                              ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
-    #   na.omit(.)
+    dds.res <- data.frame(results(dds)) %>%
+      rownames_to_column(., var = 'ensembl_gene_id') %>%
+      dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+      left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+      dplyr::rename(., Gene = ext_gene) %>%
+      mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
+                                 ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
+      na.omit(.)
     
   output$results <- renderDataTable({
     if(input$DESeqtable == TRUE) {
@@ -311,13 +311,3 @@ DE_Server <- function(id, dds.res, vst) {
   })
 }
 
-# DE_App <- function() {
-#   ui <- fluidPage(
-#     DE_UI("DE1")
-#   )
-#   server <- function(input, output, session) {
-#     DE_Server("DE1", dds.res, vst)
-#   }
-#   shinyApp(ui, server)
-# }
-# DE_App()

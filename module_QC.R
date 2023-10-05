@@ -97,19 +97,26 @@ QC_UI <- function(id) {
   )
 }
 
-QC_Server <- function(id, vsd, vsd.pca) {
+QC_Server <- function(id, dds) {
   moduleServer(id, function(input, output, session) {
 
-   
+   # create vsd object from dds file
+    dds.counts <- reactive({
+      counts(dds)
+      })
+    vsd <- reactive({
+      vst(dds.counts(), blind = F)
+      })
+    
     #run pca on vsd
     vsd.pca <- reactive({
-      data.frame(prcomp(t(assay(vsd())))$x) %>%
+      data.frame(prcomp(t(assay(vsd()))$x)) %>%
       as_tibble(rownames = "SRR") %>%
-      left_join(., as_tibble(colData(vsd)))
+      left_join(., as_tibble(colData(vsd())))
     })
     #data frame for variance
     vsd.pca.var <- reactive({
-      data.frame(summary(prcomp(t(assay(vsd()))$importance))) 
+      data.frame(summary(prcomp(t(assay(vsd())$importance)))) 
     })
     #determine % variance of pc1 and pc2
     
@@ -120,6 +127,7 @@ QC_Server <- function(id, vsd, vsd.pca) {
       prcomp(t(assay(vsd())))
     })
     #batch corrected PCA
+    #if the dataset needs batch correction, have a conditional that allows for this code to run
     # assay(vsd) <- limma::removeBatchEffect(assay(vsd),
     #                                        batch = batch, 
     #                                        design = model.matrix(~condition, data = metadata))
@@ -180,7 +188,6 @@ QC_Server <- function(id, vsd, vsd.pca) {
     #   })
     output$PCAplot <- renderPlot ({
       if(input$PCAplots == TRUE) {
-       
         pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2)) +
           #, shape = var_1(), color = batch(), fill = batch())) + 
           geom_point(size = 5) + 

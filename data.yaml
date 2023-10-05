@@ -18,29 +18,36 @@
 #     #             get_vsd.pca = reactive(stash$vsd.pca), get_vst.goi = reactive(stash$vst.goi), get_qc = reactive(stash$qc)))
 #   })
 # }
-Datasets:
-  Cancer_Discovery:
-    path: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/CD_ROSlow_dds.rds"
-    species: human
-  Ye_16:
-    path: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/Ye_16_dds.rds"
-    species: mouse
-  Ye_20:
-    path: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/Ye_20_dds.rds"
-    species: mouse
-  Venaza:
-    path: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/venaza_dds.rds"
-    species: human
-  Lagadinou: 
-    path: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/EL_AML_dds.rds"
-    species: human
-  Lee:
-    path: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/Lee_dds.rds"
-    species: human
-  BEAT:
-    path: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/BEAT_AML_dds.rds"
-    species: human
-Transcript_to_gene:
+
+Cancer_Discovery:
+  data_path: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/CD_ROSlow_dds.rds"
+  qc_path: 
+  species: human
+Ye_16:
+  data_path: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/Ye_16_dds.rds"
+  qc_path:
+  species: mouse
+Ye_20:
+  data_path: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/Ye_20_dds.rds"
+  qc_path:
+  species: mouse
+Venaza:
+  data_path: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/venaza_dds.rds"
+  qc_path:
+  species: human
+Lagadinou: 
+  data_path: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/EL_AML_dds.rds"
+  qc_path:
+  species: human
+Lee:
+  data_path: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/Lee_dds.rds"
+  qc_path:
+  species: human
+BEAT:
+  data_path: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/BEAT_AML_dds.rds"
+  qc_path:
+  species: human
+t2g:
   mouse: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/t2g_mm.rds"
   human: "~/Documents/GitHub/EAGLe-2.0/data_rds_files/t2g_hs.rds"
   

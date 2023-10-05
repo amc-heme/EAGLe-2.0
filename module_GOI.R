@@ -68,10 +68,51 @@ goi_UI <- function(id) {
   )
 }
 
-goi_Server <- function(id, vst.goi) {
+goi_Server <- function(id, dds, t2g) {
   moduleServer(id, function(input, output, session) {
     ##Gene Centric output ####
     updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
+    #create dds results table for use in the table generated for the plot
+    dds.res <- data.frame(results(dds)) %>%
+      rownames_to_column(., var = 'ensembl_gene_id') %>%
+      dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+      left_join(unique(dplyr::select(t2g, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+      dplyr::rename(., Gene = ext_gene) %>%
+      mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
+                                 ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
+      na.omit(.)
+    #extract counts from dds file to use in vst
+    dds.counts <- reactive({
+      counts(dds)
+      })
+    vsd <- reactive({
+      vst(dds.counts(), blind = F) 
+    })
+    vst <- data.frame(assay(vsd())) %>% 
+      rownames_to_column(., var = "ensembl_gene_id") %>% 
+      left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>% 
+      na.omit(.)
+    #create a data table filtered for only mono sample type
+    res <- (label.jordan.m0m5) %>%
+      mutate(., class = condition) %>%
+      dplyr::select(., SRR, class) %>%
+      filter(., class == "mono")
+    
+    #join DE res and VST counts matrix to create data table with class, padj, and gene expression values for each sample
+    vst.goi <- as_tibble(vst) %>%
+      melt(.) %>%
+      mutate(., class = ifelse(variable %in% res$SRR, 'mono', 'prim')) %>% 
+      dplyr::filter(ensembl_gene_id %in% dds.res$ensembl_gene_id) %>%
+      left_join(unique(dplyr::select(dds.res, c(
+        ensembl_gene_id, padj
+      ))), ., by = 'ensembl_gene_id') 
+    
+    #factor class and variable(sample id)
+    vst.goi$class <-
+      factor(vst.goi$class, levels = c('prim', 'mono'))
+    
+    vst.goi$variable <- factor(vst.goi$variable)
+    
     #reactive function for for filtering vst data table based on user input 
     datavst <-
       reactive({
@@ -203,18 +244,6 @@ goi_Server <- function(id, vst.goi) {
     )
     
     
-    
-    
   })
 }
-# 
-# goi_App <- function() {
-#   ui <- fluidPage(
-#     goi_UI("GOI1")
-#   )
-#   server <- function(input, output, session) {
-#     goi_Server("GOI1", vst.goi)
-#   }
-#   shinyApp(ui, server)
-# }
-# goi_App()
+
