@@ -138,11 +138,13 @@ DE_UI <- function(id) {
 }
 #dds <- readRDS("/Users/stephaniegipson/Documents/GitHub/EAGLe-2.0/data_rds_files/CD_ROSlow_dds.rds")
 #dds.res <- readRDS("/Users/stephaniegipson/Documents/GitHub/EAGLe-2.0/data_rds_files/CD_ROSlow_dds.res.rds")
-DE_Server <- function(id, dds) {
+DE_Server <- function(id, dataset_dds) {
   moduleServer(id, function(input, output, session) {
  #DE Table ####
+ t2g_hs <- read_rds("/Users/stephaniegipson/Documents/GitHub/EAGLe-2.0/data_rds_files/t2g_hs.rds")
  
-    dds.res <- data.frame(results(dds)) %>%
+    dds.res <- reactive({ 
+      data.frame(results(dataset_dds())) %>%
       rownames_to_column(., var = 'ensembl_gene_id') %>%
       dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
       left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
@@ -150,10 +152,11 @@ DE_Server <- function(id, dds) {
       mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
                                  ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
       na.omit(.)
+    })
     
   output$results <- renderDataTable({
     if(input$DESeqtable == TRUE) {
-    dds.res
+    dds.res()
     }
   })
   
@@ -169,7 +172,7 @@ DE_Server <- function(id, dds) {
       #colors <- c(colorDE(), "grey",color2DE()) #object for colors on volcano based on user input
       colors <- c(colorDE(), "grey", color2DE())
       if(input$DESeqvolcano == TRUE) { #only create plot if the  volcano switch is toggled
-        p<- ggplot(dds.res, aes( #call in the DE results from the DE module
+        p<- ggplot(dds.res(), aes( #call in the DE results from the DE module
           x = `log2FoldChange`,
           y = -log10(padj),
           col = DiffExp,
@@ -193,13 +196,10 @@ DE_Server <- function(id, dds) {
   
   output$MAplot <- 
     renderGirafe ({
-      print("values of colors in DE module")
-      print(color3DE())
-      print(color4DE())
       #colors <- c(color3DE(), "grey",color4DE()) #object for colors on volcano based on user input
       colors <- c(color3DE(), "grey", color4DE())#object for colors on volcano based on user input called from palette module
       if(input$DESeqMA == TRUE) { #only call plot if the MA plot switch is toggled
-        ma <- ggplot(dds.res, 
+        ma <- ggplot(dds.res(), 
                      aes(
                        x = log2(baseMean),
                        y = `log2FoldChange`,
@@ -211,8 +211,8 @@ DE_Server <- function(id, dds) {
           scale_color_manual(values = colors) +
           theme_light() +
           ylim(c(
-            min(dds.res$`log2FoldChange`),
-            max(dds.res$`log2FoldChange`)
+            min(dds.res()$`log2FoldChange`),
+            max(dds.res()$`log2FoldChange`)
           )) +
           ggtitle("DE MA Plot") +
           xlab("log2 Mean Expression") +

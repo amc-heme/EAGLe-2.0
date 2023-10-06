@@ -1,8 +1,3 @@
-#each config is a glabalData module that returns the appropriate data files when chosemn
-
-#need to use global config for paths to dds files
-# config.CD <- source("~/Documents/GitHub/EAGLe-2.0/config_CD.R")
-# config.Ye16 <- source("~/Documents/GitHub/EAGLe-2.0/config_Ye16.R")
 
 data_UI <- function(id) {
   ns <- NS(id)
@@ -32,32 +27,20 @@ data_UI <- function(id) {
   )
 }
 
-data_Server <- function(id) {
+data_Server <- function(id, dataset) {
   moduleServer(id, function(input, output, session){
     #all of this needs to be changed. Read in dataset info from dataset yaml
-# reactive({
-#   if(datainput == "CancerDiscovery") {
-#     return(config.CD)
-#   } else if(datainput == "Ye16") {
-#     return(config.Ye16)
-#   } else {
-#     return(NULL)
-#   }
-# })
-    
-    data_file_values <- list(
-      "Cancer_Discovery" = ,
-      "Ye_16" = 
-    )
-    config_choice <- eventReactive(input$datainput, {
-      data_file_values[[input$datainput]]
-
-    })
-   #  print("what is config_choice")
-   # print(config_choice)
-    #return(config_choice)
-
+data_list <- dataset
+View(data_list)
+  
+  dds_object <- eventReactive(input$datainput, {
+    dataset_dds <- data_list[[input$datainput]]
+    dataset_dds
+  })
+    return(dds_object)
+   
   })
 }
-#config_files <- reactiveValues()
+
+
 

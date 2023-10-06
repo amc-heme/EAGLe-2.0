@@ -97,12 +97,12 @@ QC_UI <- function(id) {
   )
 }
 
-QC_Server <- function(id, dds) {
+QC_Server <- function(id, dataset_dds) {
   moduleServer(id, function(input, output, session) {
 
    # create vsd object from dds file
     dds.counts <- reactive({
-      counts(dds)
+      counts(dataset_dds())
       })
     vsd <- reactive({
       vst(dds.counts(), blind = F)

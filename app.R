@@ -38,34 +38,42 @@ library(esquisse)
 library(ggprism)
 library(shinycssloaders)
 library(patchwork)
+library(yaml)
 options(
   shiny.fullstacktrace = TRUE
 )
-#Data ####
-#load in data and metadata
-# load analysis functions 
-#read in data from config file
- 
+## Data ####
+# Config information for each dataset
+dataset_config <- 
+  read_yaml("./data.yaml")
 
-#sample_id <- config$sample_id
-# samples <- data.frame(SRR = metadata$SRR, batch = metadata$batch, condition = metadata$sample_type, sample_name = metadata$DESeq_Sample_Name)
-# samples <- samples[order(samples$SRR),]
-# design <- config$design_formula
-# salm_dirs <- sapply(sample_id, function(id) file.path(base_dir, id, 'quant.sf'))
-# tx2gene <- t2g_hs[,c(1,2)]
-# colnames(tx2gene) <- c('TXNAME', 'GENEID')
-# txi <- tximport(salm_dirs, type = 'salmon', tx2gene = tx2gene, ignoreTxVersion = TRUE)
-# ddsTxi <- DESeqDataSetFromTximport(txi, colData = samples, design = design)
-# ddsTxi.filt <- ddsTxi[rowMins(counts(ddsTxi)) > 5, ]
-# dds <- DESeq(ddsTxi.filt)
-# dds.res <- data.frame(results(dds)) %>%
-#   rownames_to_column(., var = 'ensembl_gene_id') %>%
-#   dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-#   left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
-#   dplyr::rename(., Gene = ext_gene) %>%
-#   mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
-#                              ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
-#   na.omit(.)
+raw_data_p <- getwd()
+# dataset_labels <-
+#   sapply(
+#     dataset_config,
+#     function(dataset){
+#       dataset$label
+#     }
+#   ) |> 
+#   unname()
+# # Construct vector of dataset choices using config file and above information
+# # (human-readable labels as labels, machine-readable labels as values)
+# dataset_choices <- names(dataset_config)
+# names(dataset_choices) <- dataset_labels
+ 
+# Read RDS files from yaml
+CD <- read_rds(paste0(raw_data_p, dataset_config[["Cancer_Discovery"]]$data_path))
+Ye16 <- read_rds(paste0(raw_data_p, dataset_config[["Ye_16"]]$data_path))
+Ye20 <- read_rds(paste0(raw_data_p, dataset_config[["Ye_20"]]$data_path))
+Venaza <- read_rds(paste0(raw_data_p, dataset_config[["Venaza"]]$data_path))
+Lagadinou <- read_rds(paste0(raw_data_p, dataset_config[["Lagadinou"]]$data_path))
+Lee <- read_rds(paste0(raw_data_p, dataset_config[["Lee"]]$data_path))
+dataset <- list(CD, Ye16, Ye20, Venaza, Lagadinou, Lee)
+
+# Add dataset names to list generated
+names(dataset) <- 
+  names(dataset_config)
+
 
 # UI ####
 ui <-
@@ -116,18 +124,17 @@ server <-
 
   ##Data tab ####
    
-   data_config <- reactive({
-     data_Server("data1", input$datainput)
-   }) 
+    dataset_dds <- data_Server("data1", dataset)
 
   ## QC tab ####
-    QC_Server("QC1", dds) 
+  
+    QC_Server("QC1", dataset_dds)
     
   ## GOI tab####  
-    # goi_Server("GOI1", dds, t2g)
-  #   
+    # goi_Server("GOI1", dataset_dds)
+  # 
   # ##DESEq #####
-  #   DE_Server("DEtab1", dds, t2g) 
+     DE_Server("DEtab1", dataset_dds) #it works!!!! #need to update to change t2g depending on mouse or human
   #  
   # ##GSEA output ####
   #   GSEA_Server("GSEA1", dds, t2g) 
