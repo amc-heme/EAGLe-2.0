@@ -1,7 +1,11 @@
 ##Differential Expression tab##
 library(colorRamp2)
 library(InteractiveComplexHeatmap)
-
+datasets <- 
+  read_yaml("./data.yaml")
+raw_data <- getwd()
+t2g_hs <- read_rds("~/Documents/GitHub/EAGLe-2.0/data_rds_files/t2g_hs.rds")
+t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data_rds_files/t2g_mm.rds")
 
 DE_UI <- function(id) {
   ns <- NS(id)
@@ -136,27 +140,53 @@ DE_UI <- function(id) {
     )
   )
 }
-#dds <- readRDS("/Users/stephaniegipson/Documents/GitHub/EAGLe-2.0/data_rds_files/CD_ROSlow_dds.rds")
-#dds.res <- readRDS("/Users/stephaniegipson/Documents/GitHub/EAGLe-2.0/data_rds_files/CD_ROSlow_dds.res.rds")
+
 DE_Server <- function(id, dataset_dds) {
   moduleServer(id, function(input, output, session) {
  #DE Table ####
- t2g_hs <- read_rds("/Users/stephaniegipson/Documents/GitHub/EAGLe-2.0/data_rds_files/t2g_hs.rds")
+
+ # function to switch between mouse or human t2g
+ ## for BEAT dataset, the ensembl id's need to be modified to work:
+ # dds.res1$ensembl_gene_id <- str_sub(dds.res1$ensembl_gene_id, end=-4) 
+    dataset_res <-
+      lapply(
+        names(datasets),
+        function(data_key) {
+          if(datasets[[data_key]]$species == "human") {
+            dds.res <- reactive({
+              data.frame(results(dataset_dds())) %>%
+                rownames_to_column(., var = 'ensembl_gene_id') %>%
+                dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+                left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+                dplyr::rename(., Gene = ext_gene) %>%
+                mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
+                                           ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
+                na.omit(.)
+            })
+          } else if(datasets[[data_key]]$species == "mouse") {
+            dds.res <- reactive({
+              data.frame(results(dataset_dds())) %>%
+                rownames_to_column(., var = 'ensembl_gene_id') %>%
+                dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+                left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+                dplyr::rename(., Gene = ext_gene) %>%
+                mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
+                                           ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
+                na.omit(.)
+            })
+          }
+          return(dds.res)
+        }
+      )
  
-    dds.res <- reactive({ 
-      data.frame(results(dataset_dds())) %>%
-      rownames_to_column(., var = 'ensembl_gene_id') %>%
-      dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-      left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
-      dplyr::rename(., Gene = ext_gene) %>%
-      mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
-                                 ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
-      na.omit(.)
-    })
-    
+
+# Add dataset names to list generated
+    names(dataset_res) <- 
+      names(dataset_config)
+  
   output$results <- renderDataTable({
-    if(input$DESeqtable == TRUE) {
-    dds.res()
+    if (input$DESeqtable == TRUE) {
+      dataset_res()
     }
   })
   

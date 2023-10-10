@@ -31,7 +31,7 @@ data_Server <- function(id, dataset) {
   moduleServer(id, function(input, output, session){
     #all of this needs to be changed. Read in dataset info from dataset yaml
 data_list <- dataset
-View(data_list)
+
   
   dds_object <- eventReactive(input$datainput, {
     dataset_dds <- data_list[[input$datainput]]

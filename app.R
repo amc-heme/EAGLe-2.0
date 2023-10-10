@@ -48,18 +48,7 @@ dataset_config <-
   read_yaml("./data.yaml")
 
 raw_data_p <- getwd()
-# dataset_labels <-
-#   sapply(
-#     dataset_config,
-#     function(dataset){
-#       dataset$label
-#     }
-#   ) |> 
-#   unname()
-# # Construct vector of dataset choices using config file and above information
-# # (human-readable labels as labels, machine-readable labels as values)
-# dataset_choices <- names(dataset_config)
-# names(dataset_choices) <- dataset_labels
+
  
 # Read RDS files from yaml
 CD <- read_rds(paste0(raw_data_p, dataset_config[["Cancer_Discovery"]]$data_path))
@@ -68,7 +57,8 @@ Ye20 <- read_rds(paste0(raw_data_p, dataset_config[["Ye_20"]]$data_path))
 Venaza <- read_rds(paste0(raw_data_p, dataset_config[["Venaza"]]$data_path))
 Lagadinou <- read_rds(paste0(raw_data_p, dataset_config[["Lagadinou"]]$data_path))
 Lee <- read_rds(paste0(raw_data_p, dataset_config[["Lee"]]$data_path))
-dataset <- list(CD, Ye16, Ye20, Venaza, Lagadinou, Lee)
+BEAT <- read_rds(paste0(raw_data_p, dataset_config[["BEAT"]]$data_path))
+dataset <- list(CD, Ye16, Ye20, Venaza, Lagadinou, Lee, BEAT)
 
 # Add dataset names to list generated
 names(dataset) <- 
@@ -132,10 +122,10 @@ server <-
     
   ## GOI tab####  
     # goi_Server("GOI1", dataset_dds)
-  # 
+ 
   # ##DESEq #####
      DE_Server("DEtab1", dataset_dds) #it works!!!! #need to update to change t2g depending on mouse or human
-  #  
+ 
   # ##GSEA output ####
   #   GSEA_Server("GSEA1", dds, t2g) 
   #  
