@@ -141,7 +141,7 @@ DE_UI <- function(id) {
   )
 }
 
-DE_Server <- function(id, dataset_dds) {
+DE_Server <- function(id, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
  #DE Table ####
 
@@ -212,7 +212,7 @@ DE_Server <- function(id, dataset_dds) {
         }
         return(dds.res)
       }
-      dds.res("Ye_16")
+      dds.res[[dataset_choice()]] #need to connect chosen dataset 
     }
   })
  

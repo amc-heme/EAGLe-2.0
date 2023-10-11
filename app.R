@@ -120,18 +120,18 @@ server <-
   
 
   ##Data tab ####
-   
-    dataset_dds <- data_Server("data1", dataset)
-
+    dataset_choice <- data_Server("data1", dataset)
+  ## dds object
+    dataset_dds <- dds.file_Server("dds1", dataset, dataset_choice)
   ## QC tab ####
   
-    QC_Server("QC1", dataset_dds)
+    #QC_Server("QC1", dataset_choice, dataset_dds)
     
   ## GOI tab####  
     # goi_Server("GOI1", dataset_dds)
  
   # ##DESEq #####
-     DE_Server("DEtab1", dataset_dds) #it works!!!! #need to update to change t2g depending on mouse or human
+     DE_Server("DEtab1", dataset_choice, dataset_dds) #it works!!!! #need to update to change t2g depending on mouse or human
  
   # ##GSEA output ####
   #   GSEA_Server("GSEA1", dds, t2g) 

@@ -29,16 +29,8 @@ data_UI <- function(id) {
 
 data_Server <- function(id, dataset) {
   moduleServer(id, function(input, output, session){
-    #all of this needs to be changed. Read in dataset info from dataset yaml
-data_list <- dataset
-
-
-  dds_object <- eventReactive(input$datainput, {
-    dataset_dds <- data_list[[input$datainput]]
-    dataset_dds
-  })
-  return(dds_object)
-   
+ 
+   reactive({input$datainput})
   })
 }
 
