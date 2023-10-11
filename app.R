@@ -64,6 +64,13 @@ dataset <- list(CD, Ye16, Ye20, Venaza, Lagadinou, Lee, BEAT)
 names(dataset) <- 
   names(dataset_config)
 
+# data_list <- dataset
+# 
+# 
+#   dds_object <- eventReactive(input$datainput, {
+#     dataset_dds <- data_list[[input$datainput]]
+#     dataset_dds
+#   })
 
 # UI ####
 ui <-
