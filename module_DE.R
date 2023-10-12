@@ -141,78 +141,48 @@ DE_UI <- function(id) {
   )
 }
 
-DE_Server <- function(id, dataset_dds, dataset_choice) {
+DE_Server <- function(id, data_species, dataset_dds) {
   moduleServer(id, function(input, output, session) {
  #DE Table ####
 
  # function to switch between mouse or human t2g
  ## for BEAT dataset, the ensembl id's need to be modified to work:
  # dds.res1$ensembl_gene_id <- str_sub(dds.res1$ensembl_gene_id, end=-4) 
-    # dds.res <-
-    #     function(data_key) {
-    #       if(datasets[[data_key]]$species == "human") {
-            # dds.res <- reactive({
-            #   data.frame(results(dataset_dds())) %>%
-            #     rownames_to_column(., var = 'ensembl_gene_id') %>%
-            #     dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-            #     left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
-            #     dplyr::rename(., Gene = ext_gene) %>%
-            #     mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
-            #                                ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
-            #     na.omit(.)
-            # })
-          # } else if(datasets[[data_key]]$species == "mouse") {
-          #   dds.res <- reactive({
-          #     data.frame(results(dataset_dds())) %>%
-          #       rownames_to_column(., var = 'ensembl_gene_id') %>%
-          #       dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-          #       left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
-          #       dplyr::rename(., Gene = ext_gene) %>%
-          #       mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
-          #                                  ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
-          #       na.omit(.)
-          #   })
-        #   }
-        # 
-        #   return(dds.res)
-        # }
-        # 
+  
+    dds.res <- reactive({
+    if(data_species() == "human") {
     
-# # Add dataset names to list generated
-#     names(dds.res) <- 
-#       names(dataset_config)
+      dds.res <- data.frame(results(dataset_dds())) %>%
+        rownames_to_column(., var = 'ensembl_gene_id') %>%
+        dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+        left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+        dplyr::rename(., Gene = ext_gene) %>%
+        mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
+                                   ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
+        na.omit(.)
  
-  output$results <- renderDataTable({
-    if (input$DESeqtable == TRUE) {
-      dds.res <- function(data_key) {
-            if(datasets[[data_key]]$species == "human") {
-      dds.res <- 
-        #reactive({
-        data.frame(results(dataset_dds())) %>%
+    } else if(data_species() == "mouse") {
+      
+        dds.res <- data.frame(results(dataset_dds())) %>%
           rownames_to_column(., var = 'ensembl_gene_id') %>%
           dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-          left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+          left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
           dplyr::rename(., Gene = ext_gene) %>%
           mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
                                      ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
           na.omit(.)
-     # })
-      } else if(datasets[[data_key]]$species == "mouse") {
-        dds.res <- 
-          #reactive({
-          data.frame(results(dataset_dds())) %>%
-            rownames_to_column(., var = 'ensembl_gene_id') %>%
-            dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-            left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
-            dplyr::rename(., Gene = ext_gene) %>%
-            mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
-                                       ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
-            na.omit(.)
-        #})
-        }
-        return(dds.res)
-      }
-      dds.res[[dataset_choice()]] #need to connect chosen dataset 
+ 
+    }
+    })
+  
+      
+    
+    # 
+  
+ 
+  output$results <- renderDataTable({
+    if (input$DESeqtable == TRUE) {
+      dds.res()
     }
   })
  

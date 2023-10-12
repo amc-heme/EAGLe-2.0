@@ -17,7 +17,7 @@ data_UI <- function(id) {
                          "Lagadiou, 2013" = "Lagadinou",
                          "TCGA-LAML" = "TCGA",
                          "BEAT-AML" = "BEAT",
-                         "Lee et al, 2018" = "Lee"), selected = NULL
+                         "Lee et al, 2018" = "Lee"), selected = "Cancer_Discovery"
           )
       ),
       mainPanel(
@@ -27,10 +27,12 @@ data_UI <- function(id) {
   )
 }
 
-data_Server <- function(id, dataset) {
+data_Server <- function(id) {
   moduleServer(id, function(input, output, session){
- 
-   reactive({input$datainput})
+    
+user_choice <- reactive({input$datainput})
+observe({print(user_choice())})
+return(user_choice)
   })
 }
 

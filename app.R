@@ -64,13 +64,6 @@ dataset <- list(CD, Ye16, Ye20, Venaza, Lagadinou, Lee, BEAT)
 names(dataset) <- 
   names(dataset_config)
 
-# data_list <- dataset
-# 
-# 
-#   dds_object <- eventReactive(input$datainput, {
-#     dataset_dds <- data_list[[input$datainput]]
-#     dataset_dds
-#   })
 
 # UI ####
 ui <-
@@ -118,11 +111,21 @@ server <-
     
     options(shiny.reactlog = TRUE)
   
-
+  
   ##Data tab ####
-    dataset_choice <- data_Server("data1", dataset)
+    dataset_choice <- data_Server("data1")
+    
+    #reactive statement to return dataset species
+    data_species <- reactive({
+      dataset_config[[dataset_choice()]]$species
+    })
+    observe({
+      print(data_species())
+    })
+    
   ## dds object
     dataset_dds <- dds.file_Server("dds1", dataset, dataset_choice)
+
   ## QC tab ####
   
     #QC_Server("QC1", dataset_choice, dataset_dds)
@@ -131,7 +134,7 @@ server <-
     # goi_Server("GOI1", dataset_dds)
  
   # ##DESEq #####
-     DE_Server("DEtab1", dataset_choice, dataset_dds) #it works!!!! #need to update to change t2g depending on mouse or human
+     DE_Server("DEtab1", dataset_dds, dataset_species) 
  
   # ##GSEA output ####
   #   GSEA_Server("GSEA1", dds, t2g) 

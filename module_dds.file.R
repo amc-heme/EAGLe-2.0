@@ -4,10 +4,9 @@ dds.file_Server <- function(id, dataset, dataset_choice) {
     data_list <- dataset
     
       dds_object <- reactive({
-        dataset_dds <- data_list[[dataset_choice()]]
-        dataset_dds
+        data_list[[dataset_choice()]]
       })
-      
+      observe({print(dds_object())})
       return(dds_object)
   })
 }
