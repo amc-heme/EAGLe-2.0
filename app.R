@@ -134,7 +134,7 @@ server <-
     # goi_Server("GOI1", dataset_dds)
  
   # ##DESEq #####
-     DE_Server("DEtab1", dataset_dds, dataset_species) 
+     DE_Server("DEtab1",data_species, dataset_dds) 
  
   # ##GSEA output ####
   #   GSEA_Server("GSEA1", dds, t2g) 

@@ -150,20 +150,20 @@ DE_Server <- function(id, data_species, dataset_dds) {
  # dds.res1$ensembl_gene_id <- str_sub(dds.res1$ensembl_gene_id, end=-4) 
   
     dds.res <- reactive({
-    if(data_species() == "human") {
-    
-      dds.res <- data.frame(results(dataset_dds())) %>%
-        rownames_to_column(., var = 'ensembl_gene_id') %>%
-        dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-        left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
-        dplyr::rename(., Gene = ext_gene) %>%
-        mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
-                                   ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
-        na.omit(.)
- 
-    } else if(data_species() == "mouse") {
-      
-        dds.res <- data.frame(results(dataset_dds())) %>%
+      if(data_species() == "human") {
+        
+        res <- data.frame(results(dataset_dds())) %>%
+          rownames_to_column(., var = 'ensembl_gene_id') %>%
+          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+          left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+          dplyr::rename(., Gene = ext_gene) %>%
+          mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
+                                     ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
+          na.omit(.)
+        
+      } else if(data_species() == "mouse") {
+        
+        res <- data.frame(results(dataset_dds())) %>%
           rownames_to_column(., var = 'ensembl_gene_id') %>%
           dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
           left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
@@ -171,17 +171,19 @@ DE_Server <- function(id, data_species, dataset_dds) {
           mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
                                      ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
           na.omit(.)
- 
-    }
+      }
+      res
     })
-  
-      
     
-    # 
-  
+
+   # observe({
+   #   print(dds.res())
+   # })
+   # 
  
   output$results <- renderDataTable({
     if (input$DESeqtable == TRUE) {
+ 
       dds.res()
     }
   })
