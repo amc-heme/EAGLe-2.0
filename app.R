@@ -68,7 +68,7 @@ names(dataset) <-
 # UI ####
 ui <-
   navbarPage(
-    "EAGLe: Cancer Discovery",
+    "EAGLe 2.0",
     #Dataset tab ####
     tabPanel(
       "Dataset",

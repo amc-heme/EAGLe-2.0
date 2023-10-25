@@ -6,7 +6,22 @@ datasets <-
 raw_data <- getwd()
 t2g_hs <- read_rds("~/Documents/GitHub/EAGLe-2.0/data_rds_files/t2g_hs.rds")
 t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data_rds_files/t2g_mm.rds")
+## datasets with pairwise comparisons:
+#ye_16
+  #
+# pollyea venaza
+# lagadinou
+# TCGA
+# BEAT
 
+#try using shiny widgets checkbox group buttons to include pairwise testing options
+  #ex: checkboxGroupButtons(
+    # inputId = "Id002",
+    # label = "Choices", 
+    # choices = c("Choice 1", "Choice 2", "Choice 3"),
+    # status = "danger"
+# )
+#choose relevant comparisons for the user to choose from and have them run on the fly
 DE_UI <- function(id) {
   ns <- NS(id)
   fluidPage(
@@ -18,6 +33,12 @@ DE_UI <- function(id) {
       sidebarLayout(
         sidebarPanel(
         tagList(
+        checkboxGroupButtons(
+          inputId = ns("PWChoices"),
+          label = "Choose a Pairwise Comparison;",
+          choices = NULL,
+          status = "primary"
+          ),
         materialSwitch(
           inputId =
             (ns("DESeqtable")),
@@ -61,16 +82,16 @@ DE_UI <- function(id) {
           right =
             TRUE
         ),
-         conditionalPanel(
-           ns = ns,
-           condition = "input.DESeqtable == true",
-          h4("DE Table Specific Options"),
-          #option to filter table by padj
-         radioButtons(ns("padjbutton"), label = "Filter DE tables by padj",
-                      choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
-         hr(),
-         downloadButton(ns("downloadDEtable"), label = "Download DE Table")
-         ),
+         # conditionalPanel(
+         #   ns = ns,
+         #   condition = "input.DESeqtable == true",
+         #  h4("DE Table Specific Options"),
+         #  #option to filter table by padj
+         # radioButtons(ns("padjbutton"), label = "Filter DE tables by padj",
+         #              choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
+         # hr(),
+         # downloadButton(ns("downloadDEtable"), label = "Download DE Table")
+         # ),
 
          hr(),
         conditionalPanel(
@@ -145,10 +166,10 @@ DE_Server <- function(id, data_species, dataset_dds) {
   moduleServer(id, function(input, output, session) {
  #DE Table ####
 
- # function to switch between mouse or human t2g
  ## for BEAT dataset, the ensembl id's need to be modified to work:
  # dds.res1$ensembl_gene_id <- str_sub(dds.res1$ensembl_gene_id, end=-4) 
-  
+    
+    # reactive to switch between mouse or human t2g
     dds.res <- reactive({
       if(data_species() == "human") {
         
