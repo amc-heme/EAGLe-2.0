@@ -71,8 +71,9 @@ ui <-
     "EAGLe 2.0",
     #Dataset tab ####
     tabPanel(
-      "Dataset",
-      data_UI("data1")
+      "Dataset", 
+          data_UI("data1")
+      
     ),
     #QC Menu ####
     tabPanel(
@@ -88,7 +89,14 @@ ui <-
     
     #DESeq Menu ####
       tabPanel("Differential Expression",
-             DE_UI("DEtab1")
+               tabsetPanel(
+                 tabPanel("LRT",
+                          DE_UI("DEtab1")),
+                 tabPanel(
+                   "Pairwise Comparisons",
+                   PW_UI("PWtab1")
+                 )
+               )
              ),
     
     #GSEA menu ####

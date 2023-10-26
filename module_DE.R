@@ -14,13 +14,7 @@ t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data_rds_files/t2g_mm.rds")
 # TCGA
 # BEAT
 
-#try using shiny widgets checkbox group buttons to include pairwise testing options
-  #ex: checkboxGroupButtons(
-    # inputId = "Id002",
-    # label = "Choices", 
-    # choices = c("Choice 1", "Choice 2", "Choice 3"),
-    # status = "danger"
-# )
+
 #choose relevant comparisons for the user to choose from and have them run on the fly
 DE_UI <- function(id) {
   ns <- NS(id)
@@ -33,12 +27,6 @@ DE_UI <- function(id) {
       sidebarLayout(
         sidebarPanel(
         tagList(
-        checkboxGroupButtons(
-          inputId = ns("PWChoices"),
-          label = "Choose a Pairwise Comparison;",
-          choices = NULL,
-          status = "primary"
-          ),
         materialSwitch(
           inputId =
             (ns("DESeqtable")),
@@ -196,12 +184,6 @@ DE_Server <- function(id, data_species, dataset_dds) {
       res
     })
     
-
-   # observe({
-   #   print(dds.res())
-   # })
-   # 
- 
   output$results <- renderDataTable({
     if (input$DESeqtable == TRUE) {
  
