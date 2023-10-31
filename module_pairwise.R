@@ -135,7 +135,26 @@ PW_UI <- function(id) {
 PW_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
     #all of the pairwise tests need to run on the fly from dds.wald
-    
+  # ye_16: 
+    #[1] "Intercept"                                   
+    # [2] "Source_blood_vs_bone_marrow"                 
+    # [3] "Source_gonadal_adipose_tissue_vs_bone_marrow"
+    # [4] "Source_normal_bm_vs_bone_marrow"             
+    # [5] "Source_spleen_vs_bone_marrow"    
+  # venaza
+    # [1] "Intercept"                 "condition_24hr_vs_control"
+    # [3] "condition_6hr_vs_control"  "patient_FJ_vs_1020"       
+    # [5] "patient_RB_vs_1020"  
+  # Lagadinou
+    # [1] "Intercept"                             
+    # [2] "Treatment_high_PTL_5uM_vs_high_no_drug"
+    # [3] "Treatment_low_no_drug_vs_high_no_drug" 
+    # [4] "Treatment_low_PTL_5uM_vs_high_no_drug" 
+    # [5] "Batch"    
+  # BEAT: resultsNames(dds.wald1) (the large datasets need to be run completely on the fly from 
+    #ddstxi in order to extract the correct metadata)
+    # [1] "Intercept"         "quantile_q2_vs_q1" "quantile_q3_vs_q1"
+    # [4] "quantile_q4_vs_q1"
     
     # create a data module for those, and do the contrast here
     ## update pairwise choice for each dataset
