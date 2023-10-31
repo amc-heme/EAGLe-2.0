@@ -142,8 +142,9 @@ server <-
     # goi_Server("GOI1", dataset_dds)
  
   # ##DESEq #####
-     DE_Server("DEtab1",data_species, dataset_dds) 
- 
+    DE_Server("DEtab1",data_species, dataset_dds) 
+ ## Pairwise server ####
+    PW_Server("PWtab1", data_species, dataset_dds, dataset_choice)
   # ##GSEA output ####
   #   GSEA_Server("GSEA1", dds, t2g) 
   #  
