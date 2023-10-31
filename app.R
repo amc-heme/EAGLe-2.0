@@ -58,7 +58,8 @@ Venaza <- read_rds(paste0(raw_data_p, dataset_config[["Venaza"]]$data_path))
 Lagadinou <- read_rds(paste0(raw_data_p, dataset_config[["Lagadinou"]]$data_path))
 Lee <- read_rds(paste0(raw_data_p, dataset_config[["Lee"]]$data_path))
 BEAT <- read_rds(paste0(raw_data_p, dataset_config[["BEAT"]]$data_path))
-dataset <- list(CD, Ye16, Ye20, Venaza, Lagadinou, Lee, BEAT)
+HPA <- read_rds(paste0(raw_data_p, dataset_config[["HPA"]]$data_path))
+dataset <- list(CD, Ye16, Ye20, Venaza, Lagadinou, Lee, BEAT, HPA)
 
 # Add dataset names to list generated
 names(dataset) <- 

@@ -33,3 +33,8 @@ BEAT:
   data_path: "/data_rds_files/BEAT_AML_dds.rds"
   qc_path:
   species: "human"
+HPA:
+  label: "Human Protein Atlas"
+  data_path: "/data_rds_files/HPA_dds.rds"
+  qc_path: 
+  species: "human"

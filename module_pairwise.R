@@ -134,7 +134,7 @@ PW_UI <- function(id) {
 
 PW_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
-    #all of the pairwise tests need to run on the fly
+    #all of the pairwise tests need to run on the fly from dds.wald
     
     
     # create a data module for those, and do the contrast here

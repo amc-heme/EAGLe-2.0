@@ -17,7 +17,8 @@ data_UI <- function(id) {
                          "Lagadiou, 2013" = "Lagadinou",
                          "TCGA-LAML" = "TCGA",
                          "BEAT-AML" = "BEAT",
-                         "Lee et al, 2018" = "Lee"), selected = "Cancer_Discovery"
+                         "Lee et al, 2018" = "Lee",
+                         "Human Protein Atlas" = "HPA"), selected = "Cancer_Discovery"
           )
       ),
       mainPanel(
