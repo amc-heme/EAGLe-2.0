@@ -10,14 +10,26 @@ PW_UI <- function(id) {
     sidebarLayout(
       sidebarPanel(
         tagList(
-          shinyWidgets::checkboxGroupButtons(
-            inputId = (ns("pwc")),
-            label = "Choose a Pairwise Comparison",
-            choices = c("1", "2", "3", "4"),
-            #choices = NULL,
-            selected = NULL,
-            status = "primary"
+    
+        #   shinyWidgets::checkboxGroupButtons(
+        #     inputId = (ns("pwc")),
+        #     label = "Choose a Pairwise Comparison: LSC datasets",
+        #     choices = c(1,2),
+        #     selected = NULL,
+        #     status = "primary"
+        # 
+        # ),
+        #for BEAT and TCGA:
+        selectInput(
+            ns("DEmodel"),
+            label = "Choose a metadata variable for DE design",
+            choices = NULL
           ),
+        selectInput(
+          ns("pwc"),
+          label = "Choose a Pairwise Comparison",
+          choices = NULL
+        ),
           materialSwitch(
             inputId =
               (ns("PWDESeqtable")),
@@ -158,31 +170,69 @@ PW_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     
     # create a data module for those, and do the contrast here
     ## update pairwise choice for each dataset
+    # observe({
+    #   if(dataset_choice() == "Ye_16"){
+    #     updateCheckboxGroupButtons(
+    #       session = session,
+    #       inputId = "pwc",
+    #       choices = c("blood_vs_bm", "gat_vs_bm", "normBM_vs_bm", "spleen_vs_bm") ,
+    #       selected = NULL
+    #     )
+    #   } else if(dataset_choice() == "Venaza"){
+    #     updateCheckboxGroupButtons(
+    #       session = session,
+    #       inputId = "pwc",
+    #       choices = c("24hr_vs_control", "6hr_vs_control"),
+    #       selected = NULL
+    #     )
+    #   } else if(dataset_choice() == "Lagadinou") {
+    #     updateCheckboxGroupButtons(
+    #     session = session,
+    #     inputId = "pwc", 
+    #     choices = c("high_PTL_5uM_vs_high_no_drug", "low_no_drug_vs_high_no_drug", "low_PTL_5uM_vs_high_no_drug")
+    # )
+    #   }
+    # })
     observe({
-      if(dataset_choice() == "Cancer_Discovery") {
-        updateCheckboxGroupButtons(
+      if(dataset_choice() == "BEAT"){
+        updateSelectInput(
           session = session,
-          inputId = "pwc",
-          choices = c("1", "2"),
+          inputId = "DEmodel",
+          choices = c("ven response quantile", "FAB morphology", "Denovo vs relapse") ,
           selected = NULL
         )
-      } else if(dataset_choice() == "Ye_16"){
-        updateCheckboxGroupButtons(
+      } else if(dataset_choice() == "TCGA"){
+        updateSelectInput(
+          session = session,
+          inputId = "DEmodel",
+          choices = c("FAB morphology", "Molecular classification", "RAS mutation", "NPM1 mutation"),
+          selected = NULL
+        )
+      } 
+    })
+    observe({
+      if(dataset_choice() == "Ye_16"){
+        updateSelectInput(
           session = session,
           inputId = "pwc",
-          choices = c("blood", "bone marrow", "gonadal adipose tissue", "normal bone marrow", "spleen"),
+          choices = c("blood_vs_bm", "gat_vs_bm", "normBM_vs_bm", "spleen_vs_bm") ,
           selected = NULL
         )
       } else if(dataset_choice() == "Venaza"){
-        updateCheckboxGroupButtons(
+        updateSelectInput(
           session = session,
           inputId = "pwc",
-          choices = c("1", "2"),
+          choices = c("24hr_vs_control", "6hr_vs_control"),
           selected = NULL
+        )
+      } else if(dataset_choice() == "Lagadinou") {
+        updateSelectInput(
+          session = session,
+          inputId = "pwc", 
+          choices = c("high_PTL_5uM_vs_high_no_drug", "low_no_drug_vs_high_no_drug", "low_PTL_5uM_vs_high_no_drug")
         )
       }
     })
-
     ## run pairwise contrast depending on pairwise choice for each dataset
     #DE Table ####
     
