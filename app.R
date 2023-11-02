@@ -145,7 +145,8 @@ server <-
   # ##DESEq #####
     DE_Server("DEtab1",data_species, dataset_dds) 
  ## Pairwise server ####
-    
+    # I want this to be conditional if a dataset with pairwise options is selected
+    ## possibly a separate module for BEAT and TCGA
     PW_Server("PWtab1", data_species, dataset_dds, dataset_choice)
   # ##GSEA output ####
   #   GSEA_Server("GSEA1", dds, t2g) 
