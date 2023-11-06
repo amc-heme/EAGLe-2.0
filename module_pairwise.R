@@ -150,7 +150,7 @@ PW_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
     
     observe({
-      shinyjs::toggle(id = "DEmodel", condition = dataset_choice() == "BEAT")
+      shinyjs::toggle(id = "DEmodel", condition = dataset_choice() %in% c("BEAT", "TCGA"))
     })
     #all of the pairwise tests need to run on the fly from dds.wald
   # ye_16: 
