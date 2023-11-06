@@ -4,6 +4,7 @@ PW_UI <- function(id) {
   fluidPage(
     theme =
       shinytheme("flatly"),
+    useShinyjs(),
     titlePanel(
       "Differential Expression Tables and Plots"
     ),#end title
@@ -20,6 +21,7 @@ PW_UI <- function(id) {
         # 
         # ),
         #for BEAT and TCGA:
+        
         selectInput(
             ns("DEmodel"),
             label = "Choose a metadata variable for DE design",
@@ -146,6 +148,10 @@ PW_UI <- function(id) {
 
 PW_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
+    
+    observe({
+      shinyjs::toggle(id = "DEmodel", condition = dataset_choice() == "BEAT")
+    })
     #all of the pairwise tests need to run on the fly from dds.wald
   # ye_16: 
     #[1] "Intercept"                                   
