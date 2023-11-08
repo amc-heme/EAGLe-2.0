@@ -153,9 +153,7 @@ DE_UI <- function(id) {
 DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
     #Model Choice ####
-    # observe({
-    #   shinyjs::toggle(id = "pwc", condition = dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT","TCGA"))
-    # })
+
     observe({
       shinyjs::toggle(id = "DEmodel", condition = dataset_choice() %in% c("BEAT", "TCGA"))
     })
@@ -178,6 +176,9 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     })
     #LRT or Pairwise choices ####
     observe({
+      shinyjs::toggle(id = "pwc", condition = dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT","TCGA"))
+    })
+    observe({
       if(dataset_choice() == "Ye_16"){
         updateSelectInput(
           session = session,
@@ -198,16 +199,69 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
           inputId = "pwc", 
           choices = c("LRT","high_PTL_5uM_vs_high_no_drug", "low_no_drug_vs_high_no_drug", "low_PTL_5uM_vs_high_no_drug")
         )
+      } else if(dataset_choice() == "BEAT" & input$DEmodel == "ven response quantile") {
+        updateSelectInput(
+          session = session,
+          inputId = "pwc",
+          choices = c("quantile_q2_vs_q1", "quantile_q3_vs_q1", "quantile_q4_vs_q1"),
+          selected = NULL
+        )
+      } else if(dataset_choice() == "BEAT" & input$DEmodel == "FAB morphology") {
+        updateSelectInput(
+          session = session,
+          inputId = "pwc",
+          choices = c("M0_vs_M5", "M1_vs_M5", "M3_vs_M5", "M4_vs_M5", "M5b_vs_M5"),
+          selected = NULL
+        )
+      } else if(dataset_choice() == "BEAT" & input$DEmodel == "Denovo vs relapse") {
+        updateSelectInput(
+          session = session,
+          inputId = "pwc",
+          choices = "LRT",
+          selected = NULL
+        )
+      } else if(dataset_choice() == "TCGA" & input$DEmodel == "FAB morphology") {
+        updateSelectInput(
+          session = session,
+          inputId = "pwc",
+          choices = c("M0_vs_M5", "M1_vs_M5", "M2_vs_M5", "M3_vs_M5", "M4_vs_M5"),
+          selected = NULL
+        )
+      } else if(dataset_choice() == "TCGA" & input$DEmodel == "Molecular classification") {
+        updateSelectInput(
+          session = session,
+          inputId = "pwc",
+          choices = c("Normal vs BCR-ABL1", "Normal vs Complex", "Normal vs RUNX1-RUNX1T1", "Normal vs MLL translocation",
+                      "Normal vs Poor Risk Cytogenetic Abnormality", "Normal vs PML-RARA", "Normal vs NUP98 translocation",
+                      "Normal vs CBFB-MYH11", "Normal vs Intermediate Risk Cytogenetic Abnormality"),
+          selected = NULL
+        )
+      } else if(dataset_choice() == "TCGA" & input$DEmodel == "RAS mutation") {
+        updateSelectInput(
+          session = session,
+          inputId = "pwc",
+          choices = "LRT",
+          selected = NULL
+        )
+      } else if(dataset_choice() == "TCGA" & input$DEmodel == "NPM1 mutation") {
+        updateSelectInput(
+          session = session,
+          inputId = "pwc",
+          choices = "LRT",
+          selected = NULL
+        )
       }
     })
+  
+  # run DE for pairwise data
  #DE Table ####
-
+ 
  ## for BEAT dataset, the ensembl id's need to be modified to work:
  # dds.res1$ensembl_gene_id <- str_sub(dds.res1$ensembl_gene_id, end=-4) 
     
     # reactive to switch between mouse or human t2g
     dds.res <- reactive({
-      if(data_species() == "human") {
+      if(dataset_choice() %in% c("Cancer_Discovery", "Lee")) {
         
         res <- data.frame(results(dataset_dds())) %>%
           rownames_to_column(., var = 'ensembl_gene_id') %>%
@@ -218,7 +272,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
                                      ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
           na.omit(.)
         
-      } else if(data_species() == "mouse") {
+      } else if(dataset_choice() %in% "Ye_20") {
         
         res <- data.frame(results(dataset_dds())) %>%
           rownames_to_column(., var = 'ensembl_gene_id') %>%
@@ -228,7 +282,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
           mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
                                      ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
           na.omit(.)
-      }
+      } 
       res
     })
     

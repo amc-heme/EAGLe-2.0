@@ -237,7 +237,8 @@ PW_Server <- function(id, data_species, dataset_dds, dataset_choice) {
         updateSelectInput(
           session = session,
           inputId = "pwc", 
-          choices = c("high_PTL_5uM_vs_high_no_drug", "low_no_drug_vs_high_no_drug", "low_PTL_5uM_vs_high_no_drug")
+          choices = c("high_PTL_5uM_vs_high_no_drug", "low_no_drug_vs_high_no_drug", "low_PTL_5uM_vs_high_no_drug"),
+          selected = NULL
         )
       }
     })
