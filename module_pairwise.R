@@ -148,7 +148,9 @@ PW_UI <- function(id) {
 
 PW_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
-    
+    observe({
+      shinyjs::toggle(id = "pwc", condition = dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT","TCGA"))
+    })
     observe({
       shinyjs::toggle(id = "DEmodel", condition = dataset_choice() %in% c("BEAT", "TCGA"))
     })

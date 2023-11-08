@@ -87,17 +87,14 @@ ui <-
               "Gene Expression",
               goi_UI("GOI1")
     ),
-    
     #DESeq Menu ####
       tabPanel("Differential Expression",
-               tabsetPanel(
-                 tabPanel("LRT",
-                          DE_UI("DEtab1")),
-                 tabPanel(
-                   "Pairwise Comparisons",
-                   PW_UI("PWtab1")
-                 )
-               )
+            DE_UI("DEtab1"),
+                 # tabPanel(
+                 #   "Pairwise Comparisons",
+                 #   PW_UI("PWtab1")
+                 # )
+                 # 
              ),
     
     #GSEA menu ####
@@ -143,11 +140,22 @@ server <-
     # goi_Server("GOI1", dataset_dds)
  
   # ##DESEq #####
-    DE_Server("DEtab1",data_species, dataset_dds) 
+    DE_Server("DEtab1",data_species, dataset_dds, dataset_choice) 
  ## Pairwise server ####
-    # I want this to be conditional if a dataset with pairwise options is selected
-    ## possibly a separate module for BEAT and TCGA
-    PW_Server("PWtab1", data_species, dataset_dds, dataset_choice)
+    # I want this to be conditional if a dataset with pairwise options is selected and 
+    # only show after LRT is run in DE_Server
+    # PW_Server("PWtab1", data_species, dataset_dds, dataset_choice)
+    # 
+    # 
+    # observe({
+    #   if(dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT","TCGA")) {
+    #     shinyjs::show("PWtab1")
+    #   } else {
+    #     shinyjs::hide("PWtab1")
+    #   }
+    # })
+    #   
+    
   # ##GSEA output ####
   #   GSEA_Server("GSEA1", dds, t2g) 
   #  

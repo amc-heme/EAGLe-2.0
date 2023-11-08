@@ -21,12 +21,23 @@ DE_UI <- function(id) {
   fluidPage(
     theme =
       shinytheme("flatly"),
+    useShinyjs(),
     titlePanel(
       "Differential Expression Tables and Plots"
     ),#end title
       sidebarLayout(
         sidebarPanel(
         tagList(
+          selectInput(
+            ns("DEmodel"),
+            label = "Choose a metadata variable for DE design",
+            choices = NULL
+          ),
+          selectInput(
+            ns("pwc"),
+            label = "Choose to run LRT ~OR~ a pairwise comparison",
+            choices = "LRT"
+          ),
         materialSwitch(
           inputId =
             (ns("DESeqtable")),
@@ -70,17 +81,6 @@ DE_UI <- function(id) {
           right =
             TRUE
         ),
-         # conditionalPanel(
-         #   ns = ns,
-         #   condition = "input.DESeqtable == true",
-         #  h4("DE Table Specific Options"),
-         #  #option to filter table by padj
-         # radioButtons(ns("padjbutton"), label = "Filter DE tables by padj",
-         #              choices = list("<= 0.01" = "sigvar1", "<= 0.05" = "sigvar5", "All" = "allvar"), selected = "allvar"),
-         # hr(),
-         # downloadButton(ns("downloadDEtable"), label = "Download DE Table")
-         # ),
-
          hr(),
         conditionalPanel(
           ns = ns,
@@ -150,8 +150,56 @@ DE_UI <- function(id) {
   )
 }
 
-DE_Server <- function(id, data_species, dataset_dds) {
+DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
+    #Model Choice ####
+    # observe({
+    #   shinyjs::toggle(id = "pwc", condition = dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT","TCGA"))
+    # })
+    observe({
+      shinyjs::toggle(id = "DEmodel", condition = dataset_choice() %in% c("BEAT", "TCGA"))
+    })
+    observe({
+      if(dataset_choice() == "BEAT"){
+        updateSelectInput(
+          session = session,
+          inputId = "DEmodel",
+          choices = c("ven response quantile", "FAB morphology", "Denovo vs relapse") ,
+          selected = NULL
+        )
+      } else if(dataset_choice() == "TCGA"){
+        updateSelectInput(
+          session = session,
+          inputId = "DEmodel",
+          choices = c("FAB morphology", "Molecular classification", "RAS mutation", "NPM1 mutation"),
+          selected = NULL
+        )
+      } 
+    })
+    #LRT or Pairwise choices ####
+    observe({
+      if(dataset_choice() == "Ye_16"){
+        updateSelectInput(
+          session = session,
+          inputId = "pwc",
+          choices = c("LRT", "blood_vs_bm", "gat_vs_bm", "normBM_vs_bm", "spleen_vs_bm") ,
+          selected = NULL
+        )
+      } else if(dataset_choice() == "Venaza"){
+        updateSelectInput(
+          session = session,
+          inputId = "pwc",
+          choices = c("LRT", "24hr_vs_control", "6hr_vs_control"),
+          selected = NULL
+        )
+      } else if(dataset_choice() == "Lagadinou") {
+        updateSelectInput(
+          session = session,
+          inputId = "pwc", 
+          choices = c("LRT","high_PTL_5uM_vs_high_no_drug", "low_no_drug_vs_high_no_drug", "low_PTL_5uM_vs_high_no_drug")
+        )
+      }
+    })
  #DE Table ####
 
  ## for BEAT dataset, the ensembl id's need to be modified to work:
