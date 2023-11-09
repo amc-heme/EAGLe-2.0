@@ -35,9 +35,14 @@ DE_UI <- function(id) {
           ),
           selectInput(
             ns("pwc"),
-            label = "Choose to run LRT ~OR~ a pairwise comparison",
+            label = "Choose to run LRT OR a pairwise comparison",
             choices = "LRT"
           ),
+          actionButton(
+            (ns("runDE")),
+            "Run DESeq"
+          ),
+          hr(),
         materialSwitch(
           inputId =
             (ns("DESeqtable")),
@@ -80,6 +85,10 @@ DE_UI <- function(id) {
             FALSE,
           right =
             TRUE
+        ),
+        actionButton(
+          (ns("sendGSEA")),
+          "Send results to GSEA"
         ),
          hr(),
         conditionalPanel(
@@ -252,17 +261,21 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
         )
       }
     })
-  
+  #Run action button ####
+    observe({
+      shinyjs::toggle(id = "runDE", condition = dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT","TCGA"))
+    })
   # run DE for pairwise data
     
     #extract the counts
-    dds_counts <- counts(dataset_dds())
-    #extract the metadata
-    meta <- colData(dataset_dds())
-    #creat DESeq object from dds
-    ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = ~ input$DEmodel)
-    #run wald 
-    dds.wald <- DESeq(ddsTxi_dds, test="Wald")
+    # dds_counts <- counts(dataset_dds())
+    # #extract the metadata
+    # meta <- colData(dataset_dds())
+    # #creat DESeq object from dds
+    # ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = ~ input$DEmodel)
+    # #run wald 
+    # dds.wald <- DESeq(ddsTxi_dds, test="Wald")
+    
  #DE Table ####
  
  ## for BEAT dataset, the ensembl id's need to be modified to work:
