@@ -267,18 +267,18 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     })
   # run DE for pairwise data
     #extract the counts
-    reactive({
-      if(dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou","BEAT", "TCGA")) {
-      dds_counts <- counts(dataset_dds())
-      #extract the metadata
-      meta <- colData(dataset_dds())
-      #creat DESeq object from dds
-      ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = ~ input$DEmodel)
-      #run wald
-      dds.wald <- DESeq(ddsTxi_dds, test="Wald")
-      res <- results(dds.wald, contrast=c(input$DEmodel,"M5b", "M5")) 
-      } 
-    })
+    # reactive({
+    #   if(dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou","BEAT", "TCGA")) {
+    #   dds_counts <- counts(dataset_dds())
+    #   #extract the metadata
+    #   meta <- colData(dataset_dds())
+    #   #creat DESeq object from dds
+    #   ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = ~ input$DEmodel)
+    #   #run wald
+    #   dds.wald <- DESeq(ddsTxi_dds, test="Wald")
+    #   res <- results(dds.wald, contrast=c(input$DEmodel,"M5b", "M5")) 
+    #   } 
+    # })
   
     
  #DE Table ####
@@ -306,6 +306,15 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
           rownames_to_column(., var = 'ensembl_gene_id') %>%
           dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
           left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+          dplyr::rename(., Gene = ext_gene) %>%
+          mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
+                                     ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
+          na.omit(.)
+      } else if(dataset_choice() %in% c("Venaza", "Lagadinou") & input$DEmodel == "LRT") {
+        res <- data.frame(results(dataset_dds())) %>%
+          rownames_to_column(., var = 'ensembl_gene_id') %>%
+          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+          left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
           dplyr::rename(., Gene = ext_gene) %>%
           mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
                                      ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
@@ -349,6 +358,15 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
           mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
                                      ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
           na.omit(.)
+      } else if(dataset_choice() %in% "Ye_16" & input$DEmodel == "LRT") {
+        res <- data.frame(results(dataset_dds())) %>%
+          rownames_to_column(., var = 'ensembl_gene_id') %>%
+          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+          left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+          dplyr::rename(., Gene = ext_gene) %>%
+          mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
+                                     ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
+          na.omit(.)
       } else if(dataset_choice() %in% "Ye_16") {
 
         dds_counts <- counts(dataset_dds())
@@ -374,8 +392,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
 
   # output$results <- renderDataTable({
   #   if (input$DESeqtable == TRUE) {
-  # 
-  #     dds.res()
+  #  (for dataset_choice() if input$DEmodel =="LRT)
+  #     dds.res() (else dds.res.pairwise)
   #   }
   # })
  
