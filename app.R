@@ -38,7 +38,9 @@ library(esquisse)
 library(ggprism)
 library(shinycssloaders)
 library(patchwork)
+library(spatstat.utils)
 library(yaml)
+
 options(
   shiny.fullstacktrace = TRUE
 )
@@ -61,6 +63,8 @@ BEAT <- read_rds(paste0(raw_data_p, dataset_config[["BEAT"]]$data_path))
 TCGA <- read_rds(paste0(raw_data_p, dataset_config[["TCGA"]]$data_path))
 HPA <- read_rds(paste0(raw_data_p, dataset_config[["HPA"]]$data_path))
 dataset <- list(CD, Ye16, Ye20, Venaza, Lagadinou, Lee, BEAT, TCGA, HPA)
+
+
 
 # Add dataset names to list generated
 names(dataset) <- 

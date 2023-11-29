@@ -408,7 +408,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     choices <- switch(
       paste(dataset, model, sep = "_"),
       "Cancer_Discovery_LRT" = "LRT",
-      "Ye_16_Source" = c("LRT", "blood_vs_bm", "gat_vs_bm", "normBM_vs_bm", "spleen_vs_bm"),
+      "Ye_16_Source" = c("LRT", "blood_vs_bone_marrow", "gonadal_adipose_tissue_vs_bone_marrow", "normal_bm_vs_bone_marrow", "spleen_vs_bone_marrow"),
       "Ye_20_LRT" = "LRT",
       "Venaza_Treatment" = c("LRT", "24hr_vs_control", "6hr_vs_control"),
       "Lagadinou_Treatment" = c("LRT","high_PTL_5uM_vs_high_no_drug", "low_no_drug_vs_high_no_drug", "low_PTL_5uM_vs_high_no_drug"),
@@ -440,17 +440,24 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     #extract counts and metadata from preloaded dds object
     dds_counts <- counts(dds)
     meta <- colData(dds)
+    print("colnames colData:")
+    print(colnames(meta))
     #extract individual levels from the comparison choice
     levels <- unlist(strsplit(comparison, "_vs_"))
-    ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = ~ model)
+    print("levels:")
+    print(levels)
+    print("eval model:")
+    print(eval(expr(model)))
+    ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = ~ eval(expr(model)))
     dds.wald <- DESeq(ddsTxi_dds, test = "Wald")
-    #define the contrast
-    contrast <- c(model, levels)
-    results_df <- results(dds.wald, contrast = contrast)
+    contrasts <- c(model, levels)
+    print("this is contrasts")
+    print(contrasts)
+    results_df <- results(dds.wald, contrast = contrasts)
     return(results_df)
     }
   }
-  
+ 
   generateRes <- function(dataset, de_results) {
 
     #mouse or human?
@@ -521,11 +528,11 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
 
   observe({
     if(!is.null(dds_result())) {
-      res_1 <- generateRes(dataset_choice(), dds_result())
+      dds.res <- generateRes(dataset_choice(), dds_result())
 
       output$results <- renderDataTable({
         if (input$DESeqtable == TRUE) {
-          res_1
+          dds.res
         }
       })
     }
@@ -541,12 +548,16 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   color2DE <-
     colorServer("color2")
   #Volcano Plot ####
+  observe({
+    if(!is.null(dds_result())) {
+      res.vol <- generateRes(dataset_choice(), dds_result())
+  
   output$volplot <- 
     renderGirafe({
       #colors <- c(colorDE(), "grey",color2DE()) #object for colors on volcano based on user input
       colors <- c(colorDE(), "grey", color2DE())
       if(input$DESeqvolcano == TRUE) { #only create plot if the  volcano switch is toggled
-        p<- ggplot(dds.res(), aes( #call in the DE results from the DE module
+        p<- ggplot(res.vol, aes( 
           x = `log2FoldChange`,
           y = -log10(padj),
           col = DiffExp,
@@ -561,6 +572,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
         girafe(code = print(p))
       }
     })
+    }
+  })
   #MA Plot ####
   color3DE <-
     colorServer("color3")
@@ -568,12 +581,16 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   color4DE <-
     colorServer("color4")
   
+  observe({
+    if(!is.null(dds_result())) {
+      res.ma <- generateRes(dataset_choice(), dds_result())  
+      
   output$MAplot <- 
     renderGirafe ({
-      #colors <- c(color3DE(), "grey",color4DE()) #object for colors on volcano based on user input
+     
       colors <- c(color3DE(), "grey", color4DE())#object for colors on volcano based on user input called from palette module
       if(input$DESeqMA == TRUE) { #only call plot if the MA plot switch is toggled
-        ma <- ggplot(dds.res(), 
+        ma <- ggplot(res.ma, 
                      aes(
                        x = log2(baseMean),
                        y = `log2FoldChange`,
@@ -585,8 +602,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
           scale_color_manual(values = colors) +
           theme_light() +
           ylim(c(
-            min(dds.res()$`log2FoldChange`),
-            max(dds.res()$`log2FoldChange`)
+            min(res.ma$`log2FoldChange`),
+            max(res.ma$`log2FoldChange`)
           )) +
           ggtitle("DE MA Plot") +
           xlab("log2 Mean Expression") +
@@ -595,6 +612,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
         girafe(code = print(ma))
       }
     })
+    }
+  })
   
 
     #Heatmap ####
