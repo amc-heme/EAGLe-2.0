@@ -382,20 +382,17 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
  #      res
  #    })
 
-  # output$results <- renderDataTable({
-  #   if (input$DESeqtable == TRUE) {
-  #  (for dataset_choice() if input$DEmodel =="LRT)
-  #     dds.res() (else dds.res.pairwise)
-  #   }
-  # })
 
   DEModelChoices <- function(session, dataset) {
     choices <- switch(dataset,
-      "Ye_16" = "Tissue",
+      "Cancer_Discovery" = "LRT",
+      "Ye_16" = "Source",
+      "Ye_20" = "LRT",
       "Venaza" = "Treatment",
       "Lagadinou" = "Treatment",
       "BEAT" = c("ven response quantile", "FAB morphology", "Denovo vs relapse"),
       "TCGA" = c("FAB morphology", "Molecular classification", "RAS mutation", "NPM1 mutation"),
+      "Lee" = "LRT",
        default = character(0)
     )
     
@@ -410,7 +407,9 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   PWChoices <- function(session, dataset, model) {
     choices <- switch(
       paste(dataset, model, sep = "_"),
-      "Ye_16_Tissue" = c("LRT", "blood_vs_bm", "gat_vs_bm", "normBM_vs_bm", "spleen_vs_bm"),
+      "Cancer_Discovery_LRT" = "LRT",
+      "Ye_16_Source" = c("LRT", "blood_vs_bm", "gat_vs_bm", "normBM_vs_bm", "spleen_vs_bm"),
+      "Ye_20_LRT" = "LRT",
       "Venaza_Treatment" = c("LRT", "24hr_vs_control", "6hr_vs_control"),
       "Lagadinou_Treatment" = c("LRT","high_PTL_5uM_vs_high_no_drug", "low_no_drug_vs_high_no_drug", "low_PTL_5uM_vs_high_no_drug"),
       "BEAT_ven response quantile" = c("quantile_q2_vs_q1", "quantile_q3_vs_q1", "quantile_q4_vs_q1"),
@@ -422,6 +421,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
                                                                 "Normal vs CBFB-MYH11", "Normal vs Intermediate Risk Cytogenetic Abnormality"),
       "TCGA_RAS mutation" = "LRT",
       "TCGA_NPM1 mutation" = "LRT",
+      "Lee_LRT" = "LRT",
       default = character(0)
     )
     updateSelectInput(
@@ -432,46 +432,107 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     )
   }
   
-  runDETest <- function(dds, model) {
+  runDETest <- function(dds, model, comparison) {
+    # return dds if LRT is chosen
+    if(comparison == "LRT") {
+      return(results(dds))
+    } else {
+    #extract counts and metadata from preloaded dds object
     dds_counts <- counts(dds)
     meta <- colData(dds)
+    #extract individual levels from the comparison choice
+    levels <- unlist(strsplit(comparison, "_vs_"))
     ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = ~ model)
     dds.wald <- DESeq(ddsTxi_dds, test = "Wald")
-    results(dds.wald, contrast = c(model, "M5b", "M5"))
+    #define the contrast
+    contrast <- c(model, levels)
+    results_df <- results(dds.wald, contrast = contrast)
+    return(results_df)
+    }
   }
   
+  generateRes <- function(dataset, de_results) {
 
-  observe({
-    shinyjs::toggle(id = "DEmodel", condition = dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA"))
-  })
-  
+    #mouse or human?
+    is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
+    
+    if(is_hs) {
+      res <- data.frame(de_results) %>%
+        rownames_to_column(., var = 'ensembl_gene_id') %>% 
+      dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+        left_join(unique(dplyr::select(t2g_hs, c(
+          ensembl_gene_id, ext_gene
+        ))), ., by = 'ensembl_gene_id') %>%
+        dplyr::rename(., Gene = ext_gene) %>%
+        mutate(., DiffExp = ifelse(
+          padj < 0.05 & log2FoldChange >= 0.5,
+          'up',
+          ifelse(padj < 0.05 &
+                   log2FoldChange <= -0.5, 'down', 'no')
+        )) %>% 
+        na.omit(.)
+    } else {
+      res <- data.frame(de_results) %>%
+        rownames_to_column(., var = 'ensembl_gene_id') %>% 
+      dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+        left_join(unique(dplyr::select(t2g_mm, c(
+          ensembl_gene_id, ext_gene
+        ))), ., by = 'ensembl_gene_id') %>%
+        dplyr::rename(., Gene = ext_gene) %>%
+        mutate(., DiffExp = ifelse(
+          padj < 0.05 & log2FoldChange >= 0.5,
+          'up',
+          ifelse(padj < 0.05 &
+                   log2FoldChange <= -0.5, 'down', 'no')
+        )) %>% 
+        na.omit(.)
+    }
+    return(res)
+  }
+    
+  # observe({
+  #   shinyjs::toggle(id = "DEmodel", condition = dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA"))
+  # })
+
   
   observe({
     DEModelChoices(session, dataset_choice())
   })
   
 
-  
-  observe({
-    shinyjs::toggle(id = "pwc", condition = dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA"))
-  })
-  
+  # observe({
+  #   shinyjs::toggle(id = "pwc", condition = dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA"))
+  # })
+  # 
   observe({
     PWChoices(session, dataset_choice(), input$DEmodel)
   })
   
-  observe({
-    shinyjs::toggle(id = "runDE", condition = dataset_choice() %in% c("Ye_16","Venaza", "Lagadinou", "BEAT", "TCGA"))
+  # observe({
+  #   shinyjs::toggle(id = "runDE", condition = dataset_choice() %in% c("Ye_16","Venaza", "Lagadinou", "BEAT", "TCGA"))
+  # })
+  # 
+  dds_result <- reactiveVal(NULL)
+
+  #have DE run when runDE button is clicked
+  observeEvent(input$runDE, {
+    dds_result(runDETest(dataset_dds(), input$DEmodel, input$pwc))
   })
-  
-  
-  # DEresults <- function(dataset, model, dds) {
-  #   res <- data.frame(results(dds)) %>% 
-  #     rownames_to_column(., var = 'ensembl_gene_id')
-  #   
-  #   return(res)
-  # }
-  
+
+  observe({
+    if(!is.null(dds_result())) {
+      res_1 <- generateRes(dataset_choice(), dds_result())
+
+      output$results <- renderDataTable({
+        if (input$DESeqtable == TRUE) {
+          res_1
+        }
+      })
+    }
+  })
+# problem: DE object can be passed from function as input for another function
+# Warning: Error in as.vector: no method for coercing this S4 class to a vector
+
   
   #create objects for color palettes from the palette module
   colorDE <-  
