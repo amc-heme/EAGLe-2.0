@@ -162,7 +162,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
       "Venaza" = "condition",
       "Lagadinou" = "Treatment",
       "BEAT" = c("quantile", "FAB_BlastMorphology", "Denovo.Relapse"),
-      "TCGA" = c("FAB_morphology", "Molecular_classification", "RAS_mutation", "NPM1_mutation"),
+      "TCGA" = c("FAB", "RAS_mut", "NPM1_mut"),
       "Lee" = "LRT",
        default = character(0)
     )
@@ -186,12 +186,9 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
       "BEAT_quantile" = c("q2_vs_q1", "q3_vs_q1", "q4_vs_q1"),
       "BEAT_FAB_BlastMorphology" = c("M0_vs_M5", "M1_vs_M5", "M3_vs_M5", "M4_vs_M5", "M5b_vs_M5"),
       "BEAT_Denovo.Relapse" = "LRT",
-      "TCGA_FAB_morphology" = c("M0_vs_M5", "M1_vs_M5", "M2_vs_M5", "M3_vs_M5", "M4_vs_M5"),
-      "TCGA_Molecular_classification" = c("Normal_vs_BCR-ABL1", "Normal vs Complex", "Normal vs RUNX1-RUNX1T1", "Normal vs MLL translocation",
-                                                                "Normal vs Poor Risk Cytogenetic Abnormality", "Normal vs PML-RARA", "Normal vs NUP98 translocation",
-                                                                "Normal vs CBFB-MYH11", "Normal vs Intermediate Risk Cytogenetic Abnormality"),
-      "TCGA_RAS_mutation" = "LRT",
-      "TCGA_NPM1_mutation" = "LRT",
+      "TCGA_FAB" = c("M0_vs_M5", "M1_vs_M5", "M2_vs_M5", "M3_vs_M5", "M4_vs_M5", "M6_vs_M5", "M7_vs_M5"),
+      "TCGA_RAS_mut" = "wt_vs_mut",
+      "TCGA_NPM1_mut" = "wt_vs_mut",
       "Lee_LRT" = "LRT",
       default = character(0)
     )
@@ -336,8 +333,6 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
 })
 
 
-
-  
   #create objects for color palettes from the palette module
   colorDE <-  
     colorServer("color")
