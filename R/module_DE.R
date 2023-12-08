@@ -185,7 +185,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
       "Lagadinou_Treatment" = c("LRT","high_PTL_5uM_vs_high_no_drug", "low_no_drug_vs_high_no_drug", "low_PTL_5uM_vs_high_no_drug"),
       "BEAT_quantile" = c("q2_vs_q1", "q3_vs_q1", "q4_vs_q1"),
       "BEAT_FAB_BlastMorphology" = c("M0_vs_M5", "M1_vs_M5", "M3_vs_M5", "M4_vs_M5", "M5b_vs_M5"),
-      "BEAT_Denovo.Relapse" = "LRT",
+      "BEAT_Denovo.Relapse" = "Relapse_vs_Denovo",
       "TCGA_FAB" = c("M0_vs_M5", "M1_vs_M5", "M2_vs_M5", "M3_vs_M5", "M4_vs_M5", "M6_vs_M5", "M7_vs_M5"),
       "TCGA_RAS_mut" = "wt_vs_mut",
       "TCGA_NPM1_mut" = "wt_vs_mut",
