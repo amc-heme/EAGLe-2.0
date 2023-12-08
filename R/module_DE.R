@@ -153,245 +153,16 @@ DE_UI <- function(id) {
 
 DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
-    #Model Choice ####
-
- #    observe({
- #      shinyjs::toggle(id = "DEmodel", condition = dataset_choice() %in% c("BEAT", "TCGA"))
- #    })
- #    observe({
- #      if(dataset_choice() == "BEAT"){
- #        updateSelectInput(
- #          session = session,
- #          inputId = "DEmodel",
- #          choices = c("ven response quantile", "FAB morphology", "Denovo vs relapse") ,
- #          selected = NULL
- #        )
- #      } else if(dataset_choice() == "TCGA"){
- #        updateSelectInput(
- #          session = session,
- #          inputId = "DEmodel",
- #          choices = c("FAB morphology", "Molecular classification", "RAS mutation", "NPM1 mutation"),
- #          selected = NULL
- #        )
- #      } 
- #    })
- #    #LRT or Pairwise choices ####
- #    observe({
- #      shinyjs::toggle(id = "pwc", condition = dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT","TCGA"))
- #    })
- #    observe({
- #      if(dataset_choice() == "Ye_16"){
- #        updateSelectInput(
- #          session = session,
- #          inputId = "pwc",
- #          choices = c("LRT", "blood_vs_bm", "gat_vs_bm", "normBM_vs_bm", "spleen_vs_bm") ,
- #          selected = NULL
- #        )
- #      } else if(dataset_choice() == "Venaza"){
- #        updateSelectInput(
- #          session = session,
- #          inputId = "pwc",
- #          choices = c("LRT", "24hr_vs_control", "6hr_vs_control"),
- #          selected = NULL
- #        )
- #      } else if(dataset_choice() == "Lagadinou") {
- #        updateSelectInput(
- #          session = session,
- #          inputId = "pwc", 
- #          choices = c("LRT","high_PTL_5uM_vs_high_no_drug", "low_no_drug_vs_high_no_drug", "low_PTL_5uM_vs_high_no_drug")
- #        )
- #      } else if(dataset_choice() == "BEAT" & input$DEmodel == "ven response quantile") {
- #        updateSelectInput(
- #          session = session,
- #          inputId = "pwc",
- #          choices = c("quantile_q2_vs_q1", "quantile_q3_vs_q1", "quantile_q4_vs_q1"),
- #          selected = NULL
- #        )
- #      } else if(dataset_choice() == "BEAT" & input$DEmodel == "FAB morphology") {
- #        updateSelectInput(
- #          session = session,
- #          inputId = "pwc",
- #          choices = c("M0_vs_M5", "M1_vs_M5", "M3_vs_M5", "M4_vs_M5", "M5b_vs_M5"),
- #          selected = NULL
- #        )
- #      } else if(dataset_choice() == "BEAT" & input$DEmodel == "Denovo vs relapse") {
- #        updateSelectInput(
- #          session = session,
- #          inputId = "pwc",
- #          choices = "LRT",
- #          selected = NULL
- #        )
- #      } else if(dataset_choice() == "TCGA" & input$DEmodel == "FAB morphology") {
- #        updateSelectInput(
- #          session = session,
- #          inputId = "pwc",
- #          choices = c("M0_vs_M5", "M1_vs_M5", "M2_vs_M5", "M3_vs_M5", "M4_vs_M5"),
- #          selected = NULL
- #        )
- #      } else if(dataset_choice() == "TCGA" & input$DEmodel == "Molecular classification") {
- #        updateSelectInput(
- #          session = session,
- #          inputId = "pwc",
- #          choices = c("Normal vs BCR-ABL1", "Normal vs Complex", "Normal vs RUNX1-RUNX1T1", "Normal vs MLL translocation",
- #                      "Normal vs Poor Risk Cytogenetic Abnormality", "Normal vs PML-RARA", "Normal vs NUP98 translocation",
- #                      "Normal vs CBFB-MYH11", "Normal vs Intermediate Risk Cytogenetic Abnormality"),
- #          selected = NULL
- #        )
- #      } else if(dataset_choice() == "TCGA" & input$DEmodel == "RAS mutation") {
- #        updateSelectInput(
- #          session = session,
- #          inputId = "pwc",
- #          choices = "LRT",
- #          selected = NULL
- #        )
- #      } else if(dataset_choice() == "TCGA" & input$DEmodel == "NPM1 mutation") {
- #        updateSelectInput(
- #          session = session,
- #          inputId = "pwc",
- #          choices = "LRT",
- #          selected = NULL
- #        )
- #      }
- #    })
- #  #Run action button ####
- #    observe({
- #      shinyjs::toggle(id = "runDE", condition = dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT","TCGA"))
- #    })
- #  # run DE for pairwise data
- #    #extract the counts
- #    reactive({
- #      if(dataset_choice() %in% c("Ye_16", "Venaza", "Lagadinou","BEAT", "TCGA")) {
- #      dds_counts <- counts(dataset_dds())
- #      #extract the metadata
- #      meta <- colData(dataset_dds())
- #      #creat DESeq object from dds
- #      ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = ~ input$DEmodel)
- #      #run wald
- #      dds.wald <- DESeq(ddsTxi_dds, test="Wald")
- #      res <- results(dds.wald, contrast=c(input$DEmodel,"M5b", "M5"))
- #      }
- #    })
- #  
- #    
- # #DE Table ####
- # 
- # ## for BEAT dataset, the ensembl id's need to be modified to work:
- # # dds.res1$ensembl_gene_id <- str_sub(dds.res1$ensembl_gene_id, end=-4) 
- # 
- # #reactive to creat dds.res object for table based on the datasets,
- #    #accounting for species differences and DE model/pairwise choices
- #    dds.res <- reactive({
- #      if(dataset_choice() %in% c("Cancer_Discovery", "Lee")) {
- # 
- #        res <- data.frame(results(dataset_dds())) %>%
- #          rownames_to_column(., var = 'ensembl_gene_id') %>%
- #          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
- #          left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
- #          dplyr::rename(., Gene = ext_gene) %>%
- #          mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
- #                                     ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
- #          na.omit(.)
- # 
- #      } else if(dataset_choice() %in% "Ye_20") {
- # 
- #        res <- data.frame(results(dataset_dds())) %>%
- #          rownames_to_column(., var = 'ensembl_gene_id') %>%
- #          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
- #          left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
- #          dplyr::rename(., Gene = ext_gene) %>%
- #          mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
- #                                     ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
- #          na.omit(.)
- #      } else if(dataset_choice() %in% c("Venaza", "Lagadinou") & input$DEmodel == "LRT") {
- #        res <- data.frame(results(dataset_dds())) %>%
- #          rownames_to_column(., var = 'ensembl_gene_id') %>%
- #          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
- #          left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
- #          dplyr::rename(., Gene = ext_gene) %>%
- #          mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
- #                                     ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
- #          na.omit(.)
- #      } else if(dataset_choice() %in% c("Venaza", "Lagadinou")) {
- # 
- #        dds_counts <- counts(dataset_dds())
- #        #extract the metadata
- #        meta <- colData(dataset_dds())
- #        #creat DESeq object from dds
- #        ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = ~ input$DEmodel)
- #        #run wald
- #        dds.wald <- DESeq(ddsTxi_dds, test="Wald")
- # 
- #        res <- data.frame(results(dds.wald, contrast=c("input$DEmodel","a","b"))) %>%
- #          rownames_to_column(., var = 'ensembl_gene_id')
- # 
- #        res <- res %>%
- #          left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
- #          dplyr::rename(., Gene = ext_gene) %>%
- #          mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
- #                                     ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
- #          na.omit(.)
- #      } else if(dataset_choice() %in% c("BEAT", "TCGA")) {
- #        dds_counts <- counts(dataset_dds())
- #        #extract the metadata
- #        meta <- colData(dataset_dds())
- #        #creat DESeq object from dds
- #        ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = ~ input$DEmodel)
- #        #run wald
- #        dds.wald <- DESeq(ddsTxi_dds, test="Wald")
- # 
- #        res <- data.frame(results(dds.wald, contrast=c("input$DEmodel","a","b"))) %>%
- #          rownames_to_column(., var = 'ensembl_gene_id')
- # 
- #        res$ensembl_gene_id <- str_sub(res$ensembl_gene_id, end=-4)
- # 
- #        res <- res %>%
- #          left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
- #          dplyr::rename(., Gene = ext_gene) %>%
- #          mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
- #                                     ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
- #          na.omit(.)
- #      } else if(dataset_choice() %in% "Ye_16" & input$DEmodel == "LRT") {
- #        res <- data.frame(results(dataset_dds())) %>%
- #          rownames_to_column(., var = 'ensembl_gene_id') %>%
- #          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
- #          left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
- #          dplyr::rename(., Gene = ext_gene) %>%
- #          mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
- #                                     ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
- #          na.omit(.)
- #      } else if(dataset_choice() %in% "Ye_16") {
- # 
- #        dds_counts <- counts(dataset_dds())
- #        #extract the metadata
- #        meta <- colData(dataset_dds())
- #        #creat DESeq object from dds
- #        ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = ~ input$DEmodel)
- #        #run wald
- #        dds.wald <- DESeq(ddsTxi_dds, test="Wald")
- # 
- #        res <- data.frame(results(dds.wald, contrast=c("input$DEmodel","a","b"))) %>%
- #          rownames_to_column(., var = 'ensembl_gene_id')
- # 
- #        res <- res %>%
- #          left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
- #          dplyr::rename(., Gene = ext_gene) %>%
- #          mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
- #                                     ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
- #          na.omit(.)
- #      }
- #      res
- #    })
-
-
+# model choice ####
   DEModelChoices <- function(session, dataset) {
     choices <- switch(dataset,
       "Cancer_Discovery" = "LRT",
       "Ye_16" = "Source",
       "Ye_20" = "LRT",
-      "Venaza" = "Treatment",
+      "Venaza" = "condition",
       "Lagadinou" = "Treatment",
-      "BEAT" = c("ven response quantile", "FAB morphology", "Denovo vs relapse"),
-      "TCGA" = c("FAB morphology", "Molecular classification", "RAS mutation", "NPM1 mutation"),
+      "BEAT" = c("quantile", "FAB_BlastMorphology", "Denovo.Relapse"),
+      "TCGA" = c("FAB_morphology", "Molecular_classification", "RAS_mutation", "NPM1_mutation"),
       "Lee" = "LRT",
        default = character(0)
     )
@@ -410,17 +181,17 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
       "Cancer_Discovery_LRT" = "LRT",
       "Ye_16_Source" = c("LRT", "blood_vs_bone_marrow", "gonadal_adipose_tissue_vs_bone_marrow", "normal_bm_vs_bone_marrow", "spleen_vs_bone_marrow"),
       "Ye_20_LRT" = "LRT",
-      "Venaza_Treatment" = c("LRT", "24hr_vs_control", "6hr_vs_control"),
+      "Venaza_condition" = c("LRT", "24hr_vs_control", "6hr_vs_control"),
       "Lagadinou_Treatment" = c("LRT","high_PTL_5uM_vs_high_no_drug", "low_no_drug_vs_high_no_drug", "low_PTL_5uM_vs_high_no_drug"),
-      "BEAT_ven response quantile" = c("quantile_q2_vs_q1", "quantile_q3_vs_q1", "quantile_q4_vs_q1"),
-      "BEAT_FAB morphology" = c("M0_vs_M5", "M1_vs_M5", "M3_vs_M5", "M4_vs_M5", "M5b_vs_M5"),
-      "BEAT_Denovo vs relapse" = "LRT",
-      "TCGA_FAB morphology" = c("M0_vs_M5", "M1_vs_M5", "M2_vs_M5", "M3_vs_M5", "M4_vs_M5"),
-      "TCGA_Molecular classification" = c("Normal vs BCR-ABL1", "Normal vs Complex", "Normal vs RUNX1-RUNX1T1", "Normal vs MLL translocation",
+      "BEAT_quantile" = c("q2_vs_q1", "q3_vs_q1", "q4_vs_q1"),
+      "BEAT_FAB_BlastMorphology" = c("M0_vs_M5", "M1_vs_M5", "M3_vs_M5", "M4_vs_M5", "M5b_vs_M5"),
+      "BEAT_Denovo.Relapse" = "LRT",
+      "TCGA_FAB_morphology" = c("M0_vs_M5", "M1_vs_M5", "M2_vs_M5", "M3_vs_M5", "M4_vs_M5"),
+      "TCGA_Molecular_classification" = c("Normal_vs_BCR-ABL1", "Normal vs Complex", "Normal vs RUNX1-RUNX1T1", "Normal vs MLL translocation",
                                                                 "Normal vs Poor Risk Cytogenetic Abnormality", "Normal vs PML-RARA", "Normal vs NUP98 translocation",
                                                                 "Normal vs CBFB-MYH11", "Normal vs Intermediate Risk Cytogenetic Abnormality"),
-      "TCGA_RAS mutation" = "LRT",
-      "TCGA_NPM1 mutation" = "LRT",
+      "TCGA_RAS_mutation" = "LRT",
+      "TCGA_NPM1_mutation" = "LRT",
       "Lee_LRT" = "LRT",
       default = character(0)
     )
@@ -464,10 +235,15 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     #mouse or human?
     is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
     
-    if(is_hs) {
+    if(is_hs & dataset_choice() %in% c("BEAT", "TCGA")) {
+      
       res <- data.frame(de_results) %>%
-        rownames_to_column(., var = 'ensembl_gene_id') %>% 
-      dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+        rownames_to_column(., var = 'ensembl_gene_id')
+      
+      res$ensembl_gene_id <- str_sub(res$ensembl_gene_id, end=-4)
+      
+      res <- res %>% 
+        dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
         left_join(unique(dplyr::select(t2g_hs, c(
           ensembl_gene_id, ext_gene
         ))), ., by = 'ensembl_gene_id') %>%
@@ -479,7 +255,26 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
                    log2FoldChange <= -0.5, 'down', 'no')
         )) %>% 
         na.omit(.)
-    } else {
+     
+    } else if(is_hs & dataset_choice() %in% c("Cancer_Discovery","Venaza",
+                                        "Lagadinou", "Lee")){
+      
+      res <- data.frame(de_results) %>%
+        rownames_to_column(., var = 'ensembl_gene_id') %>% 
+        dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+        left_join(unique(dplyr::select(t2g_hs, c(
+          ensembl_gene_id, ext_gene
+        ))), ., by = 'ensembl_gene_id') %>%
+        dplyr::rename(., Gene = ext_gene) %>%
+        mutate(., DiffExp = ifelse(
+          padj < 0.05 & log2FoldChange >= 0.5,
+          'up',
+          ifelse(padj < 0.05 &
+                   log2FoldChange <= -0.5, 'down', 'no')
+        )) %>% 
+        na.omit(.)
+      
+    } else{
       res <- data.frame(de_results) %>%
         rownames_to_column(., var = 'ensembl_gene_id') %>% 
       dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
@@ -529,17 +324,18 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
 
   observe({
     if(!is.null(dds_result())) {
+      
       dds.res <- generateRes(dataset_choice(), dds_result())
-
+    
       output$results <- renderDataTable({
         if (input$DESeqtable == TRUE) {
           dds.res
-        }
-      })
-    }
-  })
-# problem: DE object can be passed from function as input for another function
-# Warning: Error in as.vector: no method for coercing this S4 class to a vector
+       }
+    })
+  }
+})
+
+
 
   
   #create objects for color palettes from the palette module
