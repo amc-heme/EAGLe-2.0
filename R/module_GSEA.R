@@ -1,5 +1,6 @@
 ## GSEA tab module
-
+t2g_hs <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_hs.rds")
+t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_mm.rds")
 #GSEA data table
 
 #load molecular pathways for GSEA
@@ -299,11 +300,11 @@ GSEA_UI <- function(id) {
 }
 
 
-GSEA_Server <- function(id, dds, t2g) {
+GSEA_Server <- function(id, DE_res) {
   moduleServer(id, function(input, output, session) {
     #run GSEA for chosen pathway input
     ens2gene <- reactive({
-      t2g[,c(2,3)]
+      t2g_hs[,c(2,3)]
     })
     #make an object to hold the values of the selectInput for gsea pathway choices
     gsea_file_values <- list("hallmark" = pathways.hallmark,
@@ -323,12 +324,15 @@ GSEA_Server <- function(id, dds, t2g) {
 
     # Extract the dds results in a tidy format
     res <- reactive({
-      results(dds, tidy = TRUE)
+      DE_res()
+      #results(dds, tidy = TRUE)
     })
     
     # Add the human name of the gene to the last column, because that's what all of the pathways are annotated using
-    res <- inner_join(res(), ens2gene(), by = c("row" = "ensembl_gene_id"))
-    colnames(res())[8] <- 'HS_Symbol'
+    res <- 
+     inner_join(res, ens2gene, by = c("row" = "ensembl_gene_id"))
+     colnames(res())[8] <- 'HS_Symbol'
+  
     
     # Select only the human gene symbol and the 'stat' from the results, remove NAs, and average the test stat for duplicate gene symbols
     res2 <- res %>%

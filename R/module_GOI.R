@@ -1,5 +1,5 @@
 # Gene centric module
-vst.goi <- readRDS("data/vst.goi.rds")
+#vst.goi <- readRDS("data/vst.goi.rds")
 goi_UI <- function(id) {
   ns <- NS(id)
   fluidPage(

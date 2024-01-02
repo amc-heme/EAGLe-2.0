@@ -4,8 +4,8 @@ library(InteractiveComplexHeatmap)
 datasets <- 
   read_yaml("./data.yaml")
 raw_data <- getwd()
-t2g_hs <- read_rds("~/Documents/GitHub/EAGLe-2.0/data_rds_files/t2g_hs.rds")
-t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data_rds_files/t2g_mm.rds")
+t2g_hs <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_hs.rds")
+t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_mm.rds")
 
 #choose relevant comparisons for the user to choose from and have them run on the fly
 DE_UI <- function(id) {
@@ -200,6 +200,31 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     )
   }
   
+  runDETest_GSEA <- function(dds, model, comparison) {
+    # return dds if LRT is chosen
+    if(comparison == "LRT") {
+      return(results(dds))
+    } else {
+      #extract counts and metadata from preloaded dds object
+      dds_counts <- counts(dds)
+      meta <- colData(dds)
+      print("colnames colData:")
+      print(head(meta))
+      #extract individual levels from the comparison choice
+      levels <- unlist(strsplit(comparison, "_vs_"))
+      print("levels:")
+      print(levels)
+      print("eval model:")
+      model_term <- as.formula(paste("~", model))
+      print(model_term)
+      ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = model_term)
+      dds.wald <- DESeq(ddsTxi_dds, test = "Wald") 
+      contrasts <- c(model, levels)
+      results_df_GSEA <- results(dds.wald, contrast = contrasts, tidy = TRUE)
+      return(results_df_GSEA)
+    }
+  } #this is what needs to be sent to GSEA#
+
   runDETest <- function(dds, model, comparison) {
     # return dds if LRT is chosen
     if(comparison == "LRT") {
@@ -218,15 +243,16 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     model_term <- as.formula(paste("~", model))
     print(model_term)
     ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = model_term)
-    dds.wald <- DESeq(ddsTxi_dds, test = "Wald")
+    dds.wald <- DESeq(ddsTxi_dds, test = "Wald") 
     contrasts <- c(model, levels)
     print("this is contrasts")
     print(contrasts)
     results_df <- results(dds.wald, contrast = contrasts)
     return(results_df)
     }
-  }
+  } #this is what needs to be sent to GSEA#
  
+  
   generateRes <- function(dataset, de_results) {
 
     #mouse or human?
@@ -318,6 +344,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   observeEvent(input$runDE, {
     dds_result(runDETest(dataset_dds(), input$DEmodel, input$pwc))
   })
+  
+  
 
   observe({
     if(!is.null(dds_result())) {
@@ -493,6 +521,14 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
       ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
     }
   )
+  
+  DDS4GSEA <- reactiveVal(NULL)
+  
+  observeEvent(input$sendGSEA, {
+    DDS4GSEA(runDETest_GSEA(dataset_dds(), input$DEmodel, input$pwc))
+  })
+  
+  return(reactive(DDS4GSEA()))
   })
 }
 
