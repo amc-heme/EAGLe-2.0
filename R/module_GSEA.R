@@ -340,11 +340,11 @@ GSEA_Server <- function(id, DE_res, dataset_choice) {
     })
     # function for calculating ranks
     pathway_ranks <- function(DE_results, ensgene) {
-      
+     
       #add the human name of the gene to the last column
       result <- inner_join(DE_results, ensgene, by = c("row" = "ensembl_gene_id"))
       colnames(result)[8] <- 'HS_Symbol'
-      
+      print(head(result))
       # select only the human gene symbol and the 'stat' from the results,
       result <- result %>% 
         dplyr::select(HS_Symbol, stat) %>% 
@@ -361,6 +361,72 @@ GSEA_Server <- function(id, DE_res, dataset_choice) {
     ranks <- reactive({
       pathway_ranks(DE_res(), ens2gene())
     })
+    
+    #need to generate dds.res table for use in plots 
+    generateResGSEA <- function(dataset, de_results) {
+      print(head(de_results))
+      #mouse or human?
+      is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
+      
+      if(is_hs & dataset_choice() %in% c("BEAT", "TCGA")) {
+        
+        res <- data.frame(de_results) %>%
+          rownames_to_column(., var = 'ensembl_gene_id')
+        
+        res$ensembl_gene_id <- str_sub(res$ensembl_gene_id, end=-4)
+        
+        res <- res %>% 
+          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+          left_join(unique(dplyr::select(t2g_hs, c(
+            ensembl_gene_id, ext_gene
+          ))), ., by = 'ensembl_gene_id') %>%
+          dplyr::rename(., Gene = ext_gene) %>%
+          mutate(., DiffExp = ifelse(
+            padj < 0.05 & log2FoldChange >= 0.5,
+            'up',
+            ifelse(padj < 0.05 &
+                     log2FoldChange <= -0.5, 'down', 'no')
+          )) %>% 
+          na.omit(.)
+        
+      } else if(is_hs & dataset_choice() %in% c("Cancer_Discovery","Venaza",
+                                                "Lagadinou", "Lee")){
+        
+        res <- data.frame(de_results) %>%
+          rownames_to_column(., var = 'ensembl_gene_id') %>% 
+          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+          left_join(unique(dplyr::select(t2g_hs, c(
+            ensembl_gene_id, ext_gene
+          ))), ., by = 'ensembl_gene_id') %>%
+          dplyr::rename(., Gene = ext_gene) %>%
+          mutate(., DiffExp = ifelse(
+            padj < 0.05 & log2FoldChange >= 0.5,
+            'up',
+            ifelse(padj < 0.05 &
+                     log2FoldChange <= -0.5, 'down', 'no')
+          )) %>% 
+          na.omit(.)
+        
+      } else{
+        res <- data.frame(de_results) %>%
+          rownames_to_column(., var = 'ensembl_gene_id') %>% 
+          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+          left_join(unique(dplyr::select(t2g_mm, c(
+            ensembl_gene_id, ext_gene
+          ))), ., by = 'ensembl_gene_id') %>%
+          dplyr::rename(., Gene = ext_gene) %>%
+          mutate(., DiffExp = ifelse(
+            padj < 0.05 & log2FoldChange >= 0.5,
+            'up',
+            ifelse(padj < 0.05 &
+                     log2FoldChange <= -0.5, 'down', 'no')
+          )) %>% 
+          na.omit(.)
+      }
+      return(res)
+    }
+  
+    
     #reactive expression to run fgsea and load results table for each chosen pathway
     gseafile <-
       eventReactive(input$filechoice,{
@@ -386,7 +452,7 @@ GSEA_Server <- function(id, DE_res, dataset_choice) {
         pathwaygsea <- gsea_file_values[[input$filechoice]]
         fgseaRes <-
           fgsea::fgsea(pathways = pathwaygsea,
-                       stats = ranks,
+                       stats = ranks(),
                        nproc = 10)
         fgseaResTidy <- fgseaRes %>%
           as_tibble() %>%
@@ -469,7 +535,7 @@ GSEA_Server <- function(id, DE_res, dataset_choice) {
         pathwaygsea <- gsea_file_values[[input$filechoice]]
         fgseaRes <-
           fgsea::fgsea(pathways = pathwaygsea,
-                       stats = ranks,
+                       stats = ranks(),
                        nproc = 10)
         fgseaResTidy <-
           fgseaRes %>%
@@ -531,7 +597,7 @@ GSEA_Server <- function(id, DE_res, dataset_choice) {
       pathwaygsea <- gsea_file_values[[input$filechoice]]
       fgseaRes <-
         fgsea::fgsea(pathways = pathwaygsea,
-                     stats = ranks,
+                     stats = ranks(),
                      nproc = 10)
       fgseaResTidy <- fgseaRes %>%
         as_tibble() %>%
@@ -540,14 +606,14 @@ GSEA_Server <- function(id, DE_res, dataset_choice) {
       if(input$topupordownbutton == "topup") {
         top.UP.path <- as.character(fgseaResTidy[1,1])
         plotEnrichment(pathwaygsea[[top.UP.path]],
-                       ranks) + labs(title=top.UP.path)
+                       ranks()) + labs(title=top.UP.path)
       } else if(input$topupordownbutton == "topdown") {
         top.DOWN.path <- as.character(fgseaResTidy[nrow(fgseaResTidy), 1])
         plotEnrichment(pathwaygsea[[top.DOWN.path]],
-                       ranks) + labs(title=top.DOWN.path)
+                       ranks()) + labs(title=top.DOWN.path)
       } else if(input$topupordownbutton == "eplotpath") {
         plotEnrichment(pathwaygsea[[input$pathwaylisteplot]],
-                       ranks) + labs(title= input$pathwaylisteplot)
+                       ranks()) + labs(title= input$pathwaylisteplot)
       }
     })
     #download button output- enrichment plot
@@ -567,7 +633,7 @@ GSEA_Server <- function(id, DE_res, dataset_choice) {
       pathwaygsea <- gsea_file_values[[input$filechoice]]
       p <-
         unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylist]))
-      
+    
       dds.res.pathways <- dds.res %>%
         mutate(., genes_in_pathway = ifelse(Gene %in% p, 'yes', 'no'))
       #print(dds.res.pathways)
