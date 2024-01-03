@@ -526,8 +526,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   
   observeEvent(input$sendGSEA, {
     DDS4GSEA(runDETest_GSEA(dataset_dds(), input$DEmodel, input$pwc))
+    
   })
-  
   return(reactive(DDS4GSEA()))
   })
 }

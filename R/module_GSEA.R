@@ -1,4 +1,6 @@
 ## GSEA tab module
+datasets <- 
+  read_yaml("./data.yaml")
 t2g_hs <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_hs.rds")
 t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_mm.rds")
 #GSEA data table
@@ -300,12 +302,10 @@ GSEA_UI <- function(id) {
 }
 
 
-GSEA_Server <- function(id, DE_res) {
+GSEA_Server <- function(id, DE_res, dataset_choice) {
   moduleServer(id, function(input, output, session) {
     #run GSEA for chosen pathway input
-    ens2gene <- reactive({
-      t2g_hs[,c(2,3)]
-    })
+   
     #make an object to hold the values of the selectInput for gsea pathway choices
     gsea_file_values <- list("hallmark" = pathways.hallmark,
                              "goall" = pathways.GOall,
@@ -321,40 +321,51 @@ GSEA_Server <- function(id, DE_res) {
                              "biocarta" = pathways.Biocarta,
                              "lsc" = pathways.lsc,
                              "aeg" = pathways.aeg)
-
-    # Extract the dds results in a tidy format
-    res <- reactive({
-      DE_res()
-      #results(dds, tidy = TRUE)
-    })
-    
-    # Add the human name of the gene to the last column, because that's what all of the pathways are annotated using
-    res <- reactive({
-      result <- res()
-      ensgene <- ens2gene()
-     
-      if(!is.null(result) && !is.null(ensgene)) {
-        result <- inner_join(result, ensgene, by = c("row" = "ensembl_gene_id"))
+    #function for using correct t2g
+    generateEnsGene <- function(dataset) {
+      #mouse or human?
+      is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
+      
+    if(is_hs) {
+      ens2gene <- t2g_hs[, c(2,3)]
+      } else{
+        ens2gene <- t2g_mm[, c(2,3)]
       }
-     colnames(result)[8] <- 'HS_Symbol'
+      print(head(ens2gene))
+      return(ens2gene)
+    }
+    #ens2gene object based on user specified dataset choice
+    ens2gene <- reactive({
+      generateEnsGene(dataset_choice())
     })
+    # function for calculating ranks
+    pathway_ranks <- function(DE_results, ensgene) {
+      
+      #add the human name of the gene to the last column
+      result <- inner_join(DE_results, ensgene, by = c("row" = "ensembl_gene_id"))
+      colnames(result)[8] <- 'HS_Symbol'
+      
+      # select only the human gene symbol and the 'stat' from the results,
+      result <- result %>% 
+        dplyr::select(HS_Symbol, stat) %>% 
+        na.omit() %>% 
+        distinct() %>% 
+        group_by(HS_Symbol) %>% 
+        summarize(stat = mean(stat))
+      
+      #reconfigure the data and return ranks
+      ranks <- deframe(result)
+      return(sort(ranks))
+    }
     
-    # Select only the human gene symbol and the 'stat' from the results, remove NAs, and average the test stat for duplicate gene symbols
-    res2 <- res %>%
-      dplyr::select(HS_Symbol, stat) %>%
-      na.omit() %>%
-      distinct() %>%
-      group_by(HS_Symbol) %>%
-      summarize(stat = mean(stat))
-    
-    # Reconfigure the data
-    ranks <- deframe(res2)
-    ranks <- sort(ranks)
+    ranks <- reactive({
+      pathway_ranks(DE_res(), ens2gene())
+    })
     #reactive expression to run fgsea and load results table for each chosen pathway
     gseafile <-
       eventReactive(input$filechoice,{
         pathwaygsea <- gsea_file_values[[input$filechoice]]
-        fgseaRes <- fgsea::fgsea(pathways = pathwaygsea, stats = ranks, nproc = 10)
+        fgseaRes <- fgsea::fgsea(pathways = pathwaygsea, stats = ranks(), nproc = 10)
         fgseaResTidy <- fgseaRes %>%
           as_tibble() %>%
           dplyr::select(., -pval,-log2err, -ES) %>% 
