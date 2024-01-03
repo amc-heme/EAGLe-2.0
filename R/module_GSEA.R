@@ -329,10 +329,15 @@ GSEA_Server <- function(id, DE_res) {
     })
     
     # Add the human name of the gene to the last column, because that's what all of the pathways are annotated using
-    res <- 
-     inner_join(res, ens2gene, by = c("row" = "ensembl_gene_id"))
-     colnames(res())[8] <- 'HS_Symbol'
-  
+    res <- reactive({
+      result <- res()
+      ensgene <- ens2gene()
+     
+      if(!is.null(result) && !is.null(ensgene)) {
+        result <- inner_join(result, ensgene, by = c("row" = "ensembl_gene_id"))
+      }
+     colnames(result)[8] <- 'HS_Symbol'
+    })
     
     # Select only the human gene symbol and the 'stat' from the results, remove NAs, and average the test stat for duplicate gene symbols
     res2 <- res %>%
