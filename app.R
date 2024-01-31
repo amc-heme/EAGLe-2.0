@@ -86,31 +86,26 @@ ui <-
               "QC",
               QC_UI("QC1")
     ),
-    # 
-    #Gene expression analysis ####
-    tabPanel( 
-              "Gene Expression",
-              goi_UI("GOI1")
-    ),
     #DESeq Menu ####
-      tabPanel("Differential Expression",
-            DE_UI("DEtab1"),
-                 # tabPanel(
-                 #   "Pairwise Comparisons",
-                 #   PW_UI("PWtab1")
-                 # )
-                 # 
-             ),
+    tabPanel("Differential Expression",
+             DE_UI("DEtab1"),
+             # tabPanel(
+             #   "Pairwise Comparisons",
+             #   PW_UI("PWtab1")
+             # )
+             # 
+    ),
     
     #GSEA menu ####
     tabPanel("GSEA",
              GSEA_UI("GSEA1")
     ),
-
-    #GOI plots ####
-    tabPanel("GSEA Pathway/Gene Visualization",
-     #pathway_UI("pathway1")
-  )
+    
+    #Gene expression analysis ####
+    tabPanel( 
+              "Gene Expression",
+              goi_UI("GOI1")
+    )
   )
 
 
@@ -148,7 +143,7 @@ server <-
     DE_res <- DE_Server("DEtab1",data_species, dataset_dds, dataset_choice) 
 
   # ##GSEA output ####
-     GSEA_Server("GSEA1", DE_res, dataset_choice)
+    GSEA_Server("GSEA1", DE_res, dataset_choice, dataset_dds)
   #  
   #   
   # ##GOI pathway output ####

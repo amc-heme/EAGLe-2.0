@@ -203,7 +203,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   runDETest_GSEA <- function(dds, model, comparison) {
     # return dds if LRT is chosen
     if(comparison == "LRT") {
-      return(results(dds))
+      return(results(dds, tidy = TRUE))
     } else {
       #extract counts and metadata from preloaded dds object
       dds_counts <- counts(dds)
@@ -531,4 +531,6 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   return(reactive(DDS4GSEA()))
   })
 }
-
+# need a way to send the results of the de test to GSEA for the volcano plot as well. 
+# dds_results function requires the runDEtest function to work. The DE table sent to
+# GSEA is in tidy format and will not work for creating a res table

@@ -302,7 +302,7 @@ GSEA_UI <- function(id) {
 }
 
 
-GSEA_Server <- function(id, DE_res, dataset_choice) {
+GSEA_Server <- function(id, DE_res, dataset_choice, dataset_dds) {
   moduleServer(id, function(input, output, session) {
     #run GSEA for chosen pathway input
    
@@ -624,6 +624,7 @@ GSEA_Server <- function(id, DE_res, dataset_choice) {
       }
     )
     # GSEA Volcano plot ####
+    dds.res <- generateResGSEA(dataset_choice, dataset_dds)
     #reactive expression for selection of specific pathway by user input
     observe({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
