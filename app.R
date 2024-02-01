@@ -140,10 +140,10 @@ server <-
     # goi_Server("GOI1", dataset_dds)
  
   # ##DESEq #####
-    DE_res <- DE_Server("DEtab1",data_species, dataset_dds, dataset_choice) 
+    DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice) 
 
   # ##GSEA output ####
-    GSEA_Server("GSEA1", DE_res, dataset_choice, dataset_dds)
+    GSEA_Server("GSEA1", dataset_choice, DE_res)
   #  
   #   
   # ##GOI pathway output ####

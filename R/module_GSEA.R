@@ -302,7 +302,7 @@ GSEA_UI <- function(id) {
 }
 
 
-GSEA_Server <- function(id, DE_res, dataset_choice, dataset_dds) {
+GSEA_Server <- function(id, dataset_choice, DE_res) {
   moduleServer(id, function(input, output, session) {
     #run GSEA for chosen pathway input
    
@@ -359,7 +359,7 @@ GSEA_Server <- function(id, DE_res, dataset_choice, dataset_dds) {
     }
     
     ranks <- reactive({
-      pathway_ranks(DE_res(), ens2gene())
+      pathway_ranks(DE_res$res_tidy(), ens2gene())
     })
     
     #need to generate dds.res table for use in plots 
@@ -376,7 +376,7 @@ GSEA_Server <- function(id, DE_res, dataset_choice, dataset_dds) {
         res$ensembl_gene_id <- str_sub(res$ensembl_gene_id, end=-4)
         
         res <- res %>% 
-          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+          dplyr::select(., ensembl_gene_id, log2FoldChange, padj) %>%
           left_join(unique(dplyr::select(t2g_hs, c(
             ensembl_gene_id, ext_gene
           ))), ., by = 'ensembl_gene_id') %>%
@@ -394,7 +394,7 @@ GSEA_Server <- function(id, DE_res, dataset_choice, dataset_dds) {
         
         res <- data.frame(de_results) %>%
           rownames_to_column(., var = 'ensembl_gene_id') %>% 
-          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+          dplyr::select(., ensembl_gene_id, log2FoldChange, padj) %>%
           left_join(unique(dplyr::select(t2g_hs, c(
             ensembl_gene_id, ext_gene
           ))), ., by = 'ensembl_gene_id') %>%
@@ -624,7 +624,9 @@ GSEA_Server <- function(id, DE_res, dataset_choice, dataset_dds) {
       }
     )
     # GSEA Volcano plot ####
-    dds.res <- generateResGSEA(dataset_choice, dataset_dds)
+    dds.res <- observeEvent(input$volcanoplot == TRUE,{
+      generateResGSEA(dataset_choice(), DE_res$dds_res())
+    })
     #reactive expression for selection of specific pathway by user input
     observe({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
@@ -635,7 +637,7 @@ GSEA_Server <- function(id, DE_res, dataset_choice, dataset_dds) {
       p <-
         unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylist]))
     
-      dds.res.pathways <- dds.res %>%
+      dds.res.pathways <- dds.res() %>%
         mutate(., genes_in_pathway = ifelse(Gene %in% p, 'yes', 'no'))
       #print(dds.res.pathways)
     })

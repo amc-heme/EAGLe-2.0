@@ -250,7 +250,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     results_df <- results(dds.wald, contrast = contrasts)
     return(results_df)
     }
-  } #this is what needs to be sent to GSEA#
+  } 
  
   
   generateRes <- function(dataset, de_results) {
@@ -528,7 +528,12 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     DDS4GSEA(runDETest_GSEA(dataset_dds(), input$DEmodel, input$pwc))
     
   })
-  return(reactive(DDS4GSEA()))
+  
+  list(
+    res_tidy = reactive(DDS4GSEA()),
+    dds_res = reactive(dds_result())
+  )
+  #return(reactive(DDS4GSEA()))
   })
 }
 # need a way to send the results of the de test to GSEA for the volcano plot as well. 
