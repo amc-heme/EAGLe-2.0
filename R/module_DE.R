@@ -539,3 +539,4 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
 # need a way to send the results of the de test to GSEA for the volcano plot as well. 
 # dds_results function requires the runDEtest function to work. The DE table sent to
 # GSEA is in tidy format and will not work for creating a res table
+#figure out how to stop dds_result from running in generateGSEAres before button is pushed
