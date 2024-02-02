@@ -134,7 +134,7 @@ server <-
 
   ## QC tab ####
   
-    QC_Server("QC1",dataset_dds)
+    QC_Server("QC1",dataset_dds, dataset_choice)
     
   ## GOI tab####  
     # goi_Server("GOI1", dataset_dds)

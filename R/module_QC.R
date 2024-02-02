@@ -4,6 +4,8 @@ library(ggplot2)
 library(DESeq2)
 library(TidyMultiqc)
 library(cowplot)
+datasets.pca <- 
+  read_yaml("./data.yaml")
 
 QC_UI <- function(id) {
   ns <- NS(id)
@@ -97,7 +99,7 @@ QC_UI <- function(id) {
   )
 }
 
-QC_Server <- function(id, dataset_dds) {
+QC_Server <- function(id, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
 
    # create vsd object from dds file
@@ -111,21 +113,28 @@ QC_Server <- function(id, dataset_dds) {
       vst(dds(), blind = F)
       }) 
     
+    pca.id <- reactive({
+      datasets.pca[[dataset_choice()]]$ID
+    })
+    
+    observe({
+      print(pca.id())
+    })
     #run pca on vsd 
     vsd.pca <- reactive({
       print(class(vsd()))
       data.frame(prcomp(t(assay(vsd())))$x) %>%
       as_tibble(rownames = "ID") %>%
-      left_join(., as_tibble(colData(vsd())), by = "ID")
+      left_join(., as_tibble(colData(vsd())), by = c("ID" = pca.id()))
     })
     #data frame for variance
-    vsd.pca.var <- reactive({
-      data.frame(summary(prcomp(t(assay(vsd())$importance)))) 
-    })
+    # vsd.pca.var <- reactive({
+    #   data.frame(summary(prcomp(t(assay(vsd())$importance)))) 
+    # })
     #determine % variance of pc1 and pc2
-    
-    pc1var = reactive({round(vsd.pca.var()[3,1] * 100, 1)})
-    pc2var = reactive({round(vsd.pca.var()[3,2] * 100 - pc1var(), 1)})
+    # 
+    # pc1var = reactive({round(vsd.pca.var()[3,1] * 100, 1)})
+    # pc2var = reactive({round(vsd.pca.var()[3,2] * 100 - pc1var(), 1)})
     
     scree.pca <- reactive({
       prcomp(t(assay(vsd())))
@@ -202,10 +211,10 @@ QC_Server <- function(id, dataset_dds) {
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
           theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
           theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          xlab(paste('PC1 =', pc1var(), '% variance')) + #reactive x lab for % variance
-          ylab(paste('PC2 =', pc2var(), '% variance')) + #reactive y lab for % variance
+          # xlab(paste('PC1 =', pc1var(), '% variance')) + #reactive x lab for % variance
+          # ylab(paste('PC2 =', pc2var(), '% variance')) + #reactive y lab for % variance
           ggtitle("PCA") + 
-          geom_text_repel(colour = "black", aes(label=sample_name),hjust=0, vjust=0)
+          geom_text_repel(colour = "black", aes(label=pca.id()),hjust=0, vjust=0)
         print(pca)
       }
     })

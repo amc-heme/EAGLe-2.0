@@ -4,48 +4,56 @@ Cancer_Discovery:
   qc_path: 
   species: "human"
   t2g: "t2g_hs"
+  ID: "SRR"
 Ye_16:
   label: "Ye et al. 2016"
   data_path: "/data/Ye_16_dds.rds"
   qc_path:
   species: "mouse"
   t2g: "t2g_mm"
+  ID: "SRR"
 Ye_20:
   label:  "Ye et al. 2020"
   data_path: "/data/Ye_20_dds.rds"
   qc_path:
   species: "mouse"
   t2g: "t2g_mm"
+  ID: "SRR"
 Venaza:
   label: "Pollyea et al., Nature, 2018"
   data_path: "/data/venaza_dds.rds"
   qc_path:
   species: "human"
   t2g: "t2g_hs"
+  ID: "ID"
 Lagadinou: 
   label: "Lagadinou et al., Cell Stem Cell, 2013"
   data_path: "/data/EL_AML_dds.rds"
   qc_path:
   species: "human"
   t2g: "t2g_hs"
+  ID: "Sample"
 Lee:
   label: "Lee et al., Nature, 2018"
   data_path: "/data/Lee_dds.rds"
   qc_path:
   species: "human"
   t2g: "t2g_hs"
+  ID: "SRR"
 BEAT:
   label: "BEAT-AML"
   data_path: "/data/BEAT_AML_dds.rds"
   qc_path:
   species: "human"
   t2g: "t2g_hs"
+  ID: "filename"
 TCGA:
   label: "TCGA"
   data_path: "/data/TCGA_dds.rds"
   qc_path: 
   species: "human"
   t2g: "t2g_hs"
+  ID: "filename"
 HPA:
   label: "Human Protein Atlas"
   data_path: "/data/HPA_dds.rds"
