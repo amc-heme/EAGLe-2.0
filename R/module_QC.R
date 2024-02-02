@@ -101,18 +101,22 @@ QC_Server <- function(id, dataset_dds) {
   moduleServer(id, function(input, output, session) {
 
    # create vsd object from dds file
-    dds.counts <- reactive({
-      counts(dataset_dds())
-      })
+    dds <- reactive({
+      print(head(dataset_dds()))
+      dataset_dds()
+      }) #this is cwrong-need DE object, not matrix
+    # variance stabilize the counts table
     vsd <- reactive({
-      vst(dds.counts(), blind = F)
-      })
+      print(head(vst(dds(), blind = F)))
+      vst(dds(), blind = F)
+      }) 
     
-    #run pca on vsd
+    #run pca on vsd 
     vsd.pca <- reactive({
-      data.frame(prcomp(t(assay(vsd()))$x)) %>%
-      as_tibble(rownames = "SRR") %>%
-      left_join(., as_tibble(colData(vsd())))
+      print(class(vsd()))
+      data.frame(prcomp(t(assay(vsd())))$x) %>%
+      as_tibble(rownames = "ID") %>%
+      left_join(., as_tibble(colData(vsd())), by = "ID")
     })
     #data frame for variance
     vsd.pca.var <- reactive({
@@ -121,7 +125,7 @@ QC_Server <- function(id, dataset_dds) {
     #determine % variance of pc1 and pc2
     
     pc1var = reactive({round(vsd.pca.var()[3,1] * 100, 1)})
-    pc2var = reactive({round(vsd.pca.var()[3,2] * 100 - pc1var, 1)})
+    pc2var = reactive({round(vsd.pca.var()[3,2] * 100 - pc1var(), 1)})
     
     scree.pca <- reactive({
       prcomp(t(assay(vsd())))
