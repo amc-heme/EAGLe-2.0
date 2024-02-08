@@ -348,7 +348,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   
 
   observe({
-    if(!is.null(dds_result())) {
+    if(!is.null(dds_result())) { #only run after runDE action button has been selected
       
       dds.res <- generateRes(dataset_choice(), dds_result())
     
@@ -524,16 +524,26 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   
   DDS4GSEA <- reactiveVal(NULL)
   
-  observeEvent(input$sendGSEA, {
+  observeEvent(input$sendGSEA, { #only run DE for GSEA if the action button is pushed 
     DDS4GSEA(runDETest_GSEA(dataset_dds(), input$DEmodel, input$pwc))
     
   })
   
+ 
+
+
+     #only generate the res table if all choices have been selected and runDE is pushed
+    res4GSEA <- reactive({
+      if(!is.null(dds_result())) {
+      generateRes(dataset_choice(), dds_result())
+    }
+  })
+
   list(
-    res_tidy = reactive(DDS4GSEA()),
-    dds_res = reactive(dds_result())
+    res_tidy = reactive(DDS4GSEA()), #send tidy version of dds.res to GSEA for ranks function
+    dds_res = res4GSEA #send dds.res to GSEA for use in volcano plot
   )
-  #return(reactive(DDS4GSEA()))
+  
   })
 }
 # need a way to send the results of the de test to GSEA for the volcano plot as well. 

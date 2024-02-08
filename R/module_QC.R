@@ -199,6 +199,8 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
     #       print("VST + batch corrected PCA")
     #     }
     #   })
+    #need functions for determining the variables to input into the pca plot
+    #maybe add the variables to the yaml and then have the function pull those values and put into the plotb
     output$PCAplot <- renderPlot ({
       if(input$PCAplots == TRUE) {
         pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2)) +

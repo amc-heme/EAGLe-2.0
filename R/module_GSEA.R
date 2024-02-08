@@ -363,69 +363,69 @@ GSEA_Server <- function(id, dataset_choice, DE_res) {
     })
     
     #need to generate dds.res table for use in plots 
-    generateResGSEA <- function(dataset, de_results) {
-      print(head(de_results))
-      #mouse or human?
-      is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
-      
-      if(is_hs & dataset_choice() %in% c("BEAT", "TCGA")) {
-        
-        res <- data.frame(de_results) %>%
-          rownames_to_column(., var = 'ensembl_gene_id')
-        
-        res$ensembl_gene_id <- str_sub(res$ensembl_gene_id, end=-4)
-        
-        res <- res %>% 
-          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-          left_join(unique(dplyr::select(t2g_hs, c(
-            ensembl_gene_id, ext_gene
-          ))), ., by = 'ensembl_gene_id') %>%
-          dplyr::rename(., Gene = ext_gene) %>%
-          mutate(., DiffExp = ifelse(
-            padj < 0.05 & log2FoldChange >= 0.5,
-            'up',
-            ifelse(padj < 0.05 &
-                     log2FoldChange <= -0.5, 'down', 'no')
-          )) %>% 
-          na.omit(.)
-        
-      } else if(is_hs & dataset_choice() %in% c("Cancer_Discovery","Venaza",
-                                                "Lagadinou", "Lee")){
-        
-        res <- data.frame(de_results) %>%
-          rownames_to_column(., var = 'ensembl_gene_id') %>% 
-          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-          left_join(unique(dplyr::select(t2g_hs, c(
-            ensembl_gene_id, ext_gene
-          ))), ., by = 'ensembl_gene_id') %>%
-          dplyr::rename(., Gene = ext_gene) %>%
-          mutate(., DiffExp = ifelse(
-            padj < 0.05 & log2FoldChange >= 0.5,
-            'up',
-            ifelse(padj < 0.05 &
-                     log2FoldChange <= -0.5, 'down', 'no')
-          )) %>% 
-          na.omit(.)
-        
-      } else{
-        res <- data.frame(de_results) %>%
-          rownames_to_column(., var = 'ensembl_gene_id') %>% 
-          dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-          left_join(unique(dplyr::select(t2g_mm, c(
-            ensembl_gene_id, ext_gene
-          ))), ., by = 'ensembl_gene_id') %>%
-          dplyr::rename(., Gene = ext_gene) %>%
-          mutate(., DiffExp = ifelse(
-            padj < 0.05 & log2FoldChange >= 0.5,
-            'up',
-            ifelse(padj < 0.05 &
-                     log2FoldChange <= -0.5, 'down', 'no')
-          )) %>% 
-          na.omit(.)
-      }
-      return(res)
-    }
-  
+    # generateResGSEA <- function(dataset, de_results) {
+    #   print(head(de_results))
+    #   #mouse or human?
+    #   is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
+    #   
+    #   if(is_hs & dataset_choice() %in% c("BEAT", "TCGA")) {
+    #     
+    #     res <- data.frame(de_results) %>%
+    #       rownames_to_column(., var = 'ensembl_gene_id')
+    #     
+    #     res$ensembl_gene_id <- str_sub(res$ensembl_gene_id, end=-4)
+    #     
+    #     res <- res %>% 
+    #       dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+    #       left_join(unique(dplyr::select(t2g_hs, c(
+    #         ensembl_gene_id, ext_gene
+    #       ))), ., by = 'ensembl_gene_id') %>%
+    #       dplyr::rename(., Gene = ext_gene) %>%
+    #       mutate(., DiffExp = ifelse(
+    #         padj < 0.05 & log2FoldChange >= 0.5,
+    #         'up',
+    #         ifelse(padj < 0.05 &
+    #                  log2FoldChange <= -0.5, 'down', 'no')
+    #       )) %>% 
+    #       na.omit(.)
+    #     
+    #   } else if(is_hs & dataset_choice() %in% c("Cancer_Discovery","Venaza",
+    #                                             "Lagadinou", "Lee")){
+    #     
+    #     res <- data.frame(de_results) %>%
+    #       rownames_to_column(., var = 'ensembl_gene_id') %>% 
+    #       dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+    #       left_join(unique(dplyr::select(t2g_hs, c(
+    #         ensembl_gene_id, ext_gene
+    #       ))), ., by = 'ensembl_gene_id') %>%
+    #       dplyr::rename(., Gene = ext_gene) %>%
+    #       mutate(., DiffExp = ifelse(
+    #         padj < 0.05 & log2FoldChange >= 0.5,
+    #         'up',
+    #         ifelse(padj < 0.05 &
+    #                  log2FoldChange <= -0.5, 'down', 'no')
+    #       )) %>% 
+    #       na.omit(.)
+    #     
+    #   } else{
+    #     res <- data.frame(de_results) %>%
+    #       rownames_to_column(., var = 'ensembl_gene_id') %>% 
+    #       dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
+    #       left_join(unique(dplyr::select(t2g_mm, c(
+    #         ensembl_gene_id, ext_gene
+    #       ))), ., by = 'ensembl_gene_id') %>%
+    #       dplyr::rename(., Gene = ext_gene) %>%
+    #       mutate(., DiffExp = ifelse(
+    #         padj < 0.05 & log2FoldChange >= 0.5,
+    #         'up',
+    #         ifelse(padj < 0.05 &
+    #                  log2FoldChange <= -0.5, 'down', 'no')
+    #       )) %>% 
+    #       na.omit(.)
+    #   }
+    #   return(res)
+    # }
+    # 
     
     #reactive expression to run fgsea and load results table for each chosen pathway
     gseafile <-
@@ -627,74 +627,82 @@ GSEA_Server <- function(id, dataset_choice, DE_res) {
     )
     
     
+    
     # GSEA Volcano plot ####
-    # dds.res <- reactiveVal(NULL)
-    # 
-    # observeEvent(input$volcanoplot == TRUE, {
-    #     
-    # dds.res <- generateResGSEA(dataset_choice(), DE_res$dds_res())
-    #   
-    # })
-    # #reactive expression for selection of specific pathway by user input
-    # observe({
-    #   pathwaygsea <- gsea_file_values[[input$filechoice]]
-    #   updateSelectizeInput(session,"pathwaylist", choices = names(pathwaygsea), server = TRUE)})
-    # #function to select only genes from the DE object that are found in the chosen pathway
-    # dds.res.pathways <- observe({
-    #   
-    #   pathwaygsea <- gsea_file_values[[input$filechoice]]
-    #   p <-
-    #     unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylist]))
-    # 
-    #   dds.res.pathways <- dds.res() %>%
-    #     mutate(., genes_in_pathway = ifelse(Gene %in% p, 'yes', 'no'))
-    #   
-    #   #print(dds.res.pathways)
-    # })
-    # #reactive title for volcano based on specific pathway choice
-    # gseavol_title <-
-    #   eventReactive(input$pathwaylist, {
-    #     paste(input$pathwaylist)
-    #   })
-    # #call in singlecolor_module for plot
-    # colorVol <- 
-    #   colorServer("color9")
-    # output$GSEAvolcano <- renderGirafe ({
-    #   #color object reactive to user input from palette chpice
-    #   colors <- 
-    #     c("grey", colorVol())
-    #   if (input$volcanoplot == TRUE) {
-    #    v <- ggplot(
-    #       data = (dds.res.pathways() %>% arrange(., (genes_in_pathway))),
-    #       aes(
-    #         x = log2FoldChange,
-    #         y = -log10(padj),
-    #         col = genes_in_pathway[],
-    #         tooltip = Gene
-    #       )
-    #     ) +
-    #       theme_light(base_size = 14) +
-    #       theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-    #       geom_point_interactive(size = 1, alpha = 0.5) +
-    #       scale_color_manual(values = colors) +
-    #       # geom_text_repel(
-    #       #   max.overlaps = 1500,
-    #       #   colour = "black",
-    #       #   aes( #only label is gene is in pathway and sig expression 
-    #       #     label = ifelse(
-    #       #       genes_in_pathway == 'yes' & log2FoldChange > 1.5,
-    #       #       as.character(Gene),
-    #       #       ""
-    #       #     )
-    #       #   ),
-    #       #   hjust = 0,
-    #       #   vjust = 0
-    #       # ) +
-    #       ggtitle(gseavol_title()) + #reactive title
-    #       xlab("log2foldchange")
-    #     girafe(code = print(v))
-    #   }
-    # })
+    observe({
+      pathwaygsea1 <- gsea_file_values[[input$filechoice]]
+      updateSelectizeInput(session,"pathwaylist", choices = names(pathwaygsea1), server = TRUE)
+    })
+   
+    
+    pathway.genes <- reactive({
+      
+      req(DE_res$dds_res())
+      
+      dds.res <- 
+        DE_res$dds_res()
+
+      pathwaygsea <- gsea_file_values[[input$filechoice]]
+      p <-
+        unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylist]))
+
+      dds.res.pathways <- dds.res %>%
+        mutate(., genes_in_pathway = ifelse(Gene %in% p, 'yes', 'no'))
+      
+      dds.res.pathways 
+    })
+      #print(dds.res.pathways)
+    #})
+      
+    #})
+   
+ 
+    
+    output$GSEAvolcano <- renderGirafe ({
+      
+      req(pathway.genes())
+      
+      #reactive title for volcano based on specific pathway choice
+      gseavol_title <-
+          paste(input$pathwaylist)
+      #call in singlecolor_module for plot
+      # colorVol <-
+      #   colorServer("color9")
+      #color object reactive to user input from palette chpice
+      colors <-
+        c("grey", "blue")
+      #if (input$volcanoplot == TRUE) {
+       v <- ggplot(
+          data = (pathway.genes() %>% arrange(., (genes_in_pathway))),
+          aes(
+            x = log2FoldChange,
+            y = -log10(padj),
+            col = genes_in_pathway[],
+            tooltip = Gene
+          )
+        ) +
+          theme_light(base_size = 14) +
+          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+          geom_point_interactive(size = 1, alpha = 0.5) +
+          scale_color_manual(values = colors) +
+          # geom_text_repel(
+          #   max.overlaps = 1500,
+          #   colour = "black",
+          #   aes( #only label is gene is in pathway and sig expression
+          #     label = ifelse(
+          #       genes_in_pathway == 'yes' & log2FoldChange > 1.5,
+          #       as.character(Gene),
+          #       ""
+          #     )
+          #   ),
+          #   hjust = 0,
+          #   vjust = 0
+          # ) +
+          ggtitle(gseavol_title) + #reactive title
+          xlab("log2foldchange")
+        girafe(code = print(v))
+      })
+  
     #download button output- gsea volcano plot
     # output$downloadvolcano <- downloadHandler(
     #   filename = function() { paste("Volcano Plot", '.png', sep='') },

@@ -40,6 +40,7 @@ library(shinycssloaders)
 library(patchwork)
 library(spatstat.utils)
 library(yaml)
+library(readr)
 
 options(
   shiny.fullstacktrace = TRUE
