@@ -106,12 +106,15 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
     dds <- reactive({
       print(head(dataset_dds()))
       dataset_dds()
-      }) #this is cwrong-need DE object, not matrix
+      }) 
+    
     # variance stabilize the counts table
     vsd <- reactive({
       print(head(vst(dds(), blind = F)))
       vst(dds(), blind = F)
       }) 
+    
+    
     
     pca.id <- reactive({
       datasets.pca[[dataset_choice()]]$ID
@@ -120,6 +123,30 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
     observe({
       print(pca.id())
     })
+    
+    #if batch = "yes: 
+    batch_vsd <- function(dataset, variable) {
+      
+      has_batch <- grepl("yes", datasets[[dataset]]$batch) 
+      
+      if(has_batch) {
+        assay(vsd) <- ComBat(assay(vsd), batch = samples$variable, mod=NULL)
+        
+        vsd.pca <- 
+          data.frame(prcomp(t(assay(vsd())))$x) %>%
+            as_tibble(rownames = "ID") %>%
+            left_join(., as_tibble(colData(vsd())), by = c("ID" = pca.id()))
+        
+      } else {
+        vsd.pca <- 
+          data.frame(prcomp(t(assay(vsd())))$x) %>%
+          as_tibble(rownames = "ID") %>%
+          left_join(., as_tibble(colData(vsd())), by = c("ID" = pca.id()))
+      }
+      return(vsd.pca)
+    }
+    
+    
     #run pca on vsd 
     vsd.pca <- reactive({
       print(class(vsd()))
@@ -201,6 +228,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
     #   })
     #need functions for determining the variables to input into the pca plot
     #maybe add the variables to the yaml and then have the function pull those values and put into the plotb
+    # color = pca_var OR batch_var
     output$PCAplot <- renderPlot ({
       if(input$PCAplots == TRUE) {
         pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2)) +
