@@ -7,7 +7,7 @@ Cancer_Discovery:
   ID: "SRR"
   PCA_var: "condition"
   batch: "yes"
-  
+  batch_var: "batch"
 Ye_16:
   label: "Ye et al. 2016"
   data_path: "/data/Ye_16_dds.rds"

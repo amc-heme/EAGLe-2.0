@@ -107,52 +107,73 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
       print(head(dataset_dds()))
       dataset_dds()
       }) 
-    
-    # variance stabilize the counts table
-    vsd <- reactive({
-      print(head(vst(dds(), blind = F)))
-      vst(dds(), blind = F)
-      }) 
-    
-    
-    
+
+    # specify ID variable for pca plot
     pca.id <- reactive({
       datasets.pca[[dataset_choice()]]$ID
     })
     
+    batch_variable <- reactive({
+      print("this is variable:")
+      print(datasets.pca[[dataset_choice()]]$batch_var)
+      datasets.pca[[dataset_choice()]]$batch_var
+    }) #this needs to be converted to a factor in colData
+     
+    # print to make sure it's correct
     observe({
       print(pca.id())
     })
     
     #if batch = "yes: 
-    batch_vsd <- function(dataset, variable) {
+    batch_vsd <- function(dataset) {
       
-      has_batch <- grepl("yes", datasets[[dataset]]$batch) 
+      has_batch <- grepl("yes", datasets.pca[[dataset]]$batch) 
+     
       
       if(has_batch) {
-        assay(vsd) <- ComBat(assay(vsd), batch = samples$variable, mod=NULL)
+        # variance stabilize the counts table
+        vsd <- 
+          #print(head(vst(dds(), blind = F)))
+          vst(dds(), blind = F)
+      
+        assay(vsd) <- ComBat(assay(vsd), batch = batch_variable(), mod=NULL)
         
-        vsd.pca <- 
-          data.frame(prcomp(t(assay(vsd())))$x) %>%
+        vpca <- 
+          data.frame(prcomp(t(assay(vsd)))$x) %>%
             as_tibble(rownames = "ID") %>%
-            left_join(., as_tibble(colData(vsd())), by = c("ID" = pca.id()))
+            left_join(., as_tibble(colData(vsd)), by = c("ID" = pca.id()))
         
       } else {
-        vsd.pca <- 
-          data.frame(prcomp(t(assay(vsd())))$x) %>%
+        
+        # variance stabilize the counts table
+        vsd <- 
+          #print(head(vst(dds(), blind = F)))
+          vst(dds(), blind = F)
+        
+        vpca <- 
+          data.frame(prcomp(t(assay(vsd)))$x) %>%
           as_tibble(rownames = "ID") %>%
-          left_join(., as_tibble(colData(vsd())), by = c("ID" = pca.id()))
+          left_join(., as_tibble(colData(vsd)), by = c("ID" = pca.id()))
       }
-      return(vsd.pca)
+      return(vpca)
     }
     
     
     #run pca on vsd 
-    vsd.pca <- reactive({
-      print(class(vsd()))
-      data.frame(prcomp(t(assay(vsd())))$x) %>%
-      as_tibble(rownames = "ID") %>%
-      left_join(., as_tibble(colData(vsd())), by = c("ID" = pca.id()))
+    # vsd.pca <- reactive({
+    #   print(class(vsd()))
+    #   data.frame(prcomp(t(assay(vsd())))$x) %>%
+    #   as_tibble(rownames = "ID") %>%
+    #   left_join(., as_tibble(colData(vsd())), by = c("ID" = pca.id()))
+    # })
+
+    
+    vsd.pca <- eventReactive(input$PCAplots, {
+      batch_vsd(dataset_choice())
+    })
+    
+    pca_color <- reactive({
+      datasets.pca[[dataset_choice()]]$pca_var
     })
     #data frame for variance
     # vsd.pca.var <- reactive({
@@ -163,9 +184,9 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
     # pc1var = reactive({round(vsd.pca.var()[3,1] * 100, 1)})
     # pc2var = reactive({round(vsd.pca.var()[3,2] * 100 - pc1var(), 1)})
     
-    scree.pca <- reactive({
-      prcomp(t(assay(vsd())))
-    })
+    # scree.pca <- reactive({
+    #   prcomp(t(assay(vsd())))
+    # })
     #batch corrected PCA
     #if the dataset needs batch correction, have a conditional that allows for this code to run
     # assay(vsd) <- limma::removeBatchEffect(assay(vsd),
@@ -231,7 +252,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
     # color = pca_var OR batch_var
     output$PCAplot <- renderPlot ({
       if(input$PCAplots == TRUE) {
-        pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2)) +
+        pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2, color = pca_color())) +
           #, shape = var_1(), color = batch(), fill = batch())) + 
           geom_point(size = 5) + 
           scale_shape_manual(values = c(21, 24), name = '') +

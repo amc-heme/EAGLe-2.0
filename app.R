@@ -41,6 +41,7 @@ library(patchwork)
 library(spatstat.utils)
 library(yaml)
 library(readr)
+library(sva)
 
 options(
   shiny.fullstacktrace = TRUE
