@@ -629,17 +629,19 @@ GSEA_Server <- function(id, dataset_choice, DE_res) {
     
     
     # GSEA Volcano plot ####
+    
+    #drop down list of pathways within chosen pathway set
     observe({
       pathwaygsea1 <- gsea_file_values[[input$filechoice]]
       updateSelectizeInput(session,"pathwaylist", choices = names(pathwaygsea1), server = TRUE)
     })
    
-    
+    #create an object of the genes in the pathway and the genes included in that pathway that are also DE
     pathway.genes <- reactive({
       
       req(DE_res$dds_res())
       
-      dds.res <- 
+      dds.res <- #This should probably be filtered for only DE genes
         DE_res$dds_res()
 
       pathwaygsea <- gsea_file_values[[input$filechoice]]
