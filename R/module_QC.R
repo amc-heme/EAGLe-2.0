@@ -116,8 +116,14 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
     batch_variable <- reactive({
       print("this is variable:")
       print(datasets.pca[[dataset_choice()]]$batch_var)
-      datasets.pca[[dataset_choice()]]$batch_var
-    }) #this needs to be converted to a factor in colData
+      batch_var <- datasets.pca[[dataset_choice()]]$batch_var
+      batch_factor <- as.factor(batch_var)
+      print(levels(batch_factor))
+      if(length(levels(batch_factor)) < 2) {
+        stop("not enough levels")
+      }
+      return(batch_factor)
+    }) #this needs to be converted to a factor in colData- it needs to be defined from colData, not from the yaml
      
     # print to make sure it's correct
     observe({
@@ -129,7 +135,6 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
       
       has_batch <- grepl("yes", datasets.pca[[dataset]]$batch) 
      
-      
       if(has_batch) {
         # variance stabilize the counts table
         vsd <- 
