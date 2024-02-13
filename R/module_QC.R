@@ -152,6 +152,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
           as_tibble(rownames = "ID") %>%
           left_join(., as_tibble(colData(vsd)), by = c("ID" = pca.id))
       }
+      print(head(vpca))
       return(vpca)
     }
  
@@ -160,10 +161,6 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
       batch_vsd(dataset_dds(), dataset_choice())
     })
     
-    #choose variable to use for color distinctions on plot
-    pca_color <- reactive({
-      datasets.pca[[dataset_choice()]]$pca_var
-    })
     
     vsd_fun <- function(dds) {
       dds.file <- dds
@@ -192,7 +189,19 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
       pc_variance_df()$pc2
       })
     
-
+    
+    #choose variable to use for color distinctions on plot
+    color_var <- function(dataset, dds) {
+      color_v <- datasets.pca[[dataset]]$PCA_var
+      meta <- colData(dds)
+      color_var <- meta[, color_v]
+      return(color_var)
+    }
+     
+    pca_color <- reactive({
+      pca_color <- color_var(dataset_choice(), dataset_dds())
+    })
+    
     #call in color palette server for use in plot
     colorpaletteQC <- 
       paletteServer("palette")
@@ -207,23 +216,23 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
     #     }
     #   })
  
-    # color = pca_var OR batch_var
+    #  color and text need to be fixed
     output$PCAplot <- renderPlot ({
       if(input$PCAplots == TRUE) {
         pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2, color = pca_color())) +
           #, shape = var_1(), color = batch(), fill = batch())) + 
           geom_point(size = 5) + 
-          scale_shape_manual(values = c(21, 24), name = '') +
-          scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
-          # scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
+          #scale_shape_manual(values = c(21, 24), name = '') +
+          #scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
+          scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
           theme_cowplot(font_size = 18) + 
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
           theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
           theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
            xlab(paste('PC1 =', pc1(), '% variance')) + #reactive x lab for % variance
            ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
-          ggtitle("PCA") 
-          #geom_text_repel(colour = "black", aes(label= pca.id(),hjust=0, vjust=0))
+          ggtitle("PCA") +
+          geom_text_repel(colour = "black", aes(label= ID,hjust=0, vjust=0))
         print(pca)
       }
     })

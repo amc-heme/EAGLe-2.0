@@ -12,11 +12,11 @@ paletteUI <- function(id, choices) {
                 "Choose a color palette",
                 choices = list(
                   "Viridis" = list(
-                    "viridis" = viridis_pal(option = "viridis")(5),
-                    "magma" = viridis_pal(option = "magma")(5),
-                    "mako" = viridis_pal(option = "mako")(5),
-                    "plasma" = viridis_pal(option = "plasma")(5),
-                    "cividis" = viridis_pal(option = "cividis")(5)
+                    "viridis" = viridis_pal(option = "viridis")(12),
+                    "magma" = viridis_pal(option = "magma")(12),
+                    "mako" = viridis_pal(option = "mako")(12),
+                    "plasma" = viridis_pal(option = "plasma")(12),
+                    "cividis" = viridis_pal(option = "cividis")(12)
                   )
                 ))
 }
