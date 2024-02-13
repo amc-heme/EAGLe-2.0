@@ -102,37 +102,38 @@ QC_UI <- function(id) {
 QC_Server <- function(id, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
 
+    # function for creating pca from vsd
     
     batch_vsd <- function(dds, dataset) {
       
-      dds.file <- dds
+      dds.file <- dds 
  
-      meta <- colData(dds.file)
+      meta <- colData(dds.file) #get colData from dds
       print("colnames colData:")
-      print(head(meta)) 
+      print(head(meta)) #make sure it's correct
       
-      batch_variable <- datasets.pca[[dataset]]$batch_var
-      batch_variable <- gsub("\"", "", batch_variable)
+      batch_variable <- datasets.pca[[dataset]]$batch_var #get batch variable from yaml
+      batch_variable <- gsub("\"", "", batch_variable) #remove quotes
       print("batch_var:")
       print(batch_variable)
       
       
-      pca.id <- datasets.pca[[dataset]]$ID
+      pca.id <- datasets.pca[[dataset]]$ID #define ID column using yaml
   
-      has_batch <- grepl("yes", datasets.pca[[dataset]]$batch) 
+      has_batch <- grepl("yes", datasets.pca[[dataset]]$batch)
       
       if(has_batch) {
         # variance stabilize the counts table
         vsd <- 
-          #print(head(vst(dds(), blind = F)))
+          
           vst(dds.file, blind = F)
         
-        batch1 <- meta[, batch_variable]
+        batch1 <- meta[, batch_variable] #define batch variable from colData
         print("batch1:")
         print(batch1)
         
         
-        assay(vsd) <- ComBat(assay(vsd), batch = batch1, mod=NULL)
+        assay(vsd) <- ComBat(assay(vsd), batch = batch1, mod=NULL) #remove batch effect
         
         vpca <- 
           data.frame(prcomp(t(assay(vsd)))$x) %>%
@@ -154,77 +155,48 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
       return(vpca)
     }
  
-    
-    vsd.pca <- eventReactive(input$PCAplots, {
+    # vsd.pca for plotting, only run function when PCAplots button is selected
+    vsd.pca <- eventReactive(input$PCAplots, { 
       batch_vsd(dataset_dds(), dataset_choice())
     })
     
+    #choose variable to use for color distinctions on plot
     pca_color <- reactive({
       datasets.pca[[dataset_choice()]]$pca_var
     })
-    #data frame for variance
-    # vsd.pca.var <- reactive({
-    #   data.frame(summary(prcomp(t(assay(vsd())$importance)))) 
-    # })
+    
+    vsd_fun <- function(dds) {
+      dds.file <- dds
+      vsd <- 
+        vst(dds.file, blind = F)
+      return(vsd)
+    }
+   
     #determine % variance of pc1 and pc2
-    # 
-    # pc1var = reactive({round(vsd.pca.var()[3,1] * 100, 1)})
-    # pc2var = reactive({round(vsd.pca.var()[3,2] * 100 - pc1var(), 1)})
+    pc_variance <- function(dds) {
+      vsd <- vsd_fun(dds)
+      vsd.pca.var <- prcomp(t(assay(vsd)))
+      pc_variance <- data.frame(pc1 = round(vsd.pca.var$sdev[1] ^ 2 / sum(vsd.pca.var$sdev ^ 2)*100,1),
+                                pc2 = round(vsd.pca.var$sdev[2] ^ 2 / sum(vsd.pca.var$sdev ^ 2)*100,1))
+     return(pc_variance)
+    }
     
-    # scree.pca <- reactive({
-    #   prcomp(t(assay(vsd())))
-    # })
-    #batch corrected PCA
-    #if the dataset needs batch correction, have a conditional that allows for this code to run
-    # assay(vsd) <- limma::removeBatchEffect(assay(vsd),
-    #                                        batch = batch, 
-    #                                        design = model.matrix(~condition, data = metadata))
-    # 
-    # bcvsd.pca <-
-    #   data.frame(prcomp(t(assay(vsd)))$x) %>%
-    #   as_tibble(rownames = "SRR") %>%
-    #   left_join(., as_tibble(colData(vsd))) %>%
-    #   dplyr::select(SRR, batch, condition, sample_name, everything())
+    pc_variance_df <- reactive({
+      pc_variance(dataset_dds())
+    })
     
-    #data frame for variance
-    #bcpca.var <- data.frame(summary(prcomp(t(assay(vsd))))$importance)
+    pc1 <- reactive({
+      pc_variance_df()$pc1
+      })
+    pc2 <- reactive({
+      pc_variance_df()$pc2
+      })
     
-    #determine % variance of pc1 and pc2
-    # bc1var = round(bcpca.var[3,1] * 100, 1)
-    # bc2var = round(bcpca.var[3,2] * 100 - bc1var, 1)
-    
-    #pca for batch corrected scree plot
-    #scree.bcpca <- prcomp(t(assay(vsd)))
-    
-    # create functions for calling the batch corrected or vsd % variance for x and y labels
-    # xlab_PC1 <- reactive ({
-    #   if(input$PCAvar == 'VST PCA') {
-    #     pc1var
-    #   } else if(input$PCAvar == 'VST + batch corrected PCA') {
-    #     bc1var
-    #   }
-    # })
-    
-    # ylab_PC2 <- reactive ({
-    #   if(input$PCAvar == 'VST PCA') {
-    #     pc2var
-    #   } else if(input$PCAvar == 'VST + batch corrected PCA') {
-    #     bc2var
-    #   }
-    # })
+
     #call in color palette server for use in plot
     colorpaletteQC <- 
       paletteServer("palette")
-    
-    #reactive funtion to choose which PCA plot is loaded
-    # PCAdata <-
-    #   eventReactive(input$PCAvar, {
-    #     if (input$PCAvar == "VST PCA") {
-    #       vsd.pca
-    #     } else if (input$PCAvar == "VST + batch corrected PCA") {
-    #       bcvsd.pca
-    #     }
-    #   })
+
     #reactive expression to change the title of the PCA plot based on which PCA is loaded
     # PCA_title <- 
     #   reactive({
@@ -234,8 +206,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
     #       print("VST + batch corrected PCA")
     #     }
     #   })
-    #need functions for determining the variables to input into the pca plot
-    #maybe add the variables to the yaml and then have the function pull those values and put into the plotb
+ 
     # color = pca_var OR batch_var
     output$PCAplot <- renderPlot ({
       if(input$PCAplots == TRUE) {
@@ -243,14 +214,14 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
           #, shape = var_1(), color = batch(), fill = batch())) + 
           geom_point(size = 5) + 
           scale_shape_manual(values = c(21, 24), name = '') +
-          # scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
+          scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
           # scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
           theme_cowplot(font_size = 18) + 
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
           theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
           theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          # xlab(paste('PC1 =', pc1var(), '% variance')) + #reactive x lab for % variance
-          # ylab(paste('PC2 =', pc2var(), '% variance')) + #reactive y lab for % variance
+           xlab(paste('PC1 =', pc1(), '% variance')) + #reactive x lab for % variance
+           ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
           ggtitle("PCA") 
           #geom_text_repel(colour = "black", aes(label= pca.id(),hjust=0, vjust=0))
         print(pca)
@@ -355,14 +326,3 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
   })
 }
 
-# QC_App <- function() {
-#   ui <- fluidPage(
-#     QC_UI("QC1")
-#   )
-#   server <- function(input, output, session) {
-#     QC_Server("QC1")
-#   }
-#   shinyApp(ui, server)
-# }
-# 
-# QC_App()
