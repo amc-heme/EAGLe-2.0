@@ -102,79 +102,61 @@ QC_UI <- function(id) {
 QC_Server <- function(id, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
 
-   # create vsd object from dds file
-    dds <- reactive({
-      print(head(dataset_dds()))
-      dataset_dds()
-      }) 
-
-    # specify ID variable for pca plot
-    pca.id <- reactive({
-      datasets.pca[[dataset_choice()]]$ID
-    })
     
-    batch_variable <- reactive({
-      print("this is variable:")
-      print(datasets.pca[[dataset_choice()]]$batch_var)
-      batch_var <- datasets.pca[[dataset_choice()]]$batch_var
-      batch_factor <- as.factor(batch_var)
-      print(levels(batch_factor))
-      if(length(levels(batch_factor)) < 2) {
-        stop("not enough levels")
-      }
-      return(batch_factor)
-    }) #this needs to be converted to a factor in colData- it needs to be defined from colData, not from the yaml
-     
-    # print to make sure it's correct
-    observe({
-      print(pca.id())
-    })
-    
-    #if batch = "yes: 
-    batch_vsd <- function(dataset) {
+    batch_vsd <- function(dds, dataset) {
       
+      dds.file <- dds
+ 
+      meta <- colData(dds.file)
+      print("colnames colData:")
+      print(head(meta)) 
+      
+      batch_variable <- datasets.pca[[dataset]]$batch_var
+      batch_variable <- gsub("\"", "", batch_variable)
+      print("batch_var:")
+      print(batch_variable)
+      
+      
+      pca.id <- datasets.pca[[dataset]]$ID
+  
       has_batch <- grepl("yes", datasets.pca[[dataset]]$batch) 
-     
+      
       if(has_batch) {
         # variance stabilize the counts table
         vsd <- 
           #print(head(vst(dds(), blind = F)))
-          vst(dds(), blind = F)
-      
-        assay(vsd) <- ComBat(assay(vsd), batch = batch_variable(), mod=NULL)
+          vst(dds.file, blind = F)
+        
+        batch1 <- meta[, batch_variable]
+        print("batch1:")
+        print(batch1)
+        
+        
+        assay(vsd) <- ComBat(assay(vsd), batch = batch1, mod=NULL)
         
         vpca <- 
           data.frame(prcomp(t(assay(vsd)))$x) %>%
-            as_tibble(rownames = "ID") %>%
-            left_join(., as_tibble(colData(vsd)), by = c("ID" = pca.id()))
+          as_tibble(rownames = "ID") %>%
+          left_join(., as_tibble(colData(vsd)), by = c("ID" = pca.id))
         
       } else {
         
         # variance stabilize the counts table
         vsd <- 
           #print(head(vst(dds(), blind = F)))
-          vst(dds(), blind = F)
+          vst(dds.file, blind = F)
         
         vpca <- 
           data.frame(prcomp(t(assay(vsd)))$x) %>%
           as_tibble(rownames = "ID") %>%
-          left_join(., as_tibble(colData(vsd)), by = c("ID" = pca.id()))
+          left_join(., as_tibble(colData(vsd)), by = c("ID" = pca.id))
       }
       return(vpca)
     }
-    
-    
-    #run pca on vsd 
-    # vsd.pca <- reactive({
-    #   print(class(vsd()))
-    #   data.frame(prcomp(t(assay(vsd())))$x) %>%
-    #   as_tibble(rownames = "ID") %>%
-    #   left_join(., as_tibble(colData(vsd())), by = c("ID" = pca.id()))
-    # })
-
+ 
     
     vsd.pca <- eventReactive(input$PCAplots, {
-      batch_vsd(dataset_choice())
+      batch_vsd(dataset_dds(), dataset_choice())
     })
     
     pca_color <- reactive({
@@ -269,8 +251,8 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
           theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
           # xlab(paste('PC1 =', pc1var(), '% variance')) + #reactive x lab for % variance
           # ylab(paste('PC2 =', pc2var(), '% variance')) + #reactive y lab for % variance
-          ggtitle("PCA") + 
-          geom_text_repel(colour = "black", aes(label=pca.id()),hjust=0, vjust=0)
+          ggtitle("PCA") 
+          #geom_text_repel(colour = "black", aes(label= pca.id(),hjust=0, vjust=0))
         print(pca)
       }
     })
