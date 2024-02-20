@@ -121,19 +121,28 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
       pca.id <- datasets.pca[[dataset]]$ID #define ID column using yaml
   
       has_batch <- grepl("yes", datasets.pca[[dataset]]$batch)
+      print(has_batch)
       
       if(has_batch) {
         # variance stabilize the counts table
         vsd <- 
-          
           vst(dds.file, blind = F)
         
         batch1 <- meta[, batch_variable] #define batch variable from colData
         print("batch1:")
         print(batch1)
         
+        condition_variable <- datasets.pca[[dataset]]$PCA_var
+        #condition <- meta$condition_variable
+        condition_variable <- as.formula(paste("~", condition_variable))
+        print(condition_variable)
+        # assay(vsd) <- limma::removeBatchEffect(assay(vsd),
+        #                                        batch = batch1,
+        #                                        design = model.matrix(~condition,
+        #                                                              colData(vsd)))
         
-        assay(vsd) <- ComBat(assay(vsd), batch = batch1, mod=NULL) #remove batch effect
+        assay(vsd) <- ComBat(assay(vsd), batch = batch1, mod=model.matrix(condition_variable,
+                                                                          data = colData(vsd))) #remove batch effect
         
         vpca <- 
           data.frame(prcomp(t(assay(vsd)))$x) %>%
@@ -206,16 +215,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
     colorpaletteQC <- 
       paletteServer("palette")
 
-    #reactive expression to change the title of the PCA plot based on which PCA is loaded
-    # PCA_title <- 
-    #   reactive({
-    #     if (input$PCAvar == "VST PCA") {
-    #       print("VST PCA")
-    #     } else if (input$PCAvar == "VST + batch corrected PCA") {
-    #       print("VST + batch corrected PCA")
-    #     }
-    #   })
- 
+
     #  color and text need to be fixed
     output$PCAplot <- renderPlot ({
       if(input$PCAplots == TRUE) {
@@ -231,7 +231,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
           theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
            xlab(paste('PC1 =', pc1(), '% variance')) + #reactive x lab for % variance
            ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
-          ggtitle("PCA") +
+          ggtitle("PCA on VSD") +
           geom_text_repel(colour = "black", aes(label= ID,hjust=0, vjust=0))
         print(pca)
       }
