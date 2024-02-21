@@ -42,6 +42,8 @@ library(spatstat.utils)
 library(yaml)
 library(readr)
 library(sva)
+library(formulaic)
+
 
 options(
   shiny.fullstacktrace = TRUE

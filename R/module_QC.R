@@ -133,16 +133,22 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
         print(batch1)
         
         condition_variable <- datasets.pca[[dataset]]$PCA_var
-        #condition <- meta$condition_variable
-        condition_variable <- as.formula(paste("~", condition_variable))
-        print(condition_variable)
-        # assay(vsd) <- limma::removeBatchEffect(assay(vsd),
-        #                                        batch = batch1,
-        #                                        design = model.matrix(~condition,
-        #                                                              colData(vsd)))
+
+        # model.form <- create.formula(outcome.name = NULL,
+        #                              input.names = condition_variable,
+        #                              dat = meta)
+        #condition_variable <- as.formula(paste("~", condition_variable))
+        condition_dat <- colData(vsd)[[condition_variable]]
+        design_matrix <- model.matrix(~condition_dat)
+        print("model:")
+        print(head(design_matrix))
         
-        assay(vsd) <- ComBat(assay(vsd), batch = batch1, mod=model.matrix(condition_variable,
-                                                                          data = colData(vsd))) #remove batch effect
+        assay(vsd) <- limma::removeBatchEffect(assay(vsd),
+                                               batch = batch1,
+                                               design = design_matrix)
+        
+        # assay(vsd) <- ComBat(assay(vsd), batch = batch1, mod=model.matrix(model.form,
+        #                                                                   data = colData(vsd))) #remove batch effect
         
         vpca <- 
           data.frame(prcomp(t(assay(vsd)))$x) %>%
