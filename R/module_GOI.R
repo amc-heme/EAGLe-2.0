@@ -25,15 +25,15 @@ goi_UI <- function(id) {
           selected = NULL,
           options = list(maxItems = NULL)
         ), #options for axis variables, fill variable, and plot filters
-        radioButtons(ns("XaxisVar_CDgene"), h4("X axis variable"),
-                     choices = list("Value" = "xvalue",
-                                    "Gene" = "xgene", "Class" = "xclass"),selected = "xgene"),
-        radioButtons(ns("YaxisVar_CDgene"), h4("Y axis variable"),
-                     choices = list("Value" = "yvalue",
-                                    "Gene" = "ygene"),selected = "yvalue"),
-        radioButtons(ns("FillVar_CDgene"), h4("color by:"),
-                     choices = list("Gene" = "fillgene",
-                                    "Class" = "fillclass"),selected = "fillclass"),
+        # radioButtons(ns("XaxisVar_CDgene"), h4("X axis variable"),
+        #              choices = list("Value" = "xvalue",
+        #                             "Gene" = "xgene", "Class" = "xclass"),selected = "xgene"),
+        # radioButtons(ns("YaxisVar_CDgene"), h4("Y axis variable"),
+        #              choices = list("Value" = "yvalue",
+        #                             "Gene" = "ygene"),selected = "yvalue"),
+        # radioButtons(ns("FillVar_CDgene"), h4("color by:"),
+        #              choices = list("Gene" = "fillgene",
+        #                             "Class" = "fillclass"),selected = "fillclass"),
         # radioButtons(ns("PrimMonobutton"), h4("Show only prim or mono gene expression"),
         #              choices = list("Show Comparison" = "comparison", "Prim" = "prim", "Mono" = "mono"), selected = "comparison"),
         hr(),
@@ -72,12 +72,13 @@ goi_UI <- function(id) {
   )
 }
 
-goi_Server <- function(id, dataset_dds, dataset_choice) {
+goi_Server <- function(id, dataset_dds, dataset_choice, DE_res) {
   moduleServer(id, function(input, output, session) {
     ##Gene Centric output ####
     #dds > vsd >vst >vst.goi
     
-    vst.create <- function(dds){
+    vst.create <- function(dds, dataset){
+      
       dds.file <- dds
       
       vsd <- 
@@ -99,6 +100,7 @@ goi_Server <- function(id, dataset_dds, dataset_choice) {
           left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
           na.omit(.)
       }
+      return(vst)
     }
     
     vst.goi.create <- function(dataset,vst,gene) {
@@ -113,67 +115,64 @@ goi_Server <- function(id, dataset_dds, dataset_choice) {
         as.data.frame(.) %>%
         rownames_to_column(var = "Sample") %>%
         dplyr::mutate(condition = cond_var)
+      
+      return(vst.goi)
     }
     
-    updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
-    #create dds results table for use in the table generated for the plot
-    dds.res <- data.frame(results(dds)) %>%
-      rownames_to_column(., var = 'ensembl_gene_id') %>%
-      dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-      left_join(unique(dplyr::select(t2g, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
-      dplyr::rename(., Gene = ext_gene) %>%
-      mutate(., DiffExp = ifelse(padj < 0.05 & log2FoldChange >= 0.5, 'up',
-                                 ifelse(padj < 0.05 & log2FoldChange <= -0.5, 'down', 'no'))) %>%
-      na.omit(.)
-    #extract counts from dds file to use in vst
-    dds.counts <- reactive({
-      counts(dds)
-      })
-    vsd <- reactive({
-      vst(dds.counts(), blind = F) 
+    #this might need to be created in a separate module...
+    vst <- reactive({
+      vst.create(dataset_dds(), dataset_choice())
     })
-    vst <- data.frame(assay(vsd())) %>% 
-      rownames_to_column(., var = "ensembl_gene_id") %>% 
-      left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>% 
-      na.omit(.)
-    #create a data table filtered for only mono sample type
-    res <- (label.jordan.m0m5) %>%
-      mutate(., class = condition) %>%
-      dplyr::select(., SRR, class) %>%
-      filter(., class == "mono")
     
-    #join DE res and VST counts matrix to create data table with class, padj, and gene expression values for each sample
-    vst.goi <- as_tibble(vst) %>%
-      melt(.) %>%
-      mutate(., class = ifelse(variable %in% res$SRR, 'mono', 'prim')) %>% 
-      dplyr::filter(ensembl_gene_id %in% dds.res$ensembl_gene_id) %>%
-      left_join(unique(dplyr::select(dds.res, c(
-        ensembl_gene_id, padj
-      ))), ., by = 'ensembl_gene_id') 
+    reactive({
+      updateSelectizeInput(session,"VSTCDgenechoice", choices = vst()$ext_gene, server = TRUE)
+    })
+    
+    
+    vst.gene <- reactive({
+      vst.goi.create(dataset_choice(), vst(), input$VSTCDgenechoice)
+    })
+    #create dds results table for use in the table generated for the plot
+    dds.res <- reactive({
+      DE_res$dds_res()
+    })
+    # #extract counts from dds file to use in vst
+    # dds.counts <- reactive({
+    #   counts(dds)
+    #   })
+    # vsd <- reactive({
+    #   vst(dds.counts(), blind = F) 
+    # })
+    # vst <- data.frame(assay(vsd())) %>% 
+    #   rownames_to_column(., var = "ensembl_gene_id") %>% 
+    #   left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>% 
+    #   na.omit(.)
+    # #create a data table filtered for only mono sample type
+    # res <- (label.jordan.m0m5) %>%
+    #   mutate(., class = condition) %>%
+    #   dplyr::select(., SRR, class) %>%
+    #   filter(., class == "mono")
+    # 
+    # #join DE res and VST counts matrix to create data table with class, padj, and gene expression values for each sample
+    # vst.goi <- as_tibble(vst) %>%
+    #   melt(.) %>%
+    #   mutate(., class = ifelse(variable %in% res$SRR, 'mono', 'prim')) %>% 
+    #   dplyr::filter(ensembl_gene_id %in% dds.res$ensembl_gene_id) %>%
+    #   left_join(unique(dplyr::select(dds.res, c(
+    #     ensembl_gene_id, padj
+    #   ))), ., by = 'ensembl_gene_id') 
     
     #factor class and variable(sample id)
-    vst.goi$class <-
-      factor(vst.goi$class, levels = c('prim', 'mono'))
-    
-    vst.goi$variable <- factor(vst.goi$variable)
+    # vst.goi$class <-
+    #   factor(vst.goi$class, levels = c('prim', 'mono'))
+    # 
+    # vst.goi$variable <- factor(vst.goi$variable)
     
     #reactive function for for filtering vst data table based on user input 
     datavst <-
       reactive({
-        vst.goi %>% 
+        vst.gene() %>% 
              dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
-        # if(input$PrimMonobutton == "comparison") {
-        #   vst.goi %>% 
-        #     dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
-        # } else if(input$PrimMonobutton == "prim") {
-        #   vst.goi %>%
-        #     dplyr::filter(ext_gene %in% input$VSTCDgenechoice) %>%
-        #     dplyr::filter(class == "prim")
-        # } else if(input$PrimMonobutton == "mono") {
-        #   vst.goi %>%
-        #     dplyr::filter(ext_gene %in% input$VSTCDgenechoice) %>%
-        #     dplyr::filter(class == "mono")
-        # }
       })
     
     
@@ -234,16 +233,16 @@ goi_Server <- function(id, dataset_dds, dataset_choice) {
       paletteServer("palette2")
     
     # function for adding padj values to plot, position needs to change when x and y variables change for readability
-    sig_label_position <- reactive({
-      value <- vst.goi$value
-      if(input$XaxisVar_CDgene == "xvalue") {
-        geom_text(aes(x = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
-      } else if(input$XaxisVar_CDgene == "xgene") {
-        geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
-      } else if(input$XaxisVar_CDgene == "xclass") {
-        geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
-      }
-    })
+    # sig_label_position <- reactive({
+    #   value <- vst.gene$value
+    #   if(input$XaxisVar_CDgene == "xvalue") {
+    #     geom_text(aes(x = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
+    #   } else if(input$XaxisVar_CDgene == "xgene") {
+    #     geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
+    #   } else if(input$XaxisVar_CDgene == "xclass") {
+    #     geom_text(aes(y = max(value), label = paste("p=",format(padj, digit = 1, scientific = T))),check_overlap = T) 
+    #   }
+    # })
     
     geneheight <-
       sliderServer("plotheightslider")
@@ -273,7 +272,7 @@ goi_Server <- function(id, dataset_dds, dataset_choice) {
                        position = position_jitterdodge(jitter.width = 0.2),
                        aes(color = class)) + 
             theme_light() +
-            sig_label_position() + # function for adjusted pvalues position and format on plot
+            #sig_label_position() + # function for adjusted pvalues position and format on plot
             ylab("") +
             xlab("") +
             ggtitle("Gene Expression")
