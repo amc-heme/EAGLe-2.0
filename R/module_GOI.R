@@ -72,36 +72,36 @@ goi_UI <- function(id) {
   )
 }
 
-goi_Server <- function(id, dataset_dds, dataset_choice, DE_res) {
+goi_Server <- function(id, dataset_choice, vst) {
   moduleServer(id, function(input, output, session) {
     ##Gene Centric output ####
     #dds > vsd >vst >vst.goi
     
-    vst.create <- function(dds, dataset){
-      
-      dds.file <- dds
-      
-      vsd <- 
-        vst(dds.file, blind = F)
-      
-      #mouse or human?
-      is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
-      
-      if(is_hs){
-        
-        vst <- data.frame(assay(vsd)) %>% 
-          rownames_to_column(., var = "ensembl_gene_id") %>% 
-          left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
-          na.omit(.)
-      } else {
-       
-        vst <- data.frame(assay(vsd)) %>% 
-          rownames_to_column(., var = "ensembl_gene_id") %>% 
-          left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
-          na.omit(.)
-      }
-      return(vst)
-    }
+    # vst.create <- function(dds, dataset){
+    #   
+    #   dds.file <- dds
+    #   
+    #   vsd <- 
+    #     vst(dds.file, blind = F)
+    #   
+    #   #mouse or human?
+    #   is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
+    #   
+    #   if(is_hs){
+    #     
+    #     vst <- data.frame(assay(vsd)) %>% 
+    #       rownames_to_column(., var = "ensembl_gene_id") %>% 
+    #       left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+    #       na.omit(.)
+    #   } else {
+    #    
+    #     vst <- data.frame(assay(vsd)) %>% 
+    #       rownames_to_column(., var = "ensembl_gene_id") %>% 
+    #       left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+    #       na.omit(.)
+    #   }
+    #   return(vst)
+    # }
     
     vst.goi.create <- function(dataset,vst,gene) {
       
@@ -120,9 +120,9 @@ goi_Server <- function(id, dataset_dds, dataset_choice, DE_res) {
     }
     
     #this might need to be created in a separate module...
-    vst <- reactive({
-      vst.create(dataset_dds(), dataset_choice())
-    })
+    # vst <- reactive({
+    #   vst.create(dataset_dds(), dataset_choice())
+    # })
     
     reactive({
       updateSelectizeInput(session,"VSTCDgenechoice", choices = vst()$ext_gene, server = TRUE)
@@ -133,9 +133,9 @@ goi_Server <- function(id, dataset_dds, dataset_choice, DE_res) {
       vst.goi.create(dataset_choice(), vst(), input$VSTCDgenechoice)
     })
     #create dds results table for use in the table generated for the plot
-    dds.res <- reactive({
-      DE_res$dds_res()
-    })
+    # dds.res <- reactive({
+    #   DE_res$dds_res()
+    # })
     # #extract counts from dds file to use in vst
     # dds.counts <- reactive({
     #   counts(dds)
@@ -177,49 +177,49 @@ goi_Server <- function(id, dataset_dds, dataset_choice, DE_res) {
     
     
     #make sure duplicate selections are not allowed with radio buttons
-    observeEvent(input$XaxisVar_CDgene, {
-      if(input$XaxisVar_CDgene == "xvalue") {
-        mychoices <- c("Gene" = "ygene")
-      } else if(input$XaxisVar_CDgene=="xgene") {
-        mychoices <- c("Value" = "yvalue")
-      }else if(input$XaxisVar_CDgene == "xclass") {
-        mychoices <- c("Value" = "yvalue")
-      }
-      updateRadioButtons(session, "YaxisVar_CDgene", choices = mychoices)
-    })
-    
+    # observeEvent(input$XaxisVar_CDgene, {
+    #   if(input$XaxisVar_CDgene == "xvalue") {
+    #     mychoices <- c("Gene" = "ygene")
+    #   } else if(input$XaxisVar_CDgene=="xgene") {
+    #     mychoices <- c("Value" = "yvalue")
+    #   }else if(input$XaxisVar_CDgene == "xclass") {
+    #     mychoices <- c("Value" = "yvalue")
+    #   }
+    #   updateRadioButtons(session, "YaxisVar_CDgene", choices = mychoices)
+    # })
+    # 
     
     #x axis reactive output based on radio buttons
-    xvar_CDgene <-
-      eventReactive(input$XaxisVar_CDgene, {
-        if (input$XaxisVar_CDgene == "xvalue") {
-          "value"
-        } else if (input$XaxisVar_CDgene == "xgene") {
-          "ext_gene"
-        } else if(input$XaxisVar_CDgene == "xclass") {
-          "class"
-        }
-      })
+    # xvar_CDgene <-
+    #   eventReactive(input$XaxisVar_CDgene, {
+    #     if (input$XaxisVar_CDgene == "xvalue") {
+    #       "value"
+    #     } else if (input$XaxisVar_CDgene == "xgene") {
+    #       "ext_gene"
+    #     } else if(input$XaxisVar_CDgene == "xclass") {
+    #       "class"
+    #     }
+    #   })
     #y axis reactive output based on radio buttons
-    yvar_CDgene <-
-      eventReactive(input$YaxisVar_CDgene, {
-        if (input$YaxisVar_CDgene == "yvalue") {
-          "value"
-        } else if (input$YaxisVar_CDgene == "ygene") {
-          "ext_gene"
-        }
-      })
+    # yvar_CDgene <-
+    #   eventReactive(input$YaxisVar_CDgene, {
+    #     if (input$YaxisVar_CDgene == "yvalue") {
+    #       "value"
+    #     } else if (input$YaxisVar_CDgene == "ygene") {
+    #       "ext_gene"
+    #     }
+    #   })
     
     
     #fill reactive output based on radio buttons
-    fillvar_CDgene <-
-      eventReactive(input$FillVar_CDgene, {
-        if (input$FillVar_CDgene == "fillclass") {
-          "class"
-        } else if (input$FillVar_CDgene == "fillgene") {
-          "ext_gene"
-        }
-      })
+    # fillvar_CDgene <-
+    #   eventReactive(input$FillVar_CDgene, {
+    #     if (input$FillVar_CDgene == "fillclass") {
+    #       "class"
+    #     } else if (input$FillVar_CDgene == "fillgene") {
+    #       "ext_gene"
+    #     }
+    #   })
     # facet toggle switch function to turn faceting on or off
     Gene_facet <-
       eventReactive(input$genefacetbutton, {
@@ -270,7 +270,7 @@ goi_Server <- function(id, dataset_dds, dataset_choice, DE_res) {
             scale_color_viridis_d(option = colorpaletteGene()) + #reactive scale_color_manual from module
             geom_point(alpha = 0.5,
                        position = position_jitterdodge(jitter.width = 0.2),
-                       aes(color = class)) + 
+                       aes(color = condition)) + 
             theme_light() +
             #sig_label_position() + # function for adjusted pvalues position and format on plot
             ylab("") +

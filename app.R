@@ -135,13 +135,15 @@ server <-
     
   ## dds object
     dataset_dds <- dds.file_Server("dds1", dataset, dataset_choice)
-
+  ## vst table
+    
+    vst <- vst_Server("vst1", dataset_dds, dataset_choice)
   ## QC tab ####
   
     QC_Server("QC1",dataset_dds, dataset_choice)
     
   ## GOI tab####  
-     goi_Server("GOI1", dataset_dds, dataset_choice, DE_res)
+     goi_Server("GOI1", dataset_choice, vst)
  
   # ##DESEq #####
     DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice) 
