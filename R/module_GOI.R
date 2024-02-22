@@ -1,5 +1,9 @@
-# Gene centric module
-#vst.goi <- readRDS("data/vst.goi.rds")
+datasets <- 
+  read_yaml("./data.yaml")
+raw_data <- getwd()
+t2g_hs <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_hs.rds")
+t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_mm.rds")
+
 goi_UI <- function(id) {
   ns <- NS(id)
   fluidPage(
@@ -68,9 +72,49 @@ goi_UI <- function(id) {
   )
 }
 
-goi_Server <- function(id, dds, t2g) {
+goi_Server <- function(id, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
     ##Gene Centric output ####
+    #dds > vsd >vst >vst.goi
+    
+    vst.create <- function(dds){
+      dds.file <- dds
+      
+      vsd <- 
+        vst(dds.file, blind = F)
+      
+      #mouse or human?
+      is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
+      
+      if(is_hs){
+        
+        vst <- data.frame(assay(vsd)) %>% 
+          rownames_to_column(., var = "ensembl_gene_id") %>% 
+          left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+          na.omit(.)
+      } else {
+       
+        vst <- data.frame(assay(vsd)) %>% 
+          rownames_to_column(., var = "ensembl_gene_id") %>% 
+          left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+          na.omit(.)
+      }
+    }
+    
+    vst.goi.create <- function(dataset,vst,gene) {
+      
+      cond_var <- datasets[[dataset]]$PCA_var
+      
+      vst.goi <- vst %>%
+        dplyr::filter(ext_gene == gene) %>%
+        dplyr::select(., !ensembl_gene_id) %>%
+        t(.) %>%
+        row_to_names(row_number = 1) %>%
+        as.data.frame(.) %>%
+        rownames_to_column(var = "Sample") %>%
+        dplyr::mutate(condition = cond_var)
+    }
+    
     updateSelectizeInput(session,"VSTCDgenechoice", choices = vst.goi$ext_gene, server = TRUE)
     #create dds results table for use in the table generated for the plot
     dds.res <- data.frame(results(dds)) %>%
