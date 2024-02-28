@@ -6,6 +6,7 @@ Cancer_Discovery:
   t2g: "t2g_hs"
   ID: "SRR"
   PCA_var: "condition"
+  PCA_shape: "batch"
   batch: "yes"
   batch_var: "batch"
 Ye_16:
@@ -16,6 +17,7 @@ Ye_16:
   t2g: "t2g_mm"
   ID: "SRR"
   PCA_var: "Source"
+  PCA_shape: "NULL"
   batch: "no"
 Ye_20:
   label:  "Ye et al. 2020"
@@ -25,6 +27,7 @@ Ye_20:
   t2g: "t2g_mm"
   ID: "SRR"
   PCA_var: "Source"
+  PCA_shape: "Rep"
   batch: "yes"
   batch_var: "Rep"
 Venaza:
@@ -35,6 +38,7 @@ Venaza:
   t2g: "t2g_hs"
   ID: "ID"
   PCA_var: "condition"
+  PCA_shape: "patient"
   batch: "yes"
   batch_var: "patient"
 Lagadinou: 
@@ -45,6 +49,7 @@ Lagadinou:
   t2g: "t2g_hs"
   ID: "Sample"
   PCA_var: "Treatment"
+  PCA_shape: "Batch"
   batch: "yes"
   batch_var: "Batch"
 Lee:
@@ -55,6 +60,7 @@ Lee:
   t2g: "t2g_hs"
   ID: "SRR"
   PCA_var: "prior_cr"
+  PCA_shape: "Patient"
   batch: "yes"
   batch_var: "Patient"
 BEAT:

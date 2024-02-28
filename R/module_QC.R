@@ -228,8 +228,8 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
         pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2, color = pca_color())) +
           #, shape = var_1(), color = batch(), fill = batch())) + 
           geom_point(size = 5) + 
-          #scale_shape_manual(values = c(21, 24), name = '') +
-          #scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
+          scale_shape_manual(values = c(21, 24), name = '') +
+          scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
           scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
           theme_cowplot(font_size = 18) + 
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +

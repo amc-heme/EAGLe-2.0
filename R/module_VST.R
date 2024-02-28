@@ -31,6 +31,7 @@ vst_Server <- function(id, dataset_dds, dataset_choice) {
           left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
           na.omit(.)
       }
+      print(head(vst.table))
       vst.table
     }
     vst.global <- reactive({

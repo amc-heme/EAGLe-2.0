@@ -12,7 +12,7 @@ goi_UI <- function(id) {
     titlePanel(
       "Gene Expression Plot"
     ),
-    h6("*p values are indicated for the comparison of gene expression between prim and mono samples"),
+    #h6("*p values are indicated for the comparison of gene expression between prim and mono samples"),
     sidebarLayout(
       sidebarPanel(
         useShinyjs(), #this is needed for javascript functions
@@ -103,7 +103,13 @@ goi_Server <- function(id, dataset_choice, vst) {
     #   return(vst)
     # }
     
-    vst.goi.create <- function(dataset,vst,gene) {
+    observe({
+      gene_choices <- vst()$ext_gene
+      updateSelectizeInput(session,"VSTCDgenechoice", choices = gene_choices, server = TRUE)
+    })
+    
+    
+    vst.goi.create <- function(dataset, vst, gene) {
       
       cond_var <- datasets[[dataset]]$PCA_var
       
@@ -124,12 +130,11 @@ goi_Server <- function(id, dataset_choice, vst) {
     #   vst.create(dataset_dds(), dataset_choice())
     # })
     
-    reactive({
-      updateSelectizeInput(session,"VSTCDgenechoice", choices = vst()$ext_gene, server = TRUE)
-    })
-    
+  
     
     vst.gene <- reactive({
+      req(input$VSTCDgenechoice)
+      
       vst.goi.create(dataset_choice(), vst(), input$VSTCDgenechoice)
     })
     #create dds results table for use in the table generated for the plot
@@ -169,11 +174,11 @@ goi_Server <- function(id, dataset_choice, vst) {
     # vst.goi$variable <- factor(vst.goi$variable)
     
     #reactive function for for filtering vst data table based on user input 
-    datavst <-
-      reactive({
-        vst.gene() %>% 
-             dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
-      })
+    # datavst <-
+    #   reactive({
+    #     vst.gene() %>% 
+    #          dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
+    #   })
     
     
     #make sure duplicate selections are not allowed with radio buttons
@@ -258,7 +263,7 @@ goi_Server <- function(id, dataset_choice, vst) {
         height = function() geneheight(), #input$geneheightslider,
         res = 120,
         {
-          ggplot(datavst(),
+          ggplot(vst.gene(),
                  aes(
                    x = .data[[xvar_CDgene()]],
                    y =  .data[[yvar_CDgene()]],
