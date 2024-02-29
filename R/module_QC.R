@@ -212,11 +212,26 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
       color_var <- meta[, color_v]
       return(color_var)
     }
+    
+    #choose variable to use for color distinctions on plot
+    shape_var <- function(dataset, dds) {
+      shape_v <- datasets.pca[[dataset]]$PCA_shape
+      meta <- colData(dds)
+      shape_var <- meta[, shape_v]
+      return(shape_var)
+    }
      
     pca_color <- reactive({
       pca_color <- color_var(dataset_choice(), dataset_dds())
+      print("pca_color")
+      print(pca_color)
     })
     
+    pca_shape <- reactive({
+      pca_shape <- shape_var(dataset_choice(), dataset_dds())
+      print("pca_shape")
+      print(pca_shape)
+    })
     #call in color palette server for use in plot
     colorpaletteQC <- 
       paletteServer("palette")
@@ -225,7 +240,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
     #  color and text need to be fixed
     output$PCAplot <- renderPlot ({
       if(input$PCAplots == TRUE) {
-        pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2, color = pca_color())) +
+        pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2, color = pca_color(), shape = pca_shape(), fill = pca_color())) +
           #, shape = var_1(), color = batch(), fill = batch())) + 
           geom_point(size = 5) + 
           scale_shape_manual(values = c(21, 24), name = '') +
