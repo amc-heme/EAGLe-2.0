@@ -48,21 +48,6 @@ QC_UI <- function(id) {
             TRUE
         ),
         
-        # conditionalPanel(
-        #   ns = ns,
-        #   condition = "input['PCAplots'] == true", 
-        #   radioButtons( #choose type of PCA plot
-        #     ns("PCAvar"),
-        #     h4(
-        #       "Choose PCA plot"
-        #     ),
-        #     choices =
-        #       list("VST PCA", "VST + batch corrected PCA"),
-        #     selected =
-        #       "VST PCA"
-        #   )
-        # ),
-        
         conditionalPanel(
           ns = ns,
           condition = "input['multiqc'] == true",
@@ -101,7 +86,7 @@ QC_UI <- function(id) {
 
 QC_Server <- function(id, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
-
+##PCA plot functions ####
     # function for creating pca from vsd
     
     batch_vsd <- function(dds, dataset) {
@@ -205,7 +190,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
       })
     
     
-    #choose variable to use for color distinctions on plot
+    #variable to use for color distinctions on plot
     color_var <- function(dataset, dds) {
       color_v <- datasets.pca[[dataset]]$PCA_var
       meta <- colData(dds)
@@ -213,7 +198,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
       return(color_var)
     }
     
-    #choose variable to use for color distinctions on plot
+    #variable to use for shape distinctions on plot
     shape_var <- function(dataset, dds) {
       shape_v <- datasets.pca[[dataset]]$PCA_shape
       meta <- colData(dds)
@@ -221,29 +206,31 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
       return(shape_var)
     }
      
+    #run color function after dataset is chosen by user
     pca_color <- reactive({
       pca_color <- color_var(dataset_choice(), dataset_dds())
       print("pca_color")
       print(pca_color)
     })
     
+    #run shape function after dataset is chosen by user
     pca_shape <- reactive({
       pca_shape <- shape_var(dataset_choice(), dataset_dds())
       print("pca_shape")
       print(pca_shape)
     })
+    
     #call in color palette server for use in plot
     colorpaletteQC <- 
       paletteServer("palette")
 
 
-    #  color and text need to be fixed
+##PCA plot ####
     output$PCAplot <- renderPlot ({
       if(input$PCAplots == TRUE) {
         pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2, color = pca_color(), shape = pca_shape(), fill = pca_color())) +
-          #, shape = var_1(), color = batch(), fill = batch())) + 
           geom_point(size = 5) + 
-          scale_shape_manual(values = c(21, 24), name = '') +
+          scale_shape() +
           scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
           scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
           theme_cowplot(font_size = 18) + 
@@ -257,6 +244,9 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
         print(pca)
       }
     })
+    
+    
+ #MultiQC plot function ####   
     
     #reactive function for multiqc plot title
     QC_title <- 
@@ -285,6 +275,16 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
       }
     })
     
+    #render table:
+    # DT::datatable(multiqc_general_stats) %>%
+    #   DT::formatRound(columns=c('Salmon_percent_mapped',
+    #                             'fastp_duplication',
+    #                             'fastp_percent_after_filter_q30',
+    #                             'fastp_GC_content',
+    #                             'fastp_surviving_percent'),
+    #                   digits=3)
+    
+    
     Sample_ID <-reactive({
       qc()$metadata.sample_id
     })
@@ -304,6 +304,20 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
                   element_text(angle = 60, hjust = 1)) 
       }
     })
+    # ggplot(multiqc_general_stats,
+    #        aes(x = Sample, y = Salmon_percent_mapped, color = Source)) +
+    #   geom_point() +
+    #   theme_cowplot() +
+    #   #scale_color_manual(color = colors) +
+    #   theme(
+    #     axis.title = element_text(face = "bold"),
+    #     title = element_text(face = "bold"),
+    #     axis.text.x =
+    #       element_text(angle = 60, hjust = 1)
+    #   ) +
+    #   ggtitle("Salmon: % Mapped Reads ") +
+    #   xlab("Sample") +
+    #   ylab("% mapped") 
     
     # PCA Scree data ####
     # VSD PCA variance

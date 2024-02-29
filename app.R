@@ -143,7 +143,7 @@ server <-
     QC_Server("QC1",dataset_dds, dataset_choice)
     
   ## GOI tab####  
-     goi_Server("GOI1", dataset_choice, vst)
+    goi_Server("GOI1", dataset_choice, vst)
  
   # ##DESEq #####
     DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice) 
