@@ -354,7 +354,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     
       output$results <- renderDataTable({
         if (input$DESeqtable == TRUE) {
-          dds.res
+          DT::datatable(dds.res,
+                        options = list(scrollX = TRUE))
        }
     })
   }

@@ -250,80 +250,65 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
     
     
     #reactive function for multiqc plot title
-    QC_title <- 
-      reactive({
-        if (input$QCvar == "% mapped reads") {
-          print("% mapped reads per sample")
-        } else if (input$QCvar == "# mapped reads") {
-          print("# mapped reads per sample")
-        } else if (input$QCvar == "% uniquely mapped reads") {
-          print("% uniquely mapped reads per sample")
-        } else if (input$QCvar == "# uniquely mapped reads") {
-          print("# uniquely mapped reads per sample")
-        }
-      })
-    
-    #create object for reactive data input based on user choice of multiqc test option
-    QCdata <- reactive ({
-      if(input$QCvar == "% mapped reads") {
-        qc()$raw.salmon.percent_mapped
-      } else if(input$QCvar == "# mapped reads") {
-        qc()$raw.salmon.num_mapped
-      } else if(input$QCvar == "% uniquely mapped reads") {
-        qc()$raw.star.uniquely_mapped_percent
-      } else if(input$QCvar == "# uniquly mapped reads") {
-        qc()$raw.star.uniquely_mapped
-      }
-    })
-    
+    # QC_title <- 
+    #   reactive({
+    #     if (input$QCvar == "% mapped reads") {
+    #       print("% mapped reads per sample")
+    #     } else if (input$QCvar == "# mapped reads") {
+    #       print("# mapped reads per sample")
+    #     } else if (input$QCvar == "% uniquely mapped reads") {
+    #       print("% uniquely mapped reads per sample")
+    #     } else if (input$QCvar == "# uniquely mapped reads") {
+    #       print("# uniquely mapped reads per sample")
+    #     }
+    #   })
+    # 
+    # #create object for reactive data input based on user choice of multiqc test option
+    # QCdata <- reactive ({
+    #   if(input$QCvar == "% mapped reads") {
+    #     qc()$raw.salmon.percent_mapped
+    #   } else if(input$QCvar == "# mapped reads") {
+    #     qc()$raw.salmon.num_mapped
+    #   } else if(input$QCvar == "% uniquely mapped reads") {
+    #     qc()$raw.star.uniquely_mapped_percent
+    #   } else if(input$QCvar == "# uniquly mapped reads") {
+    #     qc()$raw.star.uniquely_mapped
+    #   }
+    # })
+    # 
    
     
     output$QCdt <- renderDataTable({
       if (input$multiqc == TRUE) {
-        
+        # venaza dataset does not have the same column names-need to add a condition for that dataset
+        # BEAT and TCGA do not have multiqc data
         multiqc_res <- qc_table()
-        multiqc_res <- DT::datatable(multiqc_res) %>%
+        multiqc_res <- DT::datatable(multiqc_res,
+                                     options = list(scrollX = TRUE)) %>%
           DT::formatRound(
-            columns = c(
-              'Salmon_percent_mapped',
-              'fastp_duplication',
-              'fastp_percent_after_filter_q30',
-              'fastp_GC_content',
-              'fastp_surviving_percent'
-            ),
+            columns = colnames(multiqc_res),
             digits = 3)
         multiqc_res
       }
     })
-    #render table:
-    # DT::datatable(multiqc_general_stats) %>%
-    #   DT::formatRound(columns=c('Salmon_percent_mapped',
-    #                             'fastp_duplication',
-    #                             'fastp_percent_after_filter_q30',
-    #                             'fastp_GC_content',
-    #                             'fastp_surviving_percent'),
-    #                   digits=3)
     
-    
-    Sample_ID <-reactive({
-      qc()$metadata.sample_id
-    })
-    
-    output$QCplot <- renderPlot ({
-      if(input$multiqc == TRUE) {
-        ggplot(
-          qc(),
-          aes(
-            x = Sample_ID,
-            y = QCdata()
-          )) +
-          geom_point() +
-          theme_cowplot (font_size = 18) +
-          ggtitle(QC_title()) +
-          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
-                  element_text(angle = 60, hjust = 1)) 
-      }
-    })
+
+  
+    # output$QCplot <- renderPlot ({
+    #   if(input$multiqc == TRUE) {
+    #     ggplot(
+    #       qc_table(),
+    #       aes(
+    #         x = Sample,
+    #         y = QCdata()
+    #       )) +
+    #       geom_point() +
+    #       theme_cowplot (font_size = 18) +
+    #       ggtitle(QC_title()) +
+    #       theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+    #               element_text(angle = 60, hjust = 1)) 
+    #   }
+    # })
     # ggplot(multiqc_general_stats,
     #        aes(x = Sample, y = Salmon_percent_mapped, color = Source)) +
     #   geom_point() +

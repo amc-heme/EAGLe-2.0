@@ -469,7 +469,10 @@ GSEA_Server <- function(id, dataset_choice, DE_res) {
     #table output for Res tables
     output$fgseaTable <- renderDataTable({
       if (input$fgseaTable == TRUE) {
-        gseafile()
+        
+        gsea_table <- gseafile()
+        DT::datatable(gsea_table,
+                     options = list(scrollX = TRUE))
       }
     })
     
