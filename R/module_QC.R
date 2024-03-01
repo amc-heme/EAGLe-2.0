@@ -204,7 +204,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
       meta <- colData(dds)
       shape_var <- meta[, shape_v]
       return(shape_var)
-    }
+    } #need to change this to only include shapes if value is not NULL
      
     #run color function after dataset is chosen by user
     pca_color <- reactive({
@@ -283,11 +283,15 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
         # venaza dataset does not have the same column names-need to add a condition for that dataset
         # BEAT and TCGA do not have multiqc data
         multiqc_res <- qc_table()
+        
+        multiqc_res <- multiqc_res %>% 
+          mutate_at(vars(-Sample), ~round(., digits = 3))
+        
         multiqc_res <- DT::datatable(multiqc_res,
-                                     options = list(scrollX = TRUE)) %>%
-          DT::formatRound(
-            columns = colnames(multiqc_res),
-            digits = 3)
+                                     options = list(scrollX = TRUE))
+          # DT::formatRound(
+          #   columns = colnames(multiqc_res),
+          #   digits = 3)
         multiqc_res
       }
     })
