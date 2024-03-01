@@ -54,11 +54,11 @@ QC_UI <- function(id) {
           selectInput( #choose type of multiqc test to visualize
             ns("QCvar"),
             label=
-              "Choose MultiQC test",
+              "Choose MultiQC table and plots",
             choices =
-              c("% mapped reads", "# mapped reads", "% uniquely mapped reads", "# uniquely mapped reads"),
+              c("Data Table", "% mapped reads"),
             selected =
-              "% mapped reads"
+              "Data Table"
           )
         ),
         paletteUI(ns("palette"))
@@ -77,14 +77,14 @@ QC_UI <- function(id) {
         conditionalPanel(
           ns = ns,
           condition = "input['multiqc'] == true",
-          plotOutput(ns("QCplot"))
+          DTOutput(ns("QCdt"))
         )
       )
     )
   )
 }
 
-QC_Server <- function(id, dataset_dds, dataset_choice) {
+QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
   moduleServer(id, function(input, output, session) {
 ##PCA plot functions ####
     # function for creating pca from vsd
@@ -248,6 +248,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
     
  #MultiQC plot function ####   
     
+    
     #reactive function for multiqc plot title
     QC_title <- 
       reactive({
@@ -275,6 +276,25 @@ QC_Server <- function(id, dataset_dds, dataset_choice) {
       }
     })
     
+   
+    
+    output$QCdt <- renderDataTable({
+      if (input$multiqc == TRUE) {
+        
+        multiqc_res <- qc_table()
+        multiqc_res <- DT::datatable(multiqc_res) %>%
+          DT::formatRound(
+            columns = c(
+              'Salmon_percent_mapped',
+              'fastp_duplication',
+              'fastp_percent_after_filter_q30',
+              'fastp_GC_content',
+              'fastp_surviving_percent'
+            ),
+            digits = 3)
+        multiqc_res
+      }
+    })
     #render table:
     # DT::datatable(multiqc_general_stats) %>%
     #   DT::formatRound(columns=c('Salmon_percent_mapped',

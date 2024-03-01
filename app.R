@@ -54,7 +54,7 @@ dataset_config <-
   read_yaml("./data.yaml")
 
 raw_data_p <- getwd()
-
+print(raw_data_p)
  
 # Read RDS files from yaml
 CD <- read_rds(paste0(raw_data_p, dataset_config[["Cancer_Discovery"]]$data_path))
@@ -68,12 +68,25 @@ TCGA <- read_rds(paste0(raw_data_p, dataset_config[["TCGA"]]$data_path))
 HPA <- read_rds(paste0(raw_data_p, dataset_config[["HPA"]]$data_path))
 dataset <- list(CD, Ye16, Ye20, Venaza, Lagadinou, Lee, BEAT, TCGA, HPA)
 
-
+# Read QC RDS files from yaml
+CD.qc <- read_rds(paste0(raw_data_p, dataset_config[["Cancer_Discovery"]]$qc_path))
+Ye16.qc <- read_rds(paste0(raw_data_p, dataset_config[["Ye_16"]]$qc_path))
+Ye20.qc <- read_rds(paste0(raw_data_p, dataset_config[["Ye_20"]]$qc_path))
+Venaza.qc <- read_rds(paste0(raw_data_p, dataset_config[["Venaza"]]$qc_path))
+Lagadinou.qc <- read_rds(paste0(raw_data_p, dataset_config[["Lagadinou"]]$qc_path))
+Lee.qc <- read_rds(paste0(raw_data_p, dataset_config[["Lee"]]$qc_path))
+BEAT.qc <- read_rds(paste0(raw_data_p, dataset_config[["BEAT"]]$qc_path))
+TCGA.qc <- read_rds(paste0(raw_data_p, dataset_config[["TCGA"]]$qc_path))
+HPA.qc <- read_rds(paste0(raw_data_p, dataset_config[["HPA"]]$qc_path))
+dataset.qc <- list(CD.qc, Ye16.qc, Ye20.qc, Venaza.qc, Lagadinou.qc, Lee.qc, BEAT.qc, TCGA.qc, HPA.qc)
 
 # Add dataset names to list generated
 names(dataset) <- 
   names(dataset_config)
 
+# Add dataset names to qc list generated
+names(dataset.qc) <- 
+  names(dataset_config)
 
 # UI ####
 ui <-
@@ -138,9 +151,12 @@ server <-
   ## vst table
     
     vst <- vst_Server("vst1", dataset_dds, dataset_choice)
+  ## qc object
+    
+    qc_table <- qc.file_Server("qct1", dataset.qc, dataset_choice)
   ## QC tab ####
   
-    QC_Server("QC1",dataset_dds, dataset_choice)
+    QC_Server("QC1",dataset_dds, dataset_choice, qc_table)
     
   ## GOI tab####  
     goi_Server("GOI1", dataset_choice, vst)

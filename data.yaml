@@ -1,7 +1,7 @@
 Cancer_Discovery:
   label: "Jordan M0-M5"
   data_path: "/data/CD_ROSlow_dds.rds"
-  qc_path: "/data/CD_qc.rds""
+  qc_path: "/data/CD_qc.rds"
   species: "human"
   t2g: "t2g_hs"
   ID: "SRR"
@@ -12,7 +12,7 @@ Cancer_Discovery:
 Ye_16:
   label: "Ye et al. 2016"
   data_path: "/data/Ye_16_dds.rds"
-  qc_path: "/data/Ye16_multiqc.rds""
+  qc_path: "/data/Ye16_multiqc.rds"
   species: "mouse"
   t2g: "t2g_mm"
   ID: "SRR"
@@ -66,7 +66,7 @@ Lee:
 BEAT:
   label: "BEAT-AML"
   data_path: "/data/BEAT_AML_dds.rds"
-  qc_path: 
+  qc_path: "/data/Lee_qc.rds"
   species: "human"
   t2g: "t2g_hs"
   ID: "filename"
@@ -74,7 +74,7 @@ BEAT:
 TCGA:
   label: "TCGA"
   data_path: "/data/TCGA_dds.rds"
-  qc_path: 
+  qc_path: "/data/Lee_qc.rds"
   species: "human"
   t2g: "t2g_hs"
   ID: "filename"
@@ -82,7 +82,7 @@ TCGA:
 HPA:
   label: "Human Protein Atlas"
   data_path: "/data/HPA_dds.rds"
-  qc_path: 
+  qc_path: "/data/Lee_qc.rds"
   species: "human"
   t2g: "t2g_hs"
   PCA_var:
