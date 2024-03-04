@@ -240,7 +240,9 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
            xlab(paste('PC1 =', pc1(), '% variance')) + #reactive x lab for % variance
            ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
           ggtitle("PCA on VSD") +
-          geom_text_repel(colour = "black", aes(label= ID,hjust=0, vjust=0))
+          geom_text_repel(colour = "black", aes(label= ID,hjust=0, vjust=0)) +
+          labs(color = "Condition", shape = "Batch") +
+          guides(fill = FALSE)
         print(pca)
       }
     })
@@ -289,9 +291,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
         
         multiqc_res <- DT::datatable(multiqc_res,
                                      options = list(scrollX = TRUE))
-          # DT::formatRound(
-          #   columns = colnames(multiqc_res),
-          #   digits = 3)
+       
         multiqc_res
       }
     })
