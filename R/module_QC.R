@@ -360,7 +360,8 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
     scree_variance_fun <- function(dds) {
       vsd <- vsd_fun(dds)
       scree.var <- prcomp(t(assay(vsd)))
-      scree_variance <- data.frame(pc = paste0("PC", 1:12), variance = (((scree.var$sdev) ^ 2 / sum((scree.var$sdev) ^ 2)) * 100))
+      num_pcs <- length(scree.var$sdev)
+      scree_variance <- data.frame(pc = paste0("PC", 1:num_pcs), variance = (((scree.var$sdev) ^ 2 / sum((scree.var$sdev) ^ 2)) * 100))
       print("scree var:")
       print(head(scree_variance))
       lorder <- as.vector(outer(c("PC"), 1:12, paste, sep = ""))
@@ -374,15 +375,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
       print(head(scree_df))
       scree_df
     })
-    #reactive function for scree plots title
-    # PCA_var_title <- 
-    #   reactive({
-    #     if (input$PCAvar == "VST PCA") {
-    #       print("VST PC variance")
-    #     } else if (input$PCAvar == "VST + batch corrected PCA") {
-    #       print("VST + batch corrected PC variance")
-    #     }
-    #   })
+
     
     # PCA scree plot ####
     output$PCAvarplot <- renderPlot ({
