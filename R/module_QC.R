@@ -21,46 +21,46 @@ QC_UI <- function(id) {
           inputId =
             ns("PCAplots"),
           label =
-            "PCA",
+            "PCA plot",
           value =
             FALSE,
           right =
             TRUE
         ),
-        # materialSwitch(
-        #   inputId =
-        #     ns("PCAscreeplots"),
-        #   label =
-        #     "Scree",
-        #   value =
-        #     FALSE,
-        #   right =
-        #     TRUE
-        # ),
+        materialSwitch(
+          inputId =
+            ns("PCAscreeplots"),
+          label =
+            "Scree plot",
+          value =
+            FALSE,
+          right =
+            TRUE
+        ),
         materialSwitch(
           inputId =
             ns("multiqc"),
           label =
-            "MultiQC",
+            "MultiQC table",
           value =
             FALSE,
           right =
             TRUE
         ),
         
-        conditionalPanel(
-          ns = ns,
-          condition = "input['multiqc'] == true",
-          selectInput( #choose type of multiqc test to visualize
-            ns("QCvar"),
-            label=
-              "Choose MultiQC table and plots",
-            choices =
-              c("Data Table", "% mapped reads"),
-            selected =
-              "Data Table"
-          )
-        ),
+        # conditionalPanel(
+        #   ns = ns,
+        #   condition = "input['multiqc'] == true",
+        #   selectInput( #choose type of multiqc test to visualize
+        #     ns("QCvar"),
+        #     label=
+        #       "Choose MultiQC table and plots",
+        #     choices =
+        #       c("Data Table", "% mapped reads"),
+        #     selected =
+        #       "Data Table"
+        #   )
+        # ),
         paletteUI(ns("palette"))
       ),
       mainPanel(
@@ -69,11 +69,11 @@ QC_UI <- function(id) {
           condition = "input['PCAplots'] == true",
           plotOutput(ns("PCAplot")) 
         ),
-        # conditionalPanel(
-        #   ns = ns,
-        #   condition = "input['PCAscreeplots'] == true",
-        #   plotOutput(ns("PCAvarplot"))
-        # ),
+        conditionalPanel(
+          ns = ns,
+          condition = "input['PCAscreeplots'] == true",
+          plotOutput(ns("PCAvarplot"))
+        ),
         conditionalPanel(
           ns = ns,
           condition = "input['multiqc'] == true",
@@ -195,6 +195,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
       color_v <- datasets.pca[[dataset]]$PCA_var
       meta <- colData(dds)
       color_var <- meta[, color_v]
+      color_var <- factor(color_var)
       return(color_var)
     }
     
@@ -203,9 +204,19 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
       shape_v <- datasets.pca[[dataset]]$PCA_shape
       meta <- colData(dds)
       shape_var <- meta[, shape_v]
+      shape_var <- factor(shape_var)
       return(shape_var)
     } #need to change this to only include shapes if value is not NULL
      
+    color_label <- function(dataset) {
+      color_l <- datasets.pca[[dataset]]$PCA_var
+      color_l
+    }
+    
+    shape_label <- function(dataset) {
+      shape_l <- datasets.pca[[dataset]]$PCA_shape
+      shape_l
+    }
     #run color function after dataset is chosen by user
     pca_color <- reactive({
       pca_color <- color_var(dataset_choice(), dataset_dds())
@@ -220,6 +231,14 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
       print(pca_shape)
     })
     
+    
+    color_legend <- reactive({
+      color_label(dataset_choice())
+    })
+    
+    shape_legend <- reactive({
+      shape_label(dataset_choice())
+    })
     #call in color palette server for use in plot
     colorpaletteQC <- 
       paletteServer("palette")
@@ -241,8 +260,8 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
            ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
           ggtitle("PCA on VSD") +
           geom_text_repel(colour = "black", aes(label= ID,hjust=0, vjust=0)) +
-          labs(color = "Condition", shape = "Batch") +
-          guides(fill = FALSE)
+          labs(color = color_legend(), shape = shape_legend()) + #rename legends
+          guides(fill = FALSE) #hide fill legend 
         print(pca)
       }
     })
@@ -329,25 +348,32 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
     #   ylab("% mapped") 
     
     # PCA Scree data ####
-    # VSD PCA variance
-    #write functions and store in object to calculate the % variance for each PC
-    # PC_var_VST <- data.frame(PC =paste0("PC", 1:num_PCs),variance =(((scree.pca$sdev) ^ 2 / sum((scree.pca$sdev) ^ 2)) * 100))
-    # lorder_VST <- as.vector(outer(c("PC"), 1:num_PCs, paste, sep = ""))
-    # PC_var_VST$PC <-factor(PC_var_VST$PC,levels = lorder_VST)
-    
+  
     #batch corrected PCA variance
-    # PC_var_bc <-data.frame(PC =paste0("PC", 1:12),variance =(((scree.bcpca$sdev) ^ 2 / sum((scree.bcpca$sdev) ^ 2)) * 100))
-    # lorder_bc <-as.vector(outer(c("PC"), 1:12, paste, sep = ""))
-    # PC_var_bc$PC <-factor(PC_var_bc$PC,levels = lorder_bc)
-    #function to tell ggplot which data set to use for the scree plots
-    # PC_var_data <-
-    #   eventReactive(input$PCAvar, {
-    #     if (input$PCAvar == "VST PCA") {
-    #       PC_var_VST
-    #     } else if (input$PCAvar == "VST + batch corrected PCA") {
-    #       PC_var_bc
-    #     }
-    #   })
+    # PC_var <- reactive({
+    #   PC_var <- data.frame(PC =paste0("PC", 1:12), variance =(((vsd.pca()$sdev) ^ 2 / sum((vsd.pca()$sdev) ^ 2)) * 100))
+    #   lorder <- as.vector(outer(c("PC"), 1:12, paste, sep = ""))
+    #   PC_var$PC <- factor(PC_var$PC,levels = lorder_bc)
+    #   PC_var
+    # })
+   
+    scree_variance_fun <- function(dds) {
+      vsd <- vsd_fun(dds)
+      scree.var <- prcomp(t(assay(vsd)))
+      scree_variance <- data.frame(pc = paste0("PC", 1:12), variance = (((scree.var$sdev) ^ 2 / sum((scree.var$sdev) ^ 2)) * 100))
+      print("scree var:")
+      print(head(scree_variance))
+      lorder <- as.vector(outer(c("PC"), 1:12, paste, sep = ""))
+      scree_variance$pc <- factor(scree_variance$pc, levels = lorder)
+      return(scree_variance)
+    }
+    
+    scree_variance_df <- reactive({
+      scree_df <- scree_variance_fun(dataset_dds())
+      print("scree df:")
+      print(head(scree_df))
+      scree_df
+    })
     #reactive function for scree plots title
     # PCA_var_title <- 
     #   reactive({
@@ -359,23 +385,23 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
     #   })
     
     # PCA scree plot ####
-    # output$PCAvarplot <- renderPlot ({
-    #   if(input$PCAscreeplots == TRUE) {
-    #     
-    #     ggplot(PC_var_VST,
-    #            aes(x = PC,
-    #                y = variance,
-    #                group = 2)) +
-    #       geom_point(size = 2) +
-    #       geom_line() +
-    #       theme_cowplot(font_size = 18) +
-    #       theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-    #       labs(x = "PC",
-    #            y = "% Variance") +
-    #       labs(title =
-    #              "PCA variability plot")
-    #   }
-    # })
+    output$PCAvarplot <- renderPlot ({
+      if(input$PCAscreeplots == TRUE) {
+
+        ggplot(scree_variance_df(),
+               aes(x = pc,
+                   y = variance,
+                   group = 2)) +
+          geom_point(size = 2) +
+          geom_line() +
+          theme_cowplot(font_size = 18) +
+          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+          labs(x = "PC",
+               y = "% Variance") +
+          labs(title =
+                 "PCA variability plot")
+      }
+    })
   })
 }
 

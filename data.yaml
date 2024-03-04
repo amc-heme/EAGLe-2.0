@@ -17,7 +17,7 @@ Ye_16:
   t2g: "t2g_mm"
   ID: "SRR"
   PCA_var: "Source"
-  PCA_shape: "NULL"
+  PCA_shape: "Source"
   batch: "no"
 Ye_20:
   label:  "Ye et al. 2020"
