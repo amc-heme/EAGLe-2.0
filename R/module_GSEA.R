@@ -336,7 +336,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res) {
     }
     #ens2gene object based on user specified dataset choice
     ens2gene <- reactive({
-      generateEnsGene(dataset_choice())
+      generateEnsGene(dataset_choice$user_dataset())
     })
     # function for calculating ranks
     pathway_ranks <- function(DE_results, ensgene) {

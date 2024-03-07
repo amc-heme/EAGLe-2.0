@@ -158,7 +158,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
  
     # vsd.pca for plotting, only run function when PCAplots button is selected
     vsd.pca <- eventReactive(input$PCAplots, { 
-      batch_vsd(dataset_dds(), dataset_choice())
+      batch_vsd(dataset_dds(), dataset_choice$user_dataset())
     })
     
     
@@ -219,25 +219,25 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
     }
     #run color function after dataset is chosen by user
     pca_color <- reactive({
-      pca_color <- color_var(dataset_choice(), dataset_dds())
+      pca_color <- color_var(dataset_choice$user_dataset(), dataset_dds())
       print("pca_color")
       print(pca_color)
     })
     
     #run shape function after dataset is chosen by user
     pca_shape <- reactive({
-      pca_shape <- shape_var(dataset_choice(), dataset_dds())
+      pca_shape <- shape_var(dataset_choice$user_dataset(), dataset_dds())
       print("pca_shape")
       print(pca_shape)
     })
     
     
     color_legend <- reactive({
-      color_label(dataset_choice())
+      color_label(dataset_choice$user_dataset())
     })
     
     shape_legend <- reactive({
-      shape_label(dataset_choice())
+      shape_label(dataset_choice$user_dataset())
     })
     #call in color palette server for use in plot
     colorpaletteQC <- 

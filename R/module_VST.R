@@ -35,7 +35,7 @@ vst_Server <- function(id, dataset_dds, dataset_choice) {
       vst.table
     }
     vst.global <- reactive({
-      vst.create(dataset_dds(), dataset_choice())
+      vst.create(dataset_dds(), dataset_choice$user_dataset())
     })
     return(vst.global)
   })

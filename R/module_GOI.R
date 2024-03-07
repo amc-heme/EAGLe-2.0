@@ -107,7 +107,7 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
     vst.gene <- reactive({
       req(input$VSTCDgenechoice)
       
-      vst.goi <- vst.goi.create(dataset_choice(), dataset_dds(), vst(), input$VSTCDgenechoice)
+      vst.goi <- vst.goi.create(dataset_choice$user_dataset(), dataset_dds(), vst(), input$VSTCDgenechoice)
       gene_choice <- input$VSTCDgenechoice
       print("vst.goi:")
       print(head(vst.goi))
@@ -248,9 +248,7 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
         height = function() geneheight(), #input$geneheightslider,
         res = 120,
         {
-          #print("Gene_expression:")
-          #print(plot_gene())
-          
+  
           ggplot(vst.gene(),
                  aes(
                    x = condition,

@@ -70,7 +70,7 @@ BEAT:
   species: "human"
   t2g: "t2g_hs"
   ID: "filename"
-  PCA_var:
+  PCA_var: "quantile"
 TCGA:
   label: "TCGA"
   data_path: "/data/TCGA_dds.rds"
@@ -78,7 +78,7 @@ TCGA:
   species: "human"
   t2g: "t2g_hs"
   ID: "filename"
-  PCA_var:
+  PCA_var: "FAB"
 HPA:
   label: "Human Protein Atlas"
   data_path: "/data/HPA_dds.rds"

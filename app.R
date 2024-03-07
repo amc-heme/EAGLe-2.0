@@ -140,8 +140,9 @@ server <-
     
     #reactive statement to return dataset species
     data_species <- reactive({
-      dataset_config[[dataset_choice()]]$species
+      dataset_config[[dataset_choice$user_dataset()]]$species
     })
+    
     observe({
       print(data_species())
     })
