@@ -23,7 +23,7 @@ goi_UI <- function(id) {
           choices =
             NULL,
           selected = NULL,
-          options = list(maxItems = NULL)
+          options = list(maxItems = 1)
         ), #options for axis variables, fill variable, and plot filters
         # radioButtons(ns("XaxisVar_CDgene"), h4("X axis variable"),
         #              choices = list("Value" = "xvalue",
@@ -72,71 +72,60 @@ goi_UI <- function(id) {
   )
 }
 
-goi_Server <- function(id, dataset_choice, vst) {
+goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
   moduleServer(id, function(input, output, session) {
     ##Gene Centric output ####
-    #dds > vsd >vst >vst.goi
-    
-    # vst.create <- function(dds, dataset){
-    #   
-    #   dds.file <- dds
-    #   
-    #   vsd <- 
-    #     vst(dds.file, blind = F)
-    #   
-    #   #mouse or human?
-    #   is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
-    #   
-    #   if(is_hs){
-    #     
-    #     vst <- data.frame(assay(vsd)) %>% 
-    #       rownames_to_column(., var = "ensembl_gene_id") %>% 
-    #       left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
-    #       na.omit(.)
-    #   } else {
-    #    
-    #     vst <- data.frame(assay(vsd)) %>% 
-    #       rownames_to_column(., var = "ensembl_gene_id") %>% 
-    #       left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
-    #       na.omit(.)
-    #   }
-    #   return(vst)
-    # }
     
     observe({
       gene_choices <- vst()$ext_gene
-      updateSelectizeInput(session,"VSTCDgenechoice", choices = gene_choices, server = TRUE)
+      updateSelectizeInput(session,"VSTCDgenechoice", choices = gene_choices, selected = NULL, server = TRUE)
     })
     
     
-    vst.goi.create <- function(dataset, vst, gene) {
+    vst.goi.create <- function(dataset, dds, vst, gene) {
       
       cond_var <- datasets[[dataset]]$PCA_var
+      meta <- colData(dds)
+      cond <- meta[, cond_var]
+      print(class(cond))
       
       vst.goi <- vst %>%
-        dplyr::filter(ext_gene == gene) %>%
+        dplyr::filter(ext_gene %in% gene) %>%
         dplyr::select(., !ensembl_gene_id) %>%
         t(.) %>%
         row_to_names(row_number = 1) %>%
         as.data.frame(.) %>%
-        rownames_to_column(var = "Sample") %>%
-        dplyr::mutate(condition = cond_var)
-      
+        rownames_to_column(var = "Sample") %>% 
+        dplyr::mutate(condition = cond) %>%
+        dplyr::rename("ext_gene" = gene)
+        
+      vst.goi$ext_gene <- as.numeric(vst.goi$ext_gene)
       return(vst.goi)
     }
     
-    #this might need to be created in a separate module...
-    # vst <- reactive({
-    #   vst.create(dataset_dds(), dataset_choice())
-    # })
-    
   
-    
     vst.gene <- reactive({
       req(input$VSTCDgenechoice)
       
-      vst.goi.create(dataset_choice(), vst(), input$VSTCDgenechoice)
+      vst.goi <- vst.goi.create(dataset_choice(), dataset_dds(), vst(), input$VSTCDgenechoice)
+      gene_choice <- input$VSTCDgenechoice
+      print("vst.goi:")
+      print(head(vst.goi))
+      vst.goi
     })
+    
+    # plot_gene <- reactive({
+    #   req(input$VSTCDgenechoice)
+    #   req(vst.gene())
+    #   
+    #   gene_c <- input$VSTCDgenechoice
+    #   print("this is the gene:")
+    #   gp <- vst.gene()[,gene_c]
+    #   gp <- factor(gp)
+    #   print(vst.gene()[,gene_c])
+    #   gp
+    # })
+    
     #create dds results table for use in the table generated for the plot
     # dds.res <- reactive({
     #   DE_res$dds_res()
@@ -174,13 +163,9 @@ goi_Server <- function(id, dataset_choice, vst) {
     # vst.goi$variable <- factor(vst.goi$variable)
     
     #reactive function for for filtering vst data table based on user input 
-    # datavst <-
-    #   reactive({
-    #     vst.gene() %>% 
-    #          dplyr::filter(ext_gene %in% input$VSTCDgenechoice)
-    #   })
+
     
-    
+
     #make sure duplicate selections are not allowed with radio buttons
     # observeEvent(input$XaxisVar_CDgene, {
     #   if(input$XaxisVar_CDgene == "xvalue") {
@@ -226,12 +211,12 @@ goi_Server <- function(id, dataset_choice, vst) {
     #     }
     #   })
     # facet toggle switch function to turn faceting on or off
-    Gene_facet <-
-      eventReactive(input$genefacetbutton, {
-        if(input$genefacetbutton == TRUE) {
-          facet_grid(cols = vars(class))
-        } else(NULL)
-      })
+    # Gene_facet <-
+    #   eventReactive(input$genefacetbutton, {
+    #     if(input$genefacetbutton == TRUE) {
+    #       facet_grid(cols = vars(class))
+    #     } else(NULL)
+    #   })
     
     #call in palette module for plot
     colorpaletteGene <- 
@@ -263,22 +248,31 @@ goi_Server <- function(id, dataset_choice, vst) {
         height = function() geneheight(), #input$geneheightslider,
         res = 120,
         {
+          #print("Gene_expression:")
+          #print(plot_gene())
+          
           ggplot(vst.gene(),
                  aes(
-                   x = .data[[xvar_CDgene()]],
-                   y =  .data[[yvar_CDgene()]],
-                   fill = .data[[fillvar_CDgene()]]
+                   x = condition,
+                   y = ext_gene,
+                   #color = condition,
+                   fill = condition
                  )) +
-            geom_boxplot(outlier.shape = NA) +
-            Gene_facet() + #reactive faceting
+            geom_boxplot() +
+            #Gene_facet() + #reactive faceting
             scale_fill_viridis_d(option = colorpaletteGene()) + #reactive  scale_fill_manual from module
             scale_color_viridis_d(option = colorpaletteGene()) + #reactive scale_color_manual from module
             geom_point(alpha = 0.5,
                        position = position_jitterdodge(jitter.width = 0.2),
-                       aes(color = condition)) + 
+                       aes(color = condition)) +
             theme_light() +
+            theme(
+              axis.title = element_text(face = "bold"),
+              title = element_text(face = "bold"),
+              axis.text.x = element_text(angle = 60, hjust = 1)) +
+            #scale_y_continuous(breaks = seq(12, 20, by = 1)) +
             #sig_label_position() + # function for adjusted pvalues position and format on plot
-            ylab("") +
+            ylab(input$VSTCDgenechoice) +
             xlab("") +
             ggtitle("Gene Expression")
         }) #end render plot
