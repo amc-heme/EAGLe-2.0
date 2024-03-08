@@ -586,12 +586,12 @@ GSEA_Server <- function(id, dataset_choice, DE_res) {
     #   }
     # )
     
-    
     #GSEA Enrichment Plots ####
     #reactive expression for specific pathway choice
     observe({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
       updateSelectizeInput(session,"pathwaylisteplot", choices = names(pathwaygsea), server = TRUE)})
+    
     #reactive expression for plot title based on enrichment plot type
     gseaeplot_title <-
       eventReactive(input$pathwaylisteplot, {

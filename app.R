@@ -149,6 +149,7 @@ server <-
     
   ## dds object
     dataset_dds <- dds.file_Server("dds1", dataset, dataset_choice)
+    
   ## vst table
     
     vst <- vst_Server("vst1", dataset_dds, dataset_choice)
@@ -168,7 +169,6 @@ server <-
   # ##GSEA output ####
     GSEA_Server("GSEA1", dataset_choice, DE_res)
   #  
-  #   
   # ##GOI pathway output ####
   #  pathway_Server("pathway1", dds, t2g)
   #   

@@ -258,7 +258,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     #mouse or human?
     is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
     
-    if(is_hs & dataset_choice() %in% c("BEAT", "TCGA")) {
+    if(is_hs & dataset %in% c("BEAT", "TCGA")) {
       
       res <- data.frame(de_results) %>%
         rownames_to_column(., var = 'ensembl_gene_id')
@@ -279,7 +279,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
         )) %>% 
         na.omit(.)
      
-    } else if(is_hs & dataset_choice() %in% c("Cancer_Discovery","Venaza",
+    } else if(is_hs & dataset %in% c("Cancer_Discovery","Venaza",
                                         "Lagadinou", "Lee")){
       
       res <- data.frame(de_results) %>%
@@ -338,6 +338,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   #   shinyjs::toggle(id = "runDE", condition = dataset_choice() %in% c("Ye_16","Venaza", "Lagadinou", "BEAT", "TCGA"))
   # })
   # 
+  
+
   dds_result <- reactiveVal(NULL)
 
   #have DE run when runDE button is clicked
@@ -360,7 +362,6 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     })
   }
 })
-
 
   #create objects for color palettes from the palette module
   colorDE <-  

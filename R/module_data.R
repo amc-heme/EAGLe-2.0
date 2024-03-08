@@ -19,19 +19,22 @@ data_UI <- function(id) {
                          "Lagadiou, 2013" = "Lagadinou",
                          "TCGA-LAML" = "TCGA",
                          "BEAT-AML" = "BEAT",
-                         "Lee et al, 2018" = "Lee",
-                         "Human Protein Atlas" = "HPA"), selected = "Cancer_Discovery"
+                         "Lee et al, 2018" = "Lee"), selected = "Cancer_Discovery"
           ),
-          selectInput(
+          selectizeInput(
             ns("DEmodel"),
-            label = "Choose a metadata variable for DE design",
-            choices = NULL
+            label = "Choose a metadata variable from dataset",
+            choices = NULL,
+            selected = NULL ,
+            options = list(maxItems = 1)
           ),
-          selectInput(
+          selectizeInput(
             ns("pwc"),
-            label = "Choose to run LRT OR a pairwise comparison",
-            choices = "LRT"
-          ),
+            label = "Choose to run LRT OR a pairwise comparison for DE testing",
+            choices = NULL,
+            selected = NULL ,
+            options = list(maxItems = 1)
+          )
         )
       ),
       mainPanel(
@@ -41,12 +44,12 @@ data_UI <- function(id) {
   )
 }
 
-data_Server <- function(id, dataset_choice) {
+data_Server <- function(id) {
   moduleServer(id, function(input, output, session){
     
     # model choice ####
-    DEModelChoices <- function(session, dataset) {
-      choices <- switch(
+    DEModelChoices <- function(dataset) {
+      m_choices <- switch(
         dataset,
         "Cancer_Discovery" = "LRT",
         "Ye_16" = "Source",
@@ -58,14 +61,21 @@ data_Server <- function(id, dataset_choice) {
         "Lee" = "LRT",
         default = character(0)
       )
+    }
+   
+
+    observe({
+      model_choices <- DEModelChoices(input$datainput)
       
       updateSelectizeInput(session,
                            "DEmodel",
-                           choices = choices,
+                           choices = model_choices,
                            selected = NULL)
-    }
+    })
     
-    PWChoices <- function(session, dataset, model) {
+    
+    
+    PWChoices <- function(dataset, model) { #this needs to not populate if model = "LRT"
       choices <- switch(
         paste(dataset, model, sep = "_"),
         "Cancer_Discovery_LRT" = "LRT",
@@ -82,34 +92,37 @@ data_Server <- function(id, dataset_choice) {
         "Lee_LRT" = "LRT",
         default = character(0)
       )
-      updateSelectInput(
-        session,
-        "pwc",
-        choices = choices,
-        selected = NULL
-      )
     }
     
-    user_model_choice <- observe({
-      DEModelChoices(session, input$datainput)
+    observe({
+      pwc_choices<- PWChoices(input$datainput, input$DEmodel)
+      
+      updateSelectizeInput(
+        session,
+        "pwc",
+        choices = pwc_choices,
+        selected = NULL
+      )
     })
-
-    user_PW_choice <- observe({
-      PWChoices(session, input$datainput, input$DEmodel)
-    })
+    
     
     user_choice <- reactive({
       input$datainput
     })
     
-    observe({
-      print(user_choice())
+    user_model_choice <- reactive({
+      input$DEmodel
     })
     
+    user_PW_choice <- reactive({
+      input$pwc
+    })
+
     list(user_dataset = user_choice,
          user_model = user_model_choice,
          user_PW = user_PW_choice
          )
+ 
   })
 }
 
