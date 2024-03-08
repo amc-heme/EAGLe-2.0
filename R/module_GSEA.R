@@ -504,7 +504,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res) {
               y = "Normalized Enrichment Score",
               title = "Pathway NES from GSEA"
             ) +
-            theme_minimal(base_size = 16) +
+            theme_cowplot(font_size = 14) +
             theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"))
         }
       }
@@ -565,7 +565,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res) {
           ma <-
             ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig, tooltip = pathway)) +
             geom_point_interactive(alpha = 0.8, size = 0.5) +
-            theme_minimal(base_size = 18) +
+            theme_cowplot(font_size = 14) +
             theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
             xlab('NES') +
             scale_color_manual(values = colors) +
@@ -686,7 +686,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res) {
             tooltip = Gene
           )
         ) +
-          theme_light(base_size = 14) +
+         theme_cowplot(font_size = 14) +
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
           geom_point_interactive(size = 1, alpha = 0.5) +
           scale_color_manual(values = colors) +

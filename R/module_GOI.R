@@ -38,8 +38,8 @@ goi_UI <- function(id) {
         #              choices = list("Show Comparison" = "comparison", "Prim" = "prim", "Mono" = "mono"), selected = "comparison"),
         hr(),
         #add a facet toggle switch
-        materialSwitch(ns("genefacetbutton"), label = "Facet", value = FALSE, right = TRUE),
-        hr(),
+        # materialSwitch(ns("genefacetbutton"), label = "Facet", value = FALSE, right = TRUE),
+        # hr(),
         
         #add palette choices for boxplot colors
         paletteUI(ns("palette2")),
@@ -246,7 +246,7 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
       renderPlot(
         width = function() genewidth(), #input$genewidthslider,
         height = function() geneheight(), #input$geneheightslider,
-        res = 120,
+        
         {
   
           ggplot(vst.gene(),
@@ -263,7 +263,7 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
             geom_point(alpha = 0.5,
                        position = position_jitterdodge(jitter.width = 0.2),
                        aes(color = condition)) +
-            theme_light() +
+            theme_cowplot(font_size = 14) +
             theme(
               axis.title = element_text(face = "bold"),
               title = element_text(face = "bold"),

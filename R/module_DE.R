@@ -386,7 +386,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
           tooltip = Gene
         )) +
           geom_point_interactive(size = 1, alpha = 0.5) +
-          theme_light() +
+          theme_cowplot(font_size = 14) +
+          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
           scale_color_manual(values = colors) +
           ggtitle("DE Volcano Plot") +
           coord_cartesian(xlim = c(-10, 7))
@@ -422,7 +423,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
           geom_point_interactive(alpha = 0.8, size = 0.5) +
           geom_hline(aes(yintercept = 0)) +
           scale_color_manual(values = colors) +
-          theme_light() +
+          theme_cowplot(font_size = 14) +
+          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
           ylim(c(
             min(res.ma$`log2FoldChange`),
             max(res.ma$`log2FoldChange`)

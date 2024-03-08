@@ -252,7 +252,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
           scale_shape() +
           scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
           scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
-          theme_cowplot(font_size = 18) + 
+          theme_cowplot(font_size = 14) + 
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
           theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
           theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
@@ -387,7 +387,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
                    group = 2)) +
           geom_point(size = 2) +
           geom_line() +
-          theme_cowplot(font_size = 18) +
+          theme_cowplot(font_size = 14) +
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
           labs(x = "PC",
                y = "% Variance") +
