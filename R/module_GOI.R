@@ -10,7 +10,7 @@ goi_UI <- function(id) {
     theme=
       shinytheme("flatly"),
     titlePanel(
-      "Gene Expression Plot"
+      "Gene Expression"
     ),
     #h6("*p values are indicated for the comparison of gene expression between prim and mono samples"),
     sidebarLayout(
@@ -267,7 +267,8 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
             theme(
               axis.title = element_text(face = "bold"),
               title = element_text(face = "bold"),
-              axis.text.x = element_text(angle = 60, hjust = 1)) +
+              axis.text.x = element_text(face = "bold", angle = 60, hjust = 1), 
+              axis.text.y = element_text(face = "bold")) +
             #scale_y_continuous(breaks = seq(12, 20, by = 1)) +
             #sig_label_position() + # function for adjusted pvalues position and format on plot
             ylab(input$VSTCDgenechoice) +

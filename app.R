@@ -134,7 +134,6 @@ server <-
     
     options(shiny.reactlog = TRUE)
   
-  
   ##Data tab ####
     dataset_choice <- data_Server("data1")
     
@@ -151,7 +150,6 @@ server <-
     dataset_dds <- dds.file_Server("dds1", dataset, dataset_choice)
     
   ## vst table
-    
     vst <- vst_Server("vst1", dataset_dds, dataset_choice)
   ## qc object
     

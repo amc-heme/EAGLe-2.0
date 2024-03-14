@@ -347,7 +347,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
     dds_result(runDETest(dataset_dds(), dataset_choice$user_model(), dataset_choice$user_PW()))
   })
   
-  
+
 
   observe({
     if(!is.null(dds_result())) { #only run after runDE action button has been selected

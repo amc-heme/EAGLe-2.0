@@ -34,7 +34,13 @@ data_UI <- function(id) {
             choices = NULL,
             selected = NULL ,
             options = list(maxItems = 1)
-          )
+          ),
+          hr(),
+          
+          actionButton(
+            (ns("runDE1")),
+            "Run DESeq"
+          ),
         )
       ),
       mainPanel(

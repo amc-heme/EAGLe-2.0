@@ -140,7 +140,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
           as_tibble(rownames = "ID") %>%
           left_join(., as_tibble(colData(vsd)), by = c("ID" = pca.id))
         
-      } else {
+      } else{
         
         # variance stabilize the counts table
         vsd <- 
@@ -151,7 +151,8 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
           data.frame(prcomp(t(assay(vsd)))$x) %>%
           as_tibble(rownames = "ID") %>%
           left_join(., as_tibble(colData(vsd)), by = c("ID" = pca.id))
-      }
+        
+      } 
       print(head(vpca))
       return(vpca)
     }
@@ -191,53 +192,78 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
     
     
     #variable to use for color distinctions on plot
-    color_var <- function(dataset, dds) {
-      color_v <- datasets.pca[[dataset]]$PCA_var
-      meta <- colData(dds)
-      color_var <- meta[, color_v]
-      color_var <- factor(color_var)
+    color_var <- function(dataset, dds, model) {
+      if(dataset %in% c("Cancer_Discovery", "Ye_16", "Ye_20", "Venaza", "Lagadinou", "Lee")){
+        color_v <- datasets.pca[[dataset]]$PCA_var
+        meta <- colData(dds)
+        color_var <- meta[, color_v]
+        color_var <- factor(color_var)
+      } else if(dataset %in% c("BEAT", "TCGA")){
+        color_v <- model
+        meta <- colData(dds)
+        color_var <- meta[, color_v]
+        color_var <- factor(color_var)
+      }
+   
       return(color_var)
     }
     
     #variable to use for shape distinctions on plot
-    shape_var <- function(dataset, dds) {
-      shape_v <- datasets.pca[[dataset]]$PCA_shape
-      meta <- colData(dds)
-      shape_var <- meta[, shape_v]
-      shape_var <- factor(shape_var)
+    shape_var <- function(dataset, dds, model) {
+      if(dataset %in% c("Cancer_Discovery", "Ye_16", "Ye_20", "Venaza", "Lagadinou", "Lee")) {
+        shape_v <- datasets.pca[[dataset]]$PCA_shape
+        meta <- colData(dds)
+        shape_var <- meta[, shape_v]
+        shape_var <- factor(shape_var)
+        
+      } else if(dataset %in% c("BEAT", "TCGA")){
+        shape_v <- model
+        meta <- colData(dds)
+        shape_var <- meta[, shape_v]
+        shape_var <- factor(shape_var)
+      }
       return(shape_var)
-    } #need to change this to only include shapes if value is not NULL
+    } 
      
-    color_label <- function(dataset) {
-      color_l <- datasets.pca[[dataset]]$PCA_var
+    color_label <- function(dataset, model) {
+      if(dataset %in% c("Cancer_Discovery", "Ye_16", "Ye_20", "Venaza", "Lagadinou", "Lee")) {
+        color_l <- datasets.pca[[dataset]]$PCA_var
+      } else if(dataset %in% c("BEAT", "TCGA")) {
+        color_l <- model
+      }
       color_l
     }
     
-    shape_label <- function(dataset) {
-      shape_l <- datasets.pca[[dataset]]$PCA_shape
+    shape_label <- function(dataset, model) {
+      if(dataset %in% c("Cancer_Discovery", "Ye_16", "Ye_20", "Venaza", "Lagadinou", "Lee")){
+        shape_l <- datasets.pca[[dataset]]$PCA_shape
+      } else if(dataset %in% c("BEAT", "TCGA")) {
+        shape_l <- model
+      }
+     
       shape_l
     }
     #run color function after dataset is chosen by user
     pca_color <- reactive({
-      pca_color <- color_var(dataset_choice$user_dataset(), dataset_dds())
+      pca_color <- color_var(dataset_choice$user_dataset(), dataset_dds(), dataset_choice$user_model())
       print("pca_color")
       print(pca_color)
     })
     
     #run shape function after dataset is chosen by user
     pca_shape <- reactive({
-      pca_shape <- shape_var(dataset_choice$user_dataset(), dataset_dds())
+      pca_shape <- shape_var(dataset_choice$user_dataset(), dataset_dds(), dataset_choice$user_model())
       print("pca_shape")
       print(pca_shape)
     })
     
     
     color_legend <- reactive({
-      color_label(dataset_choice$user_dataset())
+      color_label(dataset_choice$user_dataset(), dataset_choice$user_model())
     })
     
     shape_legend <- reactive({
-      shape_label(dataset_choice$user_dataset())
+      shape_label(dataset_choice$user_dataset(), dataset_choice$user_model())
     })
     #call in color palette server for use in plot
     colorpaletteQC <- 
@@ -259,7 +285,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
            xlab(paste('PC1 =', pc1(), '% variance')) + #reactive x lab for % variance
            ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
           ggtitle("PCA on VSD") +
-          geom_text_repel(colour = "black", aes(label= ID,hjust=0, vjust=0)) +
+          #geom_text_repel(colour = "black", aes(label= ID,hjust=0, vjust=0)) +
           labs(color = color_legend(), shape = shape_legend()) + #rename legends
           guides(fill = FALSE) #hide fill legend 
         print(pca)
