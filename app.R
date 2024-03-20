@@ -109,7 +109,7 @@ ui <-
                                       QC_UI("QC1")),
                               #DESeq Menu ####
                               tabPanel("Differential Expression",
-                                      DE_UI("DEtab1"),),
+                                      DE_UI("DEtab1")),
                               
                               #GSEA menu ####
                               tabPanel("GSEA",

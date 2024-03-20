@@ -30,11 +30,11 @@ DE_UI <- function(id) {
           #   label = "Choose to run LRT OR a pairwise comparison",
           #   choices = "LRT"
           # ),
-          actionButton(
-            (ns("runDE")),
-            "Run DESeq"
-          ),
-          hr(),
+          # actionButton(
+          #   (ns("runDE")),
+          #   "Run DESeq"
+          # ),
+
         materialSwitch(
           inputId =
             (ns("DESeqtable")),
@@ -78,10 +78,10 @@ DE_UI <- function(id) {
           right =
             TRUE
         ),
-        actionButton(
-          (ns("sendGSEA")),
-          "Send results to GSEA"
-        ),
+        # actionButton(
+        #   (ns("sendGSEA")),
+        #   "Send results to GSEA"
+        # ),
          hr(),
         conditionalPanel(
           ns = ns,
@@ -347,7 +347,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   dds_result <- reactiveVal(NULL)
 
   #have DE run when runDE button is clicked
-  observeEvent(input$runDE, {
+  observeEvent(dataset_choice$close_tab(), {
     dds_result(runDETest(dataset_dds(), dataset_choice$user_model(), dataset_choice$user_PW()))
   })
   
@@ -532,7 +532,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   
   DDS4GSEA <- reactiveVal(NULL)
   
-  observeEvent(input$sendGSEA, { #only run DE for GSEA if the action button is pushed 
+  observeEvent(dataset_choice$close_tab(), { #only run DE for GSEA if the action button is pushed 
     DDS4GSEA(runDETest_GSEA(dataset_dds(), dataset_choice$user_model(), dataset_choice$user_PW()))
     
   })
