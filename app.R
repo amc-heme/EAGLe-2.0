@@ -102,7 +102,13 @@ ui <-
                             data_UI("data1")),
                
                tabPanelBody("content",
-                          
+                            actionButton(
+                              "change_data",
+                              icon = icon("refresh"),
+                              class = "btn-xs",
+                              label = "Change Dataset",
+                              style = "position: absolute; right: 40px"
+                            ),      
                               #QC Menu ####
                               tabsetPanel(
                                 tabPanel("QC",
@@ -135,6 +141,10 @@ server <-
     
     observeEvent(dataset_choice$close_tab(), {
       updateTabsetPanel(session, "page", "content")
+    })
+    
+    observeEvent(input$change_data, {
+      updateTabsetPanel(session, "page", "landing_page")
     })
     #reactive statement to return dataset species
     data_species <- reactive({
