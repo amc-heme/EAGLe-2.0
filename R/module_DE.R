@@ -129,17 +129,23 @@ DE_UI <- function(id) {
           conditionalPanel(
             ns = ns,
             condition = "input.DESeqtable == true",
+            shinycssloaders::withSpinner(
             DTOutput(ns("results"))
+            )
           ),
           conditionalPanel(
             ns = ns,
             condition = "input.DESeqvolcano == true",
+            shinycssloaders::withSpinner(
             girafeOutput(ns("volplot"))
+            )
           ),
           conditionalPanel(
             ns = ns,
             condition = "input.DESeqMA == true",
+            shinycssloaders::withSpinner(
             girafeOutput(ns("MAplot"))
+            )
           ),
           conditionalPanel(
             ns = ns,

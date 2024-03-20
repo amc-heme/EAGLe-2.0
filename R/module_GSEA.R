@@ -251,8 +251,10 @@ GSEA_UI <- function(id) {
         conditionalPanel(
           ns = ns,
           condition = "input.fgseaTable == true",
+          shinycssloaders::withSpinner(
           DTOutput( #add loading spinners
             ns("fgseaTable")
+          )
           )
         ),
         conditionalPanel(

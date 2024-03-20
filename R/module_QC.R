@@ -67,17 +67,23 @@ QC_UI <- function(id) {
         conditionalPanel(
           ns = ns,
           condition = "input['PCAplots'] == true",
-          plotOutput(ns("PCAplot")) 
+          shinycssloaders::withSpinner(
+            plotOutput(ns("PCAplot")) 
+          )
         ),
         conditionalPanel(
           ns = ns,
           condition = "input['PCAscreeplots'] == true",
+          shinycssloaders::withSpinner(
           plotOutput(ns("PCAvarplot"))
+          )
         ),
         conditionalPanel(
           ns = ns,
           condition = "input['multiqc'] == true",
+          shinycssloaders::withSpinner(
           DTOutput(ns("QCdt"))
+          )
         )
       )
     )
