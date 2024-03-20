@@ -221,6 +221,10 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
       dds.wald <- DESeq(ddsTxi_dds, test = "Wald") 
       contrasts <- c(model, levels)
       results_df_GSEA <- results(dds.wald, contrast = contrasts, tidy = TRUE)
+      #if BEAT or TCGA
+     # results_df_GSEA$row <- str_sub(results_df_GSEA$row, end=-4) 
+      print("res_GSEA:")
+      print(head(results_df_GSEA))
       return(results_df_GSEA)
     }
   } #this is what needs to be sent to GSEA#

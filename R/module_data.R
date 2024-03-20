@@ -39,7 +39,7 @@ data_UI <- function(id) {
           
           actionButton(
             (ns("runDE1")),
-            "Run DESeq"
+            "Continue"
           ),
         )
       ),
@@ -123,12 +123,16 @@ data_Server <- function(id) {
     user_PW_choice <- reactive({
       input$pwc
     })
+    
+    close_page <- reactive({
+      input$runDE1
+    })
 
     list(user_dataset = user_choice,
          user_model = user_model_choice,
-         user_PW = user_PW_choice
+         user_PW = user_PW_choice,
+         close_tab = close_page
          )
- 
   })
 }
 

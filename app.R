@@ -43,6 +43,7 @@ library(yaml)
 library(readr)
 library(sva)
 library(formulaic)
+library(shinydashboard)
 
 
 options(
@@ -90,41 +91,35 @@ names(dataset.qc) <-
 
 # UI ####
 ui <-
-  navbarPage(
-    "EAGLe 2.0",
-    #Dataset tab ####
-    tabPanel(
-      "Dataset", 
-          data_UI("data1")
-      
-    ),
-    #QC Menu ####
-    tabPanel(
-              "QC",
-              QC_UI("QC1")
-    ),
-    #DESeq Menu ####
-    tabPanel("Differential Expression",
-             DE_UI("DEtab1"),
-             # tabPanel(
-             #   "Pairwise Comparisons",
-             #   PW_UI("PWtab1")
-             # )
-             # 
-    ),
-    
-    #GSEA menu ####
-    tabPanel("GSEA",
-             GSEA_UI("GSEA1")
-    ),
-    
-    #Gene expression analysis ####
-    tabPanel( 
-              "Gene Expression",
-              goi_UI("GOI1")
-    )
-  )
-
+  navbarPage("EAGLe 2.0",
+             
+             #Dataset tab ####
+             tabsetPanel(
+               id = "page",
+               type = "hidden",
+               
+               tabPanelBody("landing_page",
+                            data_UI("data1")),
+               
+               tabPanelBody("content",
+                          
+                              #QC Menu ####
+                              tabsetPanel(
+                                tabPanel("QC",
+                                      QC_UI("QC1")),
+                              #DESeq Menu ####
+                              tabPanel("Differential Expression",
+                                      DE_UI("DEtab1"),),
+                              
+                              #GSEA menu ####
+                              tabPanel("GSEA",
+                                      GSEA_UI("GSEA1")),
+                              
+                              #Gene expression analysis ####
+                              tabPanel("Gene Expression",
+                                      goi_UI("GOI1"))
+                            ))
+             ))
 
 #Server ####
 server <- 
@@ -137,6 +132,10 @@ server <-
   ##Data tab ####
     dataset_choice <- data_Server("data1")
     
+    
+    observeEvent(dataset_choice$close_tab(), {
+      updateTabsetPanel(session, "page", "content")
+    })
     #reactive statement to return dataset species
     data_species <- reactive({
       dataset_config[[dataset_choice$user_dataset()]]$species
@@ -158,7 +157,7 @@ server <-
   
     QC_Server("QC1",dataset_dds, dataset_choice, qc_table)
     
-  ## GOI tab####  
+  ## GOI tab####
     goi_Server("GOI1", dataset_choice, dataset_dds, vst)
  
   # ##DESEq #####

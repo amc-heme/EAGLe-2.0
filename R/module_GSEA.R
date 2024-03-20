@@ -331,6 +331,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res) {
       } else{
         ens2gene <- t2g_mm[, c(2,3)]
       }
+      print("ens2gene:")
       print(head(ens2gene))
       return(ens2gene)
     }
@@ -344,6 +345,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res) {
       #add the human name of the gene to the last column
       result <- inner_join(DE_results, ensgene, by = c("row" = "ensembl_gene_id"))
       colnames(result)[8] <- 'HS_Symbol'
+      print("res4GSEA:")
       print(head(result))
       # select only the human gene symbol and the 'stat' from the results,
       result <- result %>% 
