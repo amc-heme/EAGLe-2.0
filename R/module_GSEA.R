@@ -32,6 +32,8 @@ GSEA_UI <- function(id) {
     ),#end title
     sidebarLayout(
       sidebarPanel( 
+        # shinyjs::useShinyjs(),
+        # id = "side-panel-gsea",
         h4("Choose gmt file to load pathway sets"),
         #dropdown menu for molecular pathways 
         selectInput(ns("filechoice"), label = NULL,
@@ -304,8 +306,9 @@ GSEA_UI <- function(id) {
 }
 
 
-GSEA_Server <- function(id, dataset_choice, DE_res) {
+GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger) {
   moduleServer(id, function(input, output, session) {
+ 
     #run GSEA for chosen pathway input
    
     #make an object to hold the values of the selectInput for gsea pathway choices
@@ -786,6 +789,18 @@ GSEA_Server <- function(id, dataset_choice, DE_res) {
     #     makeInteractiveComplexHeatmap(input, output, session, htgsea, "htgsea")
     #   }
     # })
+    
+    observe({
+      req(reset_trigger())
+      
+      updateMaterialSwitch(session, "fgseaTable", value = FALSE)
+      updateMaterialSwitch(session, "rankedplot", value = FALSE)
+      updateMaterialSwitch(session, "moustache", value = FALSE)
+      updateMaterialSwitch(session, "eplot", value = FALSE)
+      updateMaterialSwitch(session, "volcanoplot", value = FALSE)
+      updateMaterialSwitch(session, "heatmap", value = FALSE)
+      
+    })
     
   })
 }

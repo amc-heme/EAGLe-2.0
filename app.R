@@ -92,7 +92,6 @@ names(dataset.qc) <-
 # UI ####
 ui <-
   navbarPage("EAGLe 2.0",
-             
              #Dataset tab ####
              tabsetPanel(
                id = "page",
@@ -135,6 +134,11 @@ server <-
     
     options(shiny.reactlog = TRUE)
   
+    #reactive container for reset button(change dataset action button)
+    reset_trigger <- reactive({
+      input$change_data
+      })
+    
   ##Data tab ####
     dataset_choice <- data_Server("data1")
     
@@ -146,6 +150,7 @@ server <-
     observeEvent(input$change_data, {
       updateTabsetPanel(session, "page", "landing_page")
     })
+
     #reactive statement to return dataset species
     data_species <- reactive({
       dataset_config[[dataset_choice$user_dataset()]]$species
@@ -165,20 +170,17 @@ server <-
     qc_table <- qc.file_Server("qct1", dataset.qc, dataset_choice)
   ## QC tab ####
   
-    QC_Server("QC1",dataset_dds, dataset_choice, qc_table)
+    QC_Server("QC1", dataset_dds, dataset_choice, qc_table, reset_trigger)
     
   ## GOI tab####
     goi_Server("GOI1", dataset_choice, dataset_dds, vst)
  
   # ##DESEq #####
-    DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice) 
+    DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice, reset_trigger) 
 
   # ##GSEA output ####
-    GSEA_Server("GSEA1", dataset_choice, DE_res)
-  #  
-  # ##GOI pathway output ####
-  #  pathway_Server("pathway1", dds, t2g)
-  #   
+    GSEA_Server("GSEA1", dataset_choice, DE_res, reset_trigger)
+
   } #end server
 
 # Run the application 

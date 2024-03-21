@@ -15,7 +15,6 @@ goi_UI <- function(id) {
     #h6("*p values are indicated for the comparison of gene expression between prim and mono samples"),
     sidebarLayout(
       sidebarPanel(
-        useShinyjs(), #this is needed for javascript functions
         selectizeInput( #gene choice dropdown menu
           ns("VSTCDgenechoice"),
           label=
@@ -74,6 +73,8 @@ goi_UI <- function(id) {
 
 goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
   moduleServer(id, function(input, output, session) {
+ 
+    # 
     ##Gene Centric output ####
     
     observe({
@@ -283,7 +284,6 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
                height = 8, dpi = 72)
       }
     )
-    
     
   })
 }

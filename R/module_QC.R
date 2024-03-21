@@ -17,6 +17,8 @@ QC_UI <- function(id) {
     ),#end title
     sidebarLayout(
       sidebarPanel(
+        # shinyjs::useShinyjs(),
+        # id = "side-panel-qc",
         materialSwitch(
           inputId =
             ns("PCAplots"),
@@ -90,7 +92,7 @@ QC_UI <- function(id) {
   )
 }
 
-QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
+QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) {
   moduleServer(id, function(input, output, session) {
 ##PCA plot functions ####
     # function for creating pca from vsd
@@ -426,6 +428,13 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table) {
           labs(title =
                  "PCA variability plot")
       }
+    })
+    
+    observe({
+      req(reset_trigger())
+      updateMaterialSwitch(session, "PCAplots", value = FALSE)
+      updateMaterialSwitch(session, "PCAscreeplots", value = FALSE)
+      updateMaterialSwitch(session, "multiqc", value = FALSE)
     })
   })
 }

@@ -19,21 +19,9 @@ DE_UI <- function(id) {
     ),#end title
       sidebarLayout(
         sidebarPanel(
+          # shinyjs::useShinyjs(),
+          # id = "side-panel-de",
         tagList(
-          # selectInput(
-          #   ns("DEmodel"),
-          #   label = "Choose a metadata variable for DE design",
-          #   choices = NULL
-          # ),
-          # selectInput(
-          #   ns("pwc"),
-          #   label = "Choose to run LRT OR a pairwise comparison",
-          #   choices = "LRT"
-          # ),
-          # actionButton(
-          #   (ns("runDE")),
-          #   "Run DESeq"
-          # ),
 
         materialSwitch(
           inputId =
@@ -157,8 +145,13 @@ DE_UI <- function(id) {
   )
 }
 
-DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
+DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigger) {
   moduleServer(id, function(input, output, session) {
+    
+    # observe({
+    #   req(session$userData$reset_trigger())
+    #   shinyjs::reset("side-panel-de")
+    # })
 # model choice ####
   # DEModelChoices <- function(session, dataset) {
   #   choices <- switch(dataset,
@@ -540,11 +533,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
   
   observeEvent(dataset_choice$close_tab(), { #only run DE for GSEA if the action button is pushed 
     DDS4GSEA(runDETest_GSEA(dataset_dds(), dataset_choice$user_model(), dataset_choice$user_PW()))
-    
-  })
-  
- 
 
+  })
 
      #only generate the res table if all choices have been selected and runDE is pushed
     res4GSEA <- reactive({
@@ -552,12 +542,17 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice) {
       generateRes(dataset_choice$user_dataset(), dds_result())
     }
   })
-
+    observe({
+      req(reset_trigger())
+      updateMaterialSwitch(session, "DESeqtable", value = FALSE)
+      updateMaterialSwitch(session, "DESeqvolcano", value = FALSE)
+      updateMaterialSwitch(session, "DESeqMA", value = FALSE)
+      updateMaterialSwitch(session, "DESeqHeat", value = FALSE)
+    })
   list(
     res_tidy = reactive(DDS4GSEA()), #send tidy version of dds.res to GSEA for ranks function
     dds_res = res4GSEA #send dds.res to GSEA for use in volcano plot
   )
-  
   })
 }
 # need a way to send the results of the de test to GSEA for the volcano plot as well. 
