@@ -110,6 +110,8 @@ ui <-
                             ),      
                               #QC Menu ####
                               tabsetPanel(
+                                id = "tabs",
+                              
                                 tabPanel("QC",
                                       QC_UI("QC1")),
                               #DESeq Menu ####
@@ -180,6 +182,10 @@ server <-
 
   # ##GSEA output ####
     GSEA_Server("GSEA1", dataset_choice, DE_res, reset_trigger)
+    
+    observeEvent(input$change_data, {
+      updateTabsetPanel(session, "tabs", selected = "QC")
+    })
 
   } #end server
 
