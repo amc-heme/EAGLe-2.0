@@ -83,9 +83,10 @@ QC_UI <- function(id) {
         conditionalPanel(
           ns = ns,
           condition = "input['multiqc'] == true",
-          shinycssloaders::withSpinner(
-          DTOutput(ns("QCdt"))
-          )
+          
+          DTOutput(ns("QCdt")),
+          textOutput(ns("QCdt2"))
+          
         )
       )
     )
@@ -333,10 +334,14 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     # 
    
     
-    output$QCdt <- renderDataTable({
-      if (input$multiqc == TRUE) {
-        # venaza dataset does not have the same column names-need to add a condition for that dataset
-        # BEAT and TCGA do not have multiqc data
+  
+      
+        output$QCdt <- renderDataTable({
+          if (input$multiqc == TRUE & dataset_choice$user_dataset() %in% 
+              c("Cancer_Discovery", "Ye_16", "Ye_20","Venaza", "Lagadinou", "Lee")) {
+        # venaza dataset does not have the same column names-need to add a 
+        # condition for that dataset
+     
         multiqc_res <- qc_table()
         
         multiqc_res <- multiqc_res %>% 
@@ -346,8 +351,18 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
                                      options = list(scrollX = TRUE))
        
         multiqc_res
-      }
-    })
+          }
+      })
+
+        output$QCdt2 <- renderText({
+          if(input$multiqc == TRUE & dataset_choice$user_dataset() %in% 
+             c("BEAT", "TCGA")) {
+            
+          paste("MultiQC data is unavailable for the selected dataset")
+          }
+                })
+  
+     
     
 
   
