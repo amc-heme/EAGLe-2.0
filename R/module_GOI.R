@@ -89,7 +89,8 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
       meta <- colData(dds)
       cond <- meta[, cond_var]
       print(class(cond))
-      
+      print("vst:")
+      print(head(vst))
       vst.goi <- vst %>%
         dplyr::filter(ext_gene %in% gene) %>%
         dplyr::select(., !ensembl_gene_id) %>%
@@ -101,6 +102,7 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
         dplyr::rename("ext_gene" = gene)
         
       vst.goi$ext_gene <- as.numeric(vst.goi$ext_gene)
+      
       return(vst.goi)
     }
     
