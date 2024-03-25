@@ -97,7 +97,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
   moduleServer(id, function(input, output, session) {
 ##PCA plot functions ####
     # function for creating pca from vsd
-    
+   
     batch_vsd <- function(dds, dataset) {
       
       dds.file <- dds 
@@ -358,7 +358,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
           if(input$multiqc == TRUE & dataset_choice$user_dataset() %in% 
              c("BEAT", "TCGA")) {
             
-          paste("MultiQC data is unavailable for the selected dataset")
+          paste("MultiQC data is unavailable for this dataset")
           }
                 })
   

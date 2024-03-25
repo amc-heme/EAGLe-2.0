@@ -13,6 +13,8 @@ DE_UI <- function(id) {
   fluidPage(
     theme =
       shinytheme("flatly"),
+    useWaiter(),
+    #waiter_on_busy(),
     useShinyjs(),
     titlePanel(
       "Differential Expression Tables and Plots"
@@ -147,7 +149,7 @@ DE_UI <- function(id) {
 
 DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigger) {
   moduleServer(id, function(input, output, session) {
-    
+    waiter <- Waiter$new()
     # observe({
     #   req(session$userData$reset_trigger())
     #   shinyjs::reset("side-panel-de")
@@ -368,17 +370,22 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   
 
   dds_result <- reactiveVal(NULL)
-
+ 
   #have DE run when runDE button is clicked
   observeEvent(dataset_choice$close_tab(), {
-    dds_result(runDETest(dataset_dds(), dataset_choice$user_model(), dataset_choice$user_PW()))
+   
+   waiter_show()
+
+      dds_result(runDETest(dataset_dds(), dataset_choice$user_model(), dataset_choice$user_PW()))
+
+    waiter_hide()
   })
   
 
 
   observe({
     if(!is.null(dds_result())) { #only run after runDE action button has been selected
-      
+     
       dds.res <- generateRes(dataset_choice$user_dataset(), dds_result())
     
       output$results <- renderDataTable({
@@ -399,10 +406,12 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   #Volcano Plot ####
   observe({
     if(!is.null(dds_result())) {
+     
       res.vol <- generateRes(dataset_choice$user_dataset(), dds_result())
   
   output$volplot <- 
     renderGirafe({
+     
       #colors <- c(colorDE(), "grey",color2DE()) #object for colors on volcano based on user input
       colors <- c(colorDE(), "grey", color2DE())
       if(input$DESeqvolcano == TRUE) { #only create plot if the  volcano switch is toggled
@@ -433,11 +442,12 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   
   observe({
     if(!is.null(dds_result())) {
+     
       res.ma <- generateRes(dataset_choice$user_dataset(), dds_result())  
       
   output$MAplot <- 
     renderGirafe ({
-     
+   
       colors <- c(color3DE(), "grey", color4DE())#object for colors on volcano based on user input called from palette module
       if(input$DESeqMA == TRUE) { #only call plot if the MA plot switch is toggled
         ma <- ggplot(res.ma, 
@@ -555,9 +565,16 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   
   DDS4GSEA <- reactiveVal(NULL)
   
-  observeEvent(dataset_choice$close_tab(), { #only run DE for GSEA if the action button is pushed 
-    DDS4GSEA(runDETest_GSEA(dataset_choice$user_dataset(), dataset_dds(), dataset_choice$user_model(), dataset_choice$user_PW()))
+  observeEvent(dataset_choice$close_tab(), { #only run DE for GSEA if the action button is pushed
+    waiter$show(
+      #spin_fading_circles()
+    )
 
+      DDS4GSEA(runDETest_GSEA(dataset_choice$user_dataset(), dataset_dds(),
+                              dataset_choice$user_model(),
+                              dataset_choice$user_PW()))
+
+   waiter$hide()
   })
 
      #only generate the res table if all choices have been selected and runDE is pushed

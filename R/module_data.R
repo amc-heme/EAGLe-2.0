@@ -4,6 +4,9 @@ data_UI <- function(id) {
   fluidPage(
     theme =
       shinytheme("flatly"),
+    useShinyjs(),
+    useWaiter(),
+ 
     titlePanel("Choose a dataset, model term, and comparison for DE and visualizations"
                ),
     sidebarLayout(
@@ -36,7 +39,7 @@ data_UI <- function(id) {
             options = list(maxItems = 1)
           ),
           hr(),
-          
+         
           actionButton(
             (ns("runDE1")),
             "Continue"
@@ -123,9 +126,12 @@ data_Server <- function(id) {
     user_PW_choice <- reactive({
       input$pwc
     })
+  
     
     close_page <- reactive({
+     
       input$runDE1
+  
     })
 
     list(user_dataset = user_choice,

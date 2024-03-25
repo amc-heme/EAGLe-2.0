@@ -73,7 +73,7 @@ goi_UI <- function(id) {
 
 goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
   moduleServer(id, function(input, output, session) {
- 
+  
     # 
     ##Gene Centric output ####
     

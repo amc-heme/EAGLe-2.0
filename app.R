@@ -44,7 +44,7 @@ library(readr)
 library(sva)
 library(formulaic)
 library(shinydashboard)
-
+library(waiter)
 
 options(
   shiny.fullstacktrace = TRUE
