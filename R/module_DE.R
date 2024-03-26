@@ -68,51 +68,57 @@ DE_UI <- function(id) {
           right =
             TRUE
         ),
-        # actionButton(
-        #   (ns("sendGSEA")),
-        #   "Send results to GSEA"
-        # ),
+        #co"lor palette choice for plots
+        h4("Color Palettes:"),
+        colorUI(ns("color"), "Choose 1st color", "#0000FF"),
+        colorUI(ns("color2"), "Choose 2nd color", "028a0f"),
          hr(),
         conditionalPanel(
           ns = ns,
-          condition = "input.DESeqvolcano == true",
-          h4("Volcano Plot Specific Options"),
-          #color palette choice for volcano plot
-          colorUI(ns("color"), "Choose 1st color", "#0000FF"),
-          colorUI(ns("color2"), "Choose 2nd color", "028a0f"),
-
-          hr(),
+          condition = "input.DESeqtable == true",
           downloadButton(
-            ns("downloadDEVolcano"),
+            ns("downloadDESeq"),
             label =
-              "Download Volcano Plot"
+              "Download DEG Table"
           )
         ),
-        hr(),
-        conditionalPanel(
-          ns = ns,
-          condition = "input.DESeqMA == true",
-          h4("MA Plot Specific Options"),
-          #color palette choice for MA plot
-          colorUI(ns("color3"), "Choose 1st color", "#0000FF"),
-          colorUI(ns("color4"), "Choose 2nd color", "028a0f"),
-
-          hr(),
-          downloadButton(
-            ns("downloadDEMA"),
-            label =
-              "Download MA Plot"
-          )
-        ),
-        hr(),
-        conditionalPanel(
-          ns = ns,
-          condition = "input.DESeqHeat == true",
-          h4("Heatmap Specific Options"),
-          #color palette choices for heatmap
-          colorUI(ns("color5"),"Choose 1st color", "#0000FF"),
-          colorUI(ns("color6"), "Choose 2nd color", "#FF0000"),
-          )
+        # conditionalPanel(
+        #   ns = ns,
+        #   condition = "input.DESeqvolcano == true",
+        #  # h4("Volcano Plot Specific Options"),
+        # 
+        # 
+        #   hr(),
+        #   downloadButton(
+        #     ns("downloadDEVolcano"),
+        #     label =
+        #       "Download Volcano Plot"
+        #   )
+        # ),
+        # hr(),
+        # conditionalPanel(
+        #   ns = ns,
+        #   condition = "input.DESeqMA == true",
+        #   #h4("MA Plot Specific Options"),
+        #   #color palette choice for MA plot
+        #   # colorUI(ns("color3"), "Choose 1st color", "#0000FF"),
+        #   # colorUI(ns("color4"), "Choose 2nd color", "028a0f"),
+        # 
+        #  # hr(),
+        #   downloadButton(
+        #     ns("downloadDEMA"),
+        #     label =
+        #       "Download MA Plot"
+        #   )
+        # ),
+        # conditionalPanel(
+        #   ns = ns,
+        #   condition = "input.DESeqHeat == true",
+        #   #h4("Heatmap Specific Options"),
+        #   #color palette choices for heatmap
+        #   # colorUI(ns("color5"),"Choose 1st color", "#0000FF"),
+        #   # colorUI(ns("color6"), "Choose 2nd color", "#FF0000"),
+        #   )
         )
       ),
         mainPanel(
@@ -200,6 +206,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   #     selected = NULL
   #   )
   # }
+  
   
   runDETest_GSEA <- function(dataset, dds, model, comparison) {
     # return dds if LRT is chosen
@@ -367,7 +374,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   #   shinyjs::toggle(id = "runDE", condition = dataset_choice() %in% c("Ye_16","Venaza", "Lagadinou", "BEAT", "TCGA"))
   # })
   # 
-  
+
 
   dds_result <- reactiveVal(NULL)
  
@@ -394,6 +401,13 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
                         options = list(scrollX = TRUE))
        }
     })
+      
+      output$downloadDESeq <- downloadHandler(
+        filename = function() { paste("DEGTable", '.csv', sep='')},
+        content = function(file) {
+          write.csv(dds.res,file)
+        }
+      )
   }
 })
 
@@ -412,7 +426,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   output$volplot <- 
     renderGirafe({
      
-      #colors <- c(colorDE(), "grey",color2DE()) #object for colors on volcano based on user input
+      #colors <- c(viridis(15)[10], "grey", magma(15)[9])
       colors <- c(colorDE(), "grey", color2DE())
       if(input$DESeqvolcano == TRUE) { #only create plot if the  volcano switch is toggled
         p<- ggplot(res.vol, aes( 
@@ -434,11 +448,11 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     }
   })
   #MA Plot ####
-  color3DE <-
-    colorServer("color3")
-  
-  color4DE <-
-    colorServer("color4")
+  # color3DE <-
+  #   colorServer("color3")
+  # 
+  # color4DE <-
+  #   colorServer("color4")
   
   observe({
     if(!is.null(dds_result())) {
@@ -447,8 +461,9 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       
   output$MAplot <- 
     renderGirafe ({
-   
-      colors <- c(color3DE(), "grey", color4DE())#object for colors on volcano based on user input called from palette module
+      #colors <- c(viridis(15)[10], "grey", magma(15)[9])
+      colors <- c(colorDE(), "grey", color2DE())
+      #colors <- c(color3DE(), "grey", color4DE())#object for colors on volcano based on user input called from palette module
       if(input$DESeqMA == TRUE) { #only call plot if the MA plot switch is toggled
         ma <- ggplot(res.ma, 
                      aes(
@@ -483,11 +498,11 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     req(input$DESeqHeat)
     ns <- NS(id)
     
-    color5DE <-
-      colorServer("color5")
-    
-    color6DE <-
-      colorServer("color6")
+    # color5DE <-
+    #   colorServer("color5")
+    # 
+    # color6DE <-
+    #   colorServer("color6")
     #object for batch corrected vsd matrix
     # assay(vsd) <-
     #   limma::removeBatchEffect(assay(vsd),
@@ -519,7 +534,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     #only show the first 100 genes for visualization in this example(can change)
     vst.mat <- head(vst.mat, n = 100)
     #create a colorRamp function based on user input in color palette choices
-    colors = colorRamp2(c(-2, 0, 2), c(color5DE(), "white", color6DE()))
+    colors = colorRamp2(c(-2, 0, 2), c(colorDE(), "white", color2DE()))
     #create heatmap object
     # if (isTruthy(input$DESeqHeat)) {
       ht = draw(ComplexHeatmap::Heatmap(
