@@ -46,13 +46,14 @@ goi_UI <- function(id) {
         hr(), #js functions to hide plot dimensions until selected
         #materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
         
+        materialSwitch(ns("hidedims"), label = "Custom Plot Dimensions",
+                       value = FALSE, right = TRUE),
+        hr(),
+            shinyjs::hidden(
+              sliderInput(ns("plotheightslider"),"Adjust Plot Height", 200, 1200, 600)),
         
-        #plot dimension input
-        sliderUI(ns("plotheightslider"), 200, 1200, 600, "Adjust Plot Height"),
-        
-        #  hr(),
-        # 
-        sliderUI(ns("plotwidthslider"), 200, 1200, 800, "Adjust Plot Width"),
+            shinyjs::hidden(
+              sliderInput(ns("plotwidthslider"), "Adjust Plot Width", 200, 1200, 800)),
         
         hr(),
         
@@ -237,18 +238,18 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
     #   }
     # })
     
-    geneheight <-
-      sliderServer("plotheightslider")
+    observe({
+            shinyjs::toggle("plotwidthslider", condition = input$hidedims)
+          })
     
-    genewidth <-
-      sliderServer("plotwidthslider")
-    
-
+    observe({
+      shinyjs::toggle("plotheightslider", condition = input$hidedims)
+    })
     #plot output
     output$VSTCDplot <-
       renderPlot(
-        width = function() genewidth(), #input$genewidthslider,
-        height = function() geneheight(), #input$geneheightslider,
+        width = function() input$plotwidthslider,
+        height = function() input$plotheightslider,
         
         {
   

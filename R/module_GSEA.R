@@ -103,7 +103,9 @@ GSEA_UI <- function(id) {
           right =
             TRUE
         ),
-        
+        #color palette choices for all plots
+        colorUI(ns("color7"), "Choose a color for plots", "#FF0000"),
+        hr(),
         conditionalPanel(
           ns = ns,
           condition = "input.fgseaTable == true",
@@ -120,11 +122,8 @@ GSEA_UI <- function(id) {
           condition = "input.rankedplot == true",
           
           h4("Waterfall Plot Specific Options"),
-          hr(),
-          #color palette choices for waterfall plot
-          colorUI(ns("color7"), "Choose color for plot", "#FF0000"),
-          
-          hr(), 
+      
+
           #slider scale to choose how many pathways to load
           sliderInput(ns("howmanypathways"), "Choose How Many Pathways to Rank",
                       min = 5, max = 50, value = 15
@@ -150,25 +149,25 @@ GSEA_UI <- function(id) {
         hr(),
         
         #GSEA Moustache ####
-        conditionalPanel(
-          ns = ns,
-          condition = "input.moustache == true",
-          h4("Moustache Plot Specific Options"),
-          
-          hr(),
-          #color palette choices for muostache plot
-          colorUI(ns("color8"), "Choose color for plot", "#FF0000"),
-          
-          hr(), 
-          # 
-          # downloadButton(
-          #   ns("downloadmoustache"),
-          #   label =
-          #     "Download Moustache Plot"
-          # )
-        ),
-        
-        hr(),
+        # conditionalPanel(
+        #   ns = ns,
+        #   condition = "input.moustache == true",
+        #   h4("Moustache Plot Specific Options"),
+        #   
+        #   #hr(),
+        #   #color palette choices for muostache plot
+        #   #colorUI(ns("color8"), "Choose color for plot", "#FF0000"),
+        #   
+        #   hr(), 
+        #   # 
+        #   # downloadButton(
+        #   #   ns("downloadmoustache"),
+        #   #   label =
+        #   #     "Download Moustache Plot"
+        #   # )
+        # ),
+        # 
+        # hr(),
         #GSEA Enrichment plot ####
         conditionalPanel(
           ns = ns,
@@ -215,7 +214,7 @@ GSEA_UI <- function(id) {
             options = list(maxItems = 1)
           ),
           #color palette choices for volcano plot
-          colorUI(ns("color9"), "Choose color for plot", "#FF0000"),
+          #colorUI(ns("color9"), "Choose color for plot", "#FF0000"),
           
           # downloadButton(
           #   ns("downloadvolcano"),
@@ -563,7 +562,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger) {
       })
     #call in singlecolor_module for plot
     colorM <- 
-      colorServer("color8")
+      colorServer("color7")
     output$GSEAMoustache <- renderGirafe(
       {
         if (input$moustache == TRUE) {
@@ -681,8 +680,10 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger) {
       # colorVol <-
       #   colorServer("color9")
       #color object reactive to user input from palette chpice
+      v_col <- colorServer("color7")
       colors <-
-        c("grey", "blue")
+        c("grey", v_col())
+     
       #if (input$volcanoplot == TRUE) {
        v <- ggplot(
           data = (pathway.genes() %>% arrange(., (genes_in_pathway))),

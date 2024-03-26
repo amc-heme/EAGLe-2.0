@@ -23,12 +23,4 @@
 #     return(sliderscale)
 #   })
 # }
-# 
-# sliderApp <- function() {
-#   ui <- fluidPage(sliderUI("slider"))
-#   server <- function(input, output, session) {
-#     sliderServer("slider")
-#   }
-#   shinyApp(ui, server)
-# }
-# sliderApp()
+
