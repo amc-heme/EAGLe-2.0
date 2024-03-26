@@ -105,7 +105,7 @@ GSEA_UI <- function(id) {
         ),
         #color palette choices for all plots
         colorUI(ns("color7"), "Choose a color for plots", "#FF0000"),
-        hr(),
+    
         conditionalPanel(
           ns = ns,
           condition = "input.fgseaTable == true",
@@ -120,25 +120,26 @@ GSEA_UI <- function(id) {
         conditionalPanel(
           ns = ns,
           condition = "input.rankedplot == true",
-          
+         
           h4("Waterfall Plot Specific Options"),
       
-
+  
           #slider scale to choose how many pathways to load
           sliderInput(ns("howmanypathways"), "Choose How Many Pathways to Rank",
                       min = 5, max = 50, value = 15
           ),
-          
-          hr(),
+       
           #js function to hide plot dimensions until selected
-         # materialSwitch(ns("hidedimsWF"), "Custom plot dimensions", value = FALSE, right = TRUE),
-          
-          sliderUI(ns("rankedheightslider"), 200, 1000, 400, "Adjust Plot Height"),
-          
-          hr(),
-          
-          #call in module UI for width slider
-          sliderUI(ns("rankedwidthslider"), 200, 1000, 600, "Adjust Plot Width"),
+          materialSwitch(ns("hidedimsWF"), "Custom plot dimensions",
+                         value = FALSE, right = TRUE),
+        
+          shinyjs::hidden(
+            sliderInput(ns("wfheightslider"),
+                        "Adjust Plot Height", 200, 1200, 500)),
+         
+          shinyjs::hidden(
+            sliderInput(ns("wfwidthslider"),
+                        "Adjust Plot Width", 200, 1200, 600)),
           
           downloadButton(
             ns("downloadranks"),
@@ -146,8 +147,7 @@ GSEA_UI <- function(id) {
               "Download Waterfall"
           )
         ),
-        hr(),
-        
+      
         #GSEA Moustache ####
         # conditionalPanel(
         #   ns = ns,
@@ -167,42 +167,46 @@ GSEA_UI <- function(id) {
         #   # )
         # ),
         # 
-        # hr(),
+         hr(),
         #GSEA Enrichment plot ####
         conditionalPanel(
           ns = ns,
           condition = "input.eplot == true",
-          
+       
           h4("Enrichment Plot Specific Options"),
+        
           #options for type of enrichment plot to load
-          radioButtons(ns("topupordownbutton"), h5("Enrichment Plot Choices"), 
-                       choices = list("Top Ranked Up Pathway" = "topup", "Top Ranked Down Pathway" = "topdown", "Pathway of Choice:" = "eplotpath"), selected = "topup"),
-          h5("Choose a specific pathway"),
+          radioButtons(ns("topupordownbutton"), label = "Enrichment Plot Choices",
+                       choices = list("Top Ranked Up Pathway" = "topup",
+                                      "Top Ranked Down Pathway" = "topdown", 
+                                      "Pathway of Choice:" = "eplotpath"),
+                       selected = "topup"),
+       
           #dropdown menu for specific pathway choices that is reactive to the pathway set dropdown menu
           selectizeInput(
             ns("pathwaylisteplot"),
             label=
-              NULL,
+              "Choose a specific pathway",
             choices =
               NULL,
             selected = NULL ,
             options = list(maxItems = 1)
           ),
-          
-          hr(),
+        
           downloadButton(
             ns("downloadeplot"),
             label =
               "Download Enrich. Plot"
           )
         ),
-        hr(),
+      hr(),
         #GSEA Volcano ####
         conditionalPanel(
           ns = ns,
           condition = "input.volcanoplot == true",
-          
+ 
           h4("Volcano Plot Specific Options"),
+   
           #dropdown list of specific pathways for volcano plot that is reactive to the pathway set dropdown menu
           selectizeInput(
             ns("pathwaylist"),
@@ -216,11 +220,11 @@ GSEA_UI <- function(id) {
           #color palette choices for volcano plot
           #colorUI(ns("color9"), "Choose color for plot", "#FF0000"),
           
-          # downloadButton(
-          #   ns("downloadvolcano"),
-          #   label =
-          #     "Download Volcano Plot"
-          # )
+          downloadButton(
+            ns("downloadvolcano"),
+            label =
+              "Download Volcano Plot"
+          )
         )
         #hr(),
         #GSEA Heatmap ####
@@ -245,10 +249,8 @@ GSEA_UI <- function(id) {
         #   )
         # )
       ),
-      
-      
+
       mainPanel(
-        
         conditionalPanel(
           ns = ns,
           condition = "input.fgseaTable == true",
@@ -486,16 +488,20 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger) {
     #call in singlecolor_palette module for plot
     colorWF <- 
       colorServer("color7")
-    rankedheight <-
-      sliderServer("rankedheightslider")
-    rankedwidth <-
-      sliderServer("rankedwidthslider")
+ 
+    observe({
+      shinyjs::toggle("wfwidthslider", condition = input$hidedimsWF)
+    })
+    
+    observe({
+      shinyjs::toggle("wfheightslider", condition = input$hidedimsWF)
+    })
     
     output$GSEAranked <- renderPlot(
       width = function()
-        rankedwidth(),
+        input$wfwidthslider,
       height = function()
-        rankedheight(),
+        input$wfheightslider,
       {
         if (input$rankedplot == TRUE) {
           #color object reactive to user choice from palette

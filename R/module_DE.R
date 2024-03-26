@@ -35,8 +35,7 @@ DE_UI <- function(id) {
           right =
             TRUE
         ),
-        hr(),
-        
+    
         materialSwitch(
           inputId =
             (ns("DESeqvolcano")),
@@ -47,7 +46,7 @@ DE_UI <- function(id) {
           right =
             TRUE
         ),
-        hr(),
+   
         materialSwitch(
           inputId =
             (ns("DESeqMA")),
@@ -68,7 +67,8 @@ DE_UI <- function(id) {
           right =
             TRUE
         ),
-        #co"lor palette choice for plots
+        #color palette choice for plots
+        
         h4("Color Palettes:"),
         colorUI(ns("color"), "Choose 1st color", "#0000FF"),
         colorUI(ns("color2"), "Choose 2nd color", "028a0f"),

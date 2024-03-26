@@ -35,27 +35,27 @@ goi_UI <- function(id) {
         #                             "Class" = "fillclass"),selected = "fillclass"),
         # radioButtons(ns("PrimMonobutton"), h4("Show only prim or mono gene expression"),
         #              choices = list("Show Comparison" = "comparison", "Prim" = "prim", "Mono" = "mono"), selected = "comparison"),
-        hr(),
+     
         #add a facet toggle switch
         # materialSwitch(ns("genefacetbutton"), label = "Facet", value = FALSE, right = TRUE),
-        # hr(),
+      
         
         #add palette choices for boxplot colors
         paletteUI(ns("palette2")),
         
-        hr(), #js functions to hide plot dimensions until selected
+        #js functions to hide plot dimensions until selected
         #materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
-        
+  
         materialSwitch(ns("hidedims"), label = "Custom Plot Dimensions",
                        value = FALSE, right = TRUE),
-        hr(),
+      
             shinyjs::hidden(
               sliderInput(ns("plotheightslider"),"Adjust Plot Height", 200, 1200, 600)),
         
             shinyjs::hidden(
               sliderInput(ns("plotwidthslider"), "Adjust Plot Width", 200, 1200, 800)),
         
-        hr(),
+      
         
         downloadButton(ns("downloadGenePlot"), label = "Download Plot"),
         
