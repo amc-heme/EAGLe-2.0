@@ -448,12 +448,13 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger) {
       })
     
     output$downloadfgsea <- downloadHandler(
-      filename = function() { paste("GSEATable", '.csv', sep='')},
+      filename = function() { paste("GSEATable", '.csv', sep = '')},
       content = function(file) {
-        write.csv(gseafile(),file)
+        fwrite(gseafile(),file, sep=",", sep2=c("", " ", ""))
       }
     )
-  
+    # fwrite(fgseaRes, file="/Users/stephaniegipson/Documents/GitHub/IS_12192023/fgseaRes.SensitiveKO.csv",
+    #        sep=",", sep2=c("", " ", ""))
     #filter Res table for chosen pathway to show in a waterfall plot
     gseafile_waterfall <-
       reactive({
