@@ -12,30 +12,50 @@ vst_Server <- function(id, dataset_dds, dataset_choice) {
       
       dds.file <- dds
       
-      vsd <- 
+      vsd <-
         vst(dds.file, blind = F)
       
       #mouse or human?
       is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
       
-      if(is_hs & dataset %in% c("Cancer_Discovery", "Venaza", "Lagadinou", "Lee")){
-        
-        vst.table <- data.frame(assay(vsd), check.names = FALSE) %>% 
-          rownames_to_column(., var = "ensembl_gene_id") %>% 
-          left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+      if (is_hs &
+          dataset %in% c("Cancer_Discovery", "Venaza", "Lagadinou", "Lee")) {
+        vst.table <- data.frame(assay(vsd), check.names = FALSE) %>%
+          janitor::clean_names()  %>%
+          rownames_to_column(., var = "ensembl_gene_id") %>%
+          left_join(unique(dplyr::select(t2g_hs, c(
+            ensembl_gene_id, ext_gene
+          ))), ., by = 'ensembl_gene_id') %>%
+          dplyr::mutate(ext_gene_ensembl = case_when(ext_gene == "" ~ ensembl_gene_id,
+                                                     TRUE ~ ext_gene)) %>%
+          dplyr::select(-c(ensembl_gene_id, ext_gene)) %>%
+          dplyr::select(ext_gene_ensembl, everything()) %>%
           na.omit(.)
-      } else if(is_hs & dataset %in% c("BEAT", "TCGA")) {
-        
-          vst.table <- data.frame(assay(vsd), check.names = FALSE) %>% 
-            rownames_to_column(., var = "ensembl_gene_id") %>% 
-            mutate(ensembl_gene_id = sub("\\..*", "", ensembl_gene_id)) %>%
-            left_join(unique(dplyr::select(t2g_hs, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
-            na.omit(.) 
+      } else if (is_hs & dataset %in% c("BEAT", "TCGA")) {
+        vst.table <- data.frame(assay(vsd), check.names = FALSE) %>%
+          janitor::clean_names()  %>%
+          rownames_to_column(., var = "ensembl_gene_id") %>%
+          mutate(ensembl_gene_id = sub("\\..*", "", ensembl_gene_id)) %>%
+          left_join(unique(dplyr::select(t2g_hs, c(
+            ensembl_gene_id, ext_gene
+          ))), ., by = 'ensembl_gene_id') %>%
+          dplyr::mutate(ext_gene_ensembl = case_when(ext_gene == "" ~ ensembl_gene_id,
+                                                     TRUE ~ ext_gene)) %>%
+          dplyr::select(-c(ensembl_gene_id, ext_gene)) %>%
+          dplyr::select(ext_gene_ensembl, everything()) %>%
+          na.omit(.)
       } else {
-        
-        vst.table <- data.frame(assay(vsd), check.names = FALSE) %>% 
-          rownames_to_column(., var = "ensembl_gene_id") %>% 
-          left_join(unique(dplyr::select(t2g_mm, c(ensembl_gene_id, ext_gene))), ., by = 'ensembl_gene_id') %>%
+        vst.table <- data.frame(assay(vsd), check.names = FALSE) %>%
+          janitor::clean_names()  %>%
+          rownames_to_column(., var = "ensembl_gene_id") %>%
+          left_join(unique(dplyr::select(t2g_mm, c(
+            ensembl_gene_id, ext_gene
+          ))), .,
+          by = 'ensembl_gene_id') %>%
+          dplyr::mutate(ext_gene_ensembl = case_when(ext_gene == "" ~ ensembl_gene_id,
+                                                     TRUE ~ ext_gene)) %>%
+          dplyr::select(-c(ensembl_gene_id, ext_gene)) %>%
+          dplyr::select(ext_gene_ensembl, everything()) %>%
           na.omit(.)
       }
       print("vst.table:")

@@ -23,43 +23,29 @@ goi_UI <- function(id) {
             NULL,
           selected = NULL,
           options = list(maxItems = 1)
-        ), #options for axis variables, fill variable, and plot filters
-        # radioButtons(ns("XaxisVar_CDgene"), h4("X axis variable"),
-        #              choices = list("Value" = "xvalue",
-        #                             "Gene" = "xgene", "Class" = "xclass"),selected = "xgene"),
-        # radioButtons(ns("YaxisVar_CDgene"), h4("Y axis variable"),
-        #              choices = list("Value" = "yvalue",
-        #                             "Gene" = "ygene"),selected = "yvalue"),
-        # radioButtons(ns("FillVar_CDgene"), h4("color by:"),
-        #              choices = list("Gene" = "fillgene",
-        #                             "Class" = "fillclass"),selected = "fillclass"),
-        # radioButtons(ns("PrimMonobutton"), h4("Show only prim or mono gene expression"),
-        #              choices = list("Show Comparison" = "comparison", "Prim" = "prim", "Mono" = "mono"), selected = "comparison"),
-     
-        #add a facet toggle switch
-        # materialSwitch(ns("genefacetbutton"), label = "Facet", value = FALSE, right = TRUE),
-      
+        ), 
         
         #add palette choices for boxplot colors
         paletteUI(ns("palette2")),
         
         #js functions to hide plot dimensions until selected
-        #materialSwitch("hidedims", "Custom plot dimensions", value = FALSE, right = TRUE),
-  
-        materialSwitch(ns("hidedims"), label = "Custom Plot Dimensions",
-                       value = FALSE, right = TRUE),
-      
-            shinyjs::hidden(
-              sliderInput(ns("plotheightslider"),"Adjust Plot Height", 200, 1200, 400)),
         
-            shinyjs::hidden(
-              sliderInput(ns("plotwidthslider"), "Adjust Plot Width", 200, 1200, 500)),
+        materialSwitch(ns("hidedims"),
+                       label = "Custom Plot Dimensions",
+                       value = FALSE,
+                       right = TRUE),
         
-      
+        shinyjs::hidden(sliderInput(ns("plotheightslider"),
+                                    "Adjust Plot Height", 200, 1200, 400)),
+        
+        shinyjs::hidden(sliderInput(ns("plotwidthslider"),
+                                    "Adjust Plot Width", 200, 1200, 500)),
+        
+        
         
         downloadButton(ns("downloadGenePlot"), label = "Download Plot"),
         
-      ),
+      ), 
       
       mainPanel( #add loading spinner
         shinycssloaders::withSpinner(
@@ -79,8 +65,14 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
     ##Gene Centric output ####
     
     observe({
-      gene_choices <- vst()$ext_gene
-      updateSelectizeInput(session,"VSTCDgenechoice", choices = gene_choices, selected = NULL, server = TRUE)
+      gene_choices <- vst()$ext_gene_ensembl
+      updateSelectizeInput(
+        session,
+        "VSTCDgenechoice",
+        choices = gene_choices,
+        selected = NULL,
+        server = TRUE
+      )
     })
     
     
@@ -93,16 +85,16 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
       print("vst:")
       print(head(vst))
       vst.goi <- vst %>%
-        dplyr::filter(ext_gene %in% gene) %>%
-        dplyr::select(., !ensembl_gene_id) %>%
+        dplyr::filter(ext_gene_ensembl %in% gene) %>%
+        #dplyr::select(., !ensembl_gene_id) %>%
         t(.) %>%
         row_to_names(row_number = 1) %>%
         as.data.frame(.) %>%
         rownames_to_column(var = "Sample") %>% 
         dplyr::mutate(condition = cond) %>%
-        dplyr::rename("ext_gene" = gene)
+        dplyr::rename("ext_gene_ensembl" = gene)
         
-      vst.goi$ext_gene <- as.numeric(vst.goi$ext_gene)
+      vst.goi$ext_gene_ensembl <- as.numeric(vst.goi$ext_gene_ensembl)
       
       return(vst.goi)
     }
@@ -256,7 +248,7 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
           ggplot(vst.gene(),
                  aes(
                    x = condition,
-                   y = ext_gene,
+                   y = ext_gene_ensembl,
                    #color = condition,
                    fill = condition
                  )) +
