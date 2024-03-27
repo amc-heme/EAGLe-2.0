@@ -104,7 +104,7 @@ GSEA_UI <- function(id) {
             TRUE
         ),
         #color palette choices for all plots
-        colorUI(ns("color7"), "Choose a color for plots", "#FF0000"),
+        colorUI(ns("color7"), "Choose a color for plots", "#D53031"),
     
         conditionalPanel(
           ns = ns,

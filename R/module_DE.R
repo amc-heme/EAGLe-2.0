@@ -70,8 +70,8 @@ DE_UI <- function(id) {
         #color palette choice for plots
         
         h4("Color Palettes:"),
-        colorUI(ns("color"), "Choose 1st color", "#0000FF"),
-        colorUI(ns("color2"), "Choose 2nd color", "028a0f"),
+        colorUI(ns("color"), "Choose 1st color", "#184C52"),
+        colorUI(ns("color2"), "Choose 2nd color", "#D53031"),
          hr(),
         conditionalPanel(
           ns = ns,

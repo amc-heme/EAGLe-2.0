@@ -50,10 +50,10 @@ goi_UI <- function(id) {
                        value = FALSE, right = TRUE),
       
             shinyjs::hidden(
-              sliderInput(ns("plotheightslider"),"Adjust Plot Height", 200, 1200, 600)),
+              sliderInput(ns("plotheightslider"),"Adjust Plot Height", 200, 1200, 400)),
         
             shinyjs::hidden(
-              sliderInput(ns("plotwidthslider"), "Adjust Plot Width", 200, 1200, 800)),
+              sliderInput(ns("plotwidthslider"), "Adjust Plot Width", 200, 1200, 500)),
         
       
         
