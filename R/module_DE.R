@@ -81,7 +81,23 @@ DE_UI <- function(id) {
             label =
               "Download DEG Table"
           )
-        )
+        ),
+        # conditionalPanel(
+        #   ns = ns,
+        #   condition = "input.DESeqHeat == true",
+        #   #js function to hide plot dimensions until selected
+        #   materialSwitch(ns("hidedimsHM"), "Custom plot dimensions",
+        #                  value = FALSE, right = TRUE),
+        #   
+        #   shinyjs::hidden(
+        #     sliderInput(ns("hmheightslider"),
+        #                 "Adjust Plot Height", 200, 1200, 600)),
+        #   
+        #   shinyjs::hidden(
+        #     sliderInput(ns("hmwidthslider"),
+        #                 "Adjust Plot Width", 200, 1200, 800)),
+        #   
+        # )
       )
     ),
         mainPanel(
@@ -109,7 +125,7 @@ DE_UI <- function(id) {
           conditionalPanel(
             ns = ns,
             condition = "input.DESeqHeat == true",
-            plotOutput(ns("ht"))
+            plotlyOutput(ns("ht"))
         )
       )
     )
@@ -374,27 +390,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   
 
     #Heatmap ####
-  #interactive heatmap needs to be wrapped in a reactive function to work
-    # color5DE <-
-    #   colorServer("color5")
-    # 
-    # color6DE <-
-    #   colorServer("color6")
-    #object for batch corrected vsd matrix
-    # assay(vsd) <-
-    #   limma::removeBatchEffect(assay(vsd),
-    #                            batch = samples$batch,
-    #                            design = model.matrix(~ condition, data = samples))
-    # # data frame for batch corrected vsd matrix
-    # vstlimma <-
-    #   data.frame(assay(vsd)) %>%
-    #   rownames_to_column(., var = "ensembl_gene_id") %>%
-    #   left_join(unique(dplyr::select(t2g_hs, c(
-    #     ensembl_gene_id, ext_gene
-    #   ))), ., by = 'ensembl_gene_id') %>%
-    #   na.omit(.)
-  #observe({
-  output$ht <- renderPlot({
+  
+  output$ht <- renderPlotly({
     
     req(input$DESeqHeat)
     ns <- NS(id)
@@ -423,25 +420,32 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     print("vst.mat:")
     print(head(vst.mat))
     #create a colorRamp function based on user input in color palette choices
-    colors.hm = colorRamp2(c(-2, 0, 2), c(colorDE(), "white", color2DE()))
+    colors.hm <- colorRamp(c(colorDE(), "white", color2DE()))
     #create heatmap object
-    
-    ht <- 
-      ComplexHeatmap::Heatmap(
-        vst.mat,
-        name = "z scaled expression",
-        col = colors.hm,
-        row_names_gp = gpar(fontsize = 4),
-        row_km = 2,
-        # top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("white", "white")),
-        #                                                       labels = c("prim", "mono"),
-        #                                                       labels_gp = gpar(col = "black", fontsize = 10))),
-        column_km = 2,
-        column_title = NULL,
-        row_title = NULL
-        
-      )
-    ht <- draw(ht)
+    ht <- plot_ly(
+      x = colnames(vst.mat),
+      y = rownames(vst.mat),
+      z = vst.mat,
+      colorbar = list(len=1, limits = c(-2, 2)),
+      colors = colors.hm,
+      type = "heatmap"
+    )
+    # ht <- 
+    #   ComplexHeatmap::Heatmap(
+    #     vst.mat,
+    #     name = "z scaled expression",
+    #     col = colors.hm,
+    #     row_names_gp = gpar(fontsize = 4),
+    #     row_km = 2,
+    #     # top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("white", "white")),
+    #     #                                                       labels = c("prim", "mono"),
+    #     #                                                       labels_gp = gpar(col = "black", fontsize = 10))),
+    #     column_km = 2,
+    #     column_title = NULL,
+    #     row_title = NULL
+    #     
+    #   )
+    # ht <- draw(ht)
     ht
     #makeInteractiveComplexHeatmap(input, output, session, ht, heatmap_id = ns("ht"))
   })
