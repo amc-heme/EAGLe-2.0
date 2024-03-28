@@ -109,7 +109,7 @@ DE_UI <- function(id) {
           conditionalPanel(
             ns = ns,
             condition = "input.DESeqHeat == true",
-            InteractiveComplexHeatmapOutput(heatmap_id = ns("ht"))
+            plotOutput(ns("ht"))
         )
       )
     )
@@ -393,7 +393,9 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     #     ensembl_gene_id, ext_gene
     #   ))), ., by = 'ensembl_gene_id') %>%
     #   na.omit(.)
-  observe({
+  #observe({
+  output$ht <- renderPlot({
+    
     req(input$DESeqHeat)
     ns <- NS(id)
     
@@ -424,7 +426,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     colors.hm = colorRamp2(c(-2, 0, 2), c(colorDE(), "white", color2DE()))
     #create heatmap object
     
-    ht = draw(
+    ht <- 
       ComplexHeatmap::Heatmap(
         vst.mat,
         name = "z scaled expression",
@@ -437,12 +439,13 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
         column_km = 2,
         column_title = NULL,
         row_title = NULL
+        
       )
-    )
-    
-    makeInteractiveComplexHeatmap(input, output, session, ht, heatmap_id = ns("ht"))
-    
+    ht <- draw(ht)
+    ht
+    #makeInteractiveComplexHeatmap(input, output, session, ht, heatmap_id = ns("ht"))
   })
+   
   
   
   # download DE table

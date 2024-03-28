@@ -732,71 +732,71 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger) {
     # )
     #GSEA heatmap ####
     #reactive expression for selected pathway choice for heatmap
-    # observe({
-    #   pathwaygsea <- gsea_file_values[[input$filechoice]]
-    #   updateSelectizeInput(session,"pathwaylistht", choices = names(pathwaygsea), server = TRUE)})
-    # #reactive expression of title for heatmap
-    # gseaht_title <-
-    #   eventReactive(input$pathwaylistht, {
-    #     print(input$pathwaylistht)
-    #   })
-    # #call in single color_module for plot palette
-    # colorGHeat <- 
-    #   colorServer("color10")
-    # colorGHeat2 <-
-    #   colorServer("color11")
-    # #interactive heatmap must be wrapped in a reactive expression
-    # observeEvent(input$pathwaylistht, {
-    #   if(input$heatmap == TRUE) {
-    #     pathwaygsea <- gsea_file_values[[input$filechoice]]
-    #     
-    #     p <- unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylistht]))
-    #     #filter DE object for significance 
-    #     dds.sig <- dds.res() %>%
-    #       dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
-    #     #object for batch corrected vsd matrix
-    #     # assay(vsd) <-
-    #     #   limma::removeBatchEffect(assay(vsd),
-    #     #                            batch = samples$batch,
-    #     #                            design = model.matrix(~ condition, data = samples))
-    #     # # data frame for batch corrected vsd matrix
-    #     # vstlimma <-
-    #     #   data.frame(assay(vsd)) %>%
-    #     #   rownames_to_column(., var = "ensembl_gene_id") %>%
-    #     #   left_join(unique(dplyr::select(t2g_hs, c(
-    #     #     ensembl_gene_id, ext_gene
-    #     #   ))), ., by = 'ensembl_gene_id') %>%
-    #     #   na.omit(.)
-    #     #filter vst counts matrix for genes in pathway
-    #     vst.myc <- vst %>% 
-    #       mutate(., pathwayheat = ifelse(ext_gene %in% p, 'yes', 'no')) %>% 
-    #       dplyr::filter(pathwayheat == "yes")
-    #     #create matrix for heatmap using genes in significant DE that are in pathway of choice
-    #     vstgsea.mat <- vst.myc %>%
-    #       dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
-    #       column_to_rownames(., var = "ext_gene") %>%
-    #       dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
-    #       as.matrix()
-    #     #transform and scale and transform back
-    #     vstgsea.mat <- t(scale(t(vstgsea.mat)))
-    #     #color function buliding a colorRamp palette based on user input from palette choices
-    #     colors = colorRamp2(c(-2, 0, 2), c(colorGHeat(), "white", colorGHeat2()))
-    #     htgsea = draw(ComplexHeatmap::Heatmap(
-    #       vstgsea.mat,
-    #       name = paste(gseaht_title(), fontsize = 6),
-    #       col = colors,
-    #       #"paste(input$pathwaylist, sep = ",")",
-    #       row_names_gp = gpar(fontsize = 6),
-    #       column_km = 2,
-    #       top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("white", "white")),
-    #                                                             labels = c("prim", "mono"), 
-    #                                                             labels_gp = gpar(col = "black", fontsize = 10))),
-    #       column_title = NULL,
-    #       row_title = NULL))
-    #     
-    #     makeInteractiveComplexHeatmap(input, output, session, htgsea, "htgsea")
-    #   }
-    # })
+    observe({
+      pathwaygsea <- gsea_file_values[[input$filechoice]]
+      updateSelectizeInput(session,"pathwaylistht", choices = names(pathwaygsea), server = TRUE)})
+    #reactive expression of title for heatmap
+    gseaht_title <-
+      eventReactive(input$pathwaylistht, {
+        print(input$pathwaylistht)
+      })
+    #call in single color_module for plot palette
+    colorGHeat <-
+      colorServer("color10")
+    colorGHeat2 <-
+      colorServer("color11")
+    #interactive heatmap must be wrapped in a reactive expression
+    observeEvent(input$pathwaylistht, {
+      if(input$heatmap == TRUE) {
+        pathwaygsea <- gsea_file_values[[input$filechoice]]
+
+        p <- unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylistht]))
+        #filter DE object for significance
+        dds.sig <- dds.res() %>%
+          dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
+        #object for batch corrected vsd matrix
+        # assay(vsd) <-
+        #   limma::removeBatchEffect(assay(vsd),
+        #                            batch = samples$batch,
+        #                            design = model.matrix(~ condition, data = samples))
+        # # data frame for batch corrected vsd matrix
+        # vstlimma <-
+        #   data.frame(assay(vsd)) %>%
+        #   rownames_to_column(., var = "ensembl_gene_id") %>%
+        #   left_join(unique(dplyr::select(t2g_hs, c(
+        #     ensembl_gene_id, ext_gene
+        #   ))), ., by = 'ensembl_gene_id') %>%
+        #   na.omit(.)
+        #filter vst counts matrix for genes in pathway
+        vst.myc <- vst %>%
+          mutate(., pathwayheat = ifelse(ext_gene %in% p, 'yes', 'no')) %>%
+          dplyr::filter(pathwayheat == "yes")
+        #create matrix for heatmap using genes in significant DE that are in pathway of choice
+        vstgsea.mat <- vst.myc %>%
+          dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
+          column_to_rownames(., var = "ext_gene") %>%
+          dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
+          as.matrix()
+        #transform and scale and transform back
+        vstgsea.mat <- t(scale(t(vstgsea.mat)))
+        #color function buliding a colorRamp palette based on user input from palette choices
+        colors = colorRamp2(c(-2, 0, 2), c(colorGHeat(), "white", colorGHeat2()))
+        htgsea = draw(ComplexHeatmap::Heatmap(
+          vstgsea.mat,
+          name = paste(gseaht_title(), fontsize = 6),
+          col = colors,
+          #"paste(input$pathwaylist, sep = ",")",
+          row_names_gp = gpar(fontsize = 6),
+          column_km = 2,
+          top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("white", "white")),
+                                                                labels = c("prim", "mono"),
+                                                                labels_gp = gpar(col = "black", fontsize = 10))),
+          column_title = NULL,
+          row_title = NULL))
+
+        makeInteractiveComplexHeatmap(input, output, session, htgsea, "htgsea")
+      }
+    })
     
     observe({
       req(reset_trigger())
