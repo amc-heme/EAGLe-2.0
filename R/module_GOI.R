@@ -86,7 +86,7 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
       print(head(vst))
       vst.goi <- vst %>%
         dplyr::filter(ext_gene_ensembl %in% gene) %>%
-        #dplyr::select(., !ensembl_gene_id) %>%
+        dplyr::select(., -ensembl_gene_id) %>%
         t(.) %>%
         row_to_names(row_number = 1) %>%
         as.data.frame(.) %>%

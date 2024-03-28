@@ -221,7 +221,7 @@ server <-
     goi_Server("GOI1", dataset_choice, dataset_dds, vst)
  
   # ##DESEq #####
-    DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice, reset_trigger) 
+    DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice, reset_trigger, vst) 
 
   # ##GSEA output ####
     GSEA_Server("GSEA1", dataset_choice, DE_res, reset_trigger)

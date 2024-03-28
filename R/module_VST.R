@@ -28,7 +28,7 @@ vst_Server <- function(id, dataset_dds, dataset_choice) {
           ))), ., by = 'ensembl_gene_id') %>%
           dplyr::mutate(ext_gene_ensembl = case_when(ext_gene == "" ~ ensembl_gene_id,
                                                      TRUE ~ ext_gene)) %>%
-          dplyr::select(-c(ensembl_gene_id, ext_gene)) %>%
+          dplyr::select(-ext_gene) %>%
           dplyr::select(ext_gene_ensembl, everything()) %>%
           na.omit(.)
       } else if (is_hs & dataset %in% c("BEAT", "TCGA")) {
@@ -41,7 +41,7 @@ vst_Server <- function(id, dataset_dds, dataset_choice) {
           ))), ., by = 'ensembl_gene_id') %>%
           dplyr::mutate(ext_gene_ensembl = case_when(ext_gene == "" ~ ensembl_gene_id,
                                                      TRUE ~ ext_gene)) %>%
-          dplyr::select(-c(ensembl_gene_id, ext_gene)) %>%
+          dplyr::select(-ext_gene) %>%
           dplyr::select(ext_gene_ensembl, everything()) %>%
           na.omit(.)
       } else {
@@ -54,7 +54,7 @@ vst_Server <- function(id, dataset_dds, dataset_choice) {
           by = 'ensembl_gene_id') %>%
           dplyr::mutate(ext_gene_ensembl = case_when(ext_gene == "" ~ ensembl_gene_id,
                                                      TRUE ~ ext_gene)) %>%
-          dplyr::select(-c(ensembl_gene_id, ext_gene)) %>%
+          dplyr::select(-ext_gene) %>%
           dplyr::select(ext_gene_ensembl, everything()) %>%
           na.omit(.)
       }
