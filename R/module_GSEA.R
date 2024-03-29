@@ -225,29 +225,29 @@ GSEA_UI <- function(id) {
             label =
               "Download Volcano Plot"
           )
-        )
-        #hr(),
+        ),
+    
         #GSEA Heatmap ####
-        # conditionalPanel(
-        #   ns = ns, 
-        #   condition = "input.heatmap == true",
-        #   h4("Heatmap Specific Options"),
-        #   
-        #   #color palette choices for heatmap
-        #   colorUI(ns("color10"), "Choose 1st color", "#FF0000"),
-        #   
-        #   colorUI(ns("color11"), "Choose 2nd color", "#0000FF"),
-        #   #dropdown menu of specific pathways for heatmap, reactive to pathway sets dropdown
-        #   selectizeInput(
-        #     ns("pathwaylistht"),
-        #     label=
-        #       "Choose a specific pathway to view genes on heatmap",
-        #     choices =
-        #       NULL,
-        #     selected = NULL ,
-        #     options = list(maxItems = 1)
-        #   )
-        # )
+        conditionalPanel(
+          ns = ns,
+          condition = "input.heatmap == true",
+          h4("Heatmap Specific Options"),
+
+          #color palette choices for heatmap
+          colorUI(ns("colorHM1"), "Choose 1st color", "#FF0000"),
+
+          colorUI(ns("colorHM2"), "Choose 2nd color", "#0000FF"),
+          #dropdown menu of specific pathways for heatmap, reactive to pathway sets dropdown
+          selectizeInput(
+            ns("pathwaylistht"),
+            label=
+              "Choose a specific pathway to view genes on heatmap",
+            choices =
+              NULL,
+            selected = NULL ,
+            options = list(maxItems = 1)
+          )
+        )
       ),
 
       mainPanel(
@@ -299,7 +299,7 @@ GSEA_UI <- function(id) {
         conditionalPanel(
           ns = ns,
           condition = "input.heatmap == true",
-          InteractiveComplexHeatmapOutput(heatmap_id = ns("htgsea"))
+          plotlyOutput(ns("htgsea"))
         )
       )
     )
@@ -307,7 +307,7 @@ GSEA_UI <- function(id) {
 }
 
 
-GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger) {
+GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst) {
   moduleServer(id, function(input, output, session) {
  
     #run GSEA for chosen pathway input
@@ -370,70 +370,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger) {
       pathway_ranks(DE_res$res_tidy(), ens2gene())
     })
     
-    #need to generate dds.res table for use in plots 
-    # generateResGSEA <- function(dataset, de_results) {
-    #   print(head(de_results))
-    #   #mouse or human?
-    #   is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
-    #   
-    #   if(is_hs & dataset_choice() %in% c("BEAT", "TCGA")) {
-    #     
-    #     res <- data.frame(de_results) %>%
-    #       rownames_to_column(., var = 'ensembl_gene_id')
-    #     
-    #     res$ensembl_gene_id <- str_sub(res$ensembl_gene_id, end=-4)
-    #     
-    #     res <- res %>% 
-    #       dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-    #       left_join(unique(dplyr::select(t2g_hs, c(
-    #         ensembl_gene_id, ext_gene
-    #       ))), ., by = 'ensembl_gene_id') %>%
-    #       dplyr::rename(., Gene = ext_gene) %>%
-    #       mutate(., DiffExp = ifelse(
-    #         padj < 0.05 & log2FoldChange >= 0.5,
-    #         'up',
-    #         ifelse(padj < 0.05 &
-    #                  log2FoldChange <= -0.5, 'down', 'no')
-    #       )) %>% 
-    #       na.omit(.)
-    #     
-    #   } else if(is_hs & dataset_choice() %in% c("Cancer_Discovery","Venaza",
-    #                                             "Lagadinou", "Lee")){
-    #     
-    #     res <- data.frame(de_results) %>%
-    #       rownames_to_column(., var = 'ensembl_gene_id') %>% 
-    #       dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-    #       left_join(unique(dplyr::select(t2g_hs, c(
-    #         ensembl_gene_id, ext_gene
-    #       ))), ., by = 'ensembl_gene_id') %>%
-    #       dplyr::rename(., Gene = ext_gene) %>%
-    #       mutate(., DiffExp = ifelse(
-    #         padj < 0.05 & log2FoldChange >= 0.5,
-    #         'up',
-    #         ifelse(padj < 0.05 &
-    #                  log2FoldChange <= -0.5, 'down', 'no')
-    #       )) %>% 
-    #       na.omit(.)
-    #     
-    #   } else{
-    #     res <- data.frame(de_results) %>%
-    #       rownames_to_column(., var = 'ensembl_gene_id') %>% 
-    #       dplyr::select(., ensembl_gene_id, baseMean, log2FoldChange, padj) %>%
-    #       left_join(unique(dplyr::select(t2g_mm, c(
-    #         ensembl_gene_id, ext_gene
-    #       ))), ., by = 'ensembl_gene_id') %>%
-    #       dplyr::rename(., Gene = ext_gene) %>%
-    #       mutate(., DiffExp = ifelse(
-    #         padj < 0.05 & log2FoldChange >= 0.5,
-    #         'up',
-    #         ifelse(padj < 0.05 &
-    #                  log2FoldChange <= -0.5, 'down', 'no')
-    #       )) %>% 
-    #       na.omit(.)
-    #   }
-    #   return(res)
-    # }
-    # 
+    
     
     #reactive expression to run fgsea and load results table for each chosen pathway
     gseafile <-
@@ -453,8 +390,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger) {
         fwrite(gseafile(),file, sep=",", sep2=c("", " ", ""))
       }
     )
-    # fwrite(fgseaRes, file="/Users/stephaniegipson/Documents/GitHub/IS_12192023/fgseaRes.SensitiveKO.csv",
-    #        sep=",", sep2=c("", " ", ""))
+
     #filter Res table for chosen pathway to show in a waterfall plot
     gseafile_waterfall <-
       reactive({
@@ -657,22 +593,24 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger) {
       
       req(DE_res$dds_res())
       
-      dds.res <- #This should probably be filtered for only DE genes
+      dds.res.v <- #This should probably be filtered for only DE genes
         DE_res$dds_res()
+      
+      print("class-res:")
+      print(class(dds.res.v))
+      print(head(dds.res.v))
+      
+      pathwaygsea2 <- gsea_file_values[[input$filechoice]]
+      
+      p1 <-
+        unlist((pathwaygsea2[names(pathwaygsea2) %in% input$pathwaylist]))
 
-      pathwaygsea <- gsea_file_values[[input$filechoice]]
-      p <-
-        unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylist]))
-
-      dds.res.pathways <- dds.res %>%
-        mutate(., genes_in_pathway = ifelse(Gene %in% p, 'yes', 'no'))
+      dds.res.pathways <- dds.res.v %>%
+        mutate(., genes_in_pathway = ifelse(Gene %in% p1, 'yes', 'no'))
       
       dds.res.pathways 
     })
-      #print(dds.res.pathways)
-    #})
-      
-    #})
+
    
  
     
@@ -688,6 +626,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger) {
       #   colorServer("color9")
       #color object reactive to user input from palette chpice
       v_col <- colorServer("color7")
+      
       colors <-
         c("grey", v_col())
      
@@ -729,74 +668,100 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger) {
     #   content = function(file) {
     #     ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
     #   }
-    # )
+ 
+    
+    
     #GSEA heatmap ####
     #reactive expression for selected pathway choice for heatmap
     observe({
-      pathwaygsea <- gsea_file_values[[input$filechoice]]
-      updateSelectizeInput(session,"pathwaylistht", choices = names(pathwaygsea), server = TRUE)})
+      pathwaygsea3 <- gsea_file_values[[input$filechoice]]
+      updateSelectizeInput(session,"pathwaylistht", choices = names(pathwaygsea3), server = TRUE)})
     #reactive expression of title for heatmap
-    gseaht_title <-
-      eventReactive(input$pathwaylistht, {
-        print(input$pathwaylistht)
-      })
+    # gseaht_title <-
+    #   eventReactive(input$pathwaylistht, {
+    #     print(input$pathwaylistht)
+    #   })
     #call in single color_module for plot palette
     colorGHeat <-
-      colorServer("color10")
+      colorServer("colorHM1")
     colorGHeat2 <-
-      colorServer("color11")
+      colorServer("colorHM2")
     #interactive heatmap must be wrapped in a reactive expression
-    observeEvent(input$pathwaylistht, {
-      if(input$heatmap == TRUE) {
-        pathwaygsea <- gsea_file_values[[input$filechoice]]
-
-        p <- unlist((pathwaygsea[names(pathwaygsea) %in% input$pathwaylistht]))
-        #filter DE object for significance
-        dds.sig <- dds.res() %>%
-          dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
-        #object for batch corrected vsd matrix
-        # assay(vsd) <-
-        #   limma::removeBatchEffect(assay(vsd),
-        #                            batch = samples$batch,
-        #                            design = model.matrix(~ condition, data = samples))
-        # # data frame for batch corrected vsd matrix
-        # vstlimma <-
-        #   data.frame(assay(vsd)) %>%
-        #   rownames_to_column(., var = "ensembl_gene_id") %>%
-        #   left_join(unique(dplyr::select(t2g_hs, c(
-        #     ensembl_gene_id, ext_gene
-        #   ))), ., by = 'ensembl_gene_id') %>%
-        #   na.omit(.)
-        #filter vst counts matrix for genes in pathway
-        vst.myc <- vst %>%
-          mutate(., pathwayheat = ifelse(ext_gene %in% p, 'yes', 'no')) %>%
-          dplyr::filter(pathwayheat == "yes")
-        #create matrix for heatmap using genes in significant DE that are in pathway of choice
-        vstgsea.mat <- vst.myc %>%
-          dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
-          column_to_rownames(., var = "ext_gene") %>%
-          dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
-          as.matrix()
-        #transform and scale and transform back
-        vstgsea.mat <- t(scale(t(vstgsea.mat)))
-        #color function buliding a colorRamp palette based on user input from palette choices
-        colors = colorRamp2(c(-2, 0, 2), c(colorGHeat(), "white", colorGHeat2()))
-        htgsea = draw(ComplexHeatmap::Heatmap(
-          vstgsea.mat,
-          name = paste(gseaht_title(), fontsize = 6),
-          col = colors,
-          #"paste(input$pathwaylist, sep = ",")",
-          row_names_gp = gpar(fontsize = 6),
-          column_km = 2,
-          top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("white", "white")),
-                                                                labels = c("prim", "mono"),
-                                                                labels_gp = gpar(col = "black", fontsize = 10))),
-          column_title = NULL,
-          row_title = NULL))
-
-        makeInteractiveComplexHeatmap(input, output, session, htgsea, "htgsea")
-      }
+    output$htgsea <- renderPlotly({
+      req(input$heatmap)
+      req(DE_res$dds_res())
+      
+      res.hmg <- DE_res$dds_res() 
+      
+      print("res.hmg:")
+      print(class(res.hmg))
+      print(head(res.hmg))
+      #filter DE object for significance
+      dds.sig <- res.hmg %>%
+        dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
+      
+      print("dds.sig:")
+      print(head(dds.sig))
+      
+      
+      pathwaygsea4 <- gsea_file_values[[input$filechoice]]
+     
+      
+      p2 <- unlist((pathwaygsea4[names(pathwaygsea4) %in% input$pathwaylistht]))
+      
+      print("p:")
+      print(head(p))
+    
+      #filter vst counts matrix for genes in pathway
+      vst.myc <- vst() %>%
+        mutate(., pathwayheat = ifelse(ext_gene_ensembl %in% p2, 'yes', 'no')) %>%
+        dplyr::filter(pathwayheat == "yes") %>% 
+        dplyr::rename("Gene" = "ext_gene_ensembl")
+      print("vst.myc:")
+      print(head(vst.myc))
+      #create matrix for heatmap using genes in significant DE that are in pathway of choice
+      vstgsea.mat <- vst.myc %>%
+        dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
+        distinct(Gene, .keep_all = TRUE) %>% 
+        column_to_rownames(var = "Gene") %>%
+        dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
+        as.matrix()
+      
+      print("vstgsea.mat:")
+      print(head(vstgsea.mat))
+      #transform and scale and transform back
+      vstgsea.mat <- t(scale(t(vstgsea.mat)))
+      #color function buliding a colorRamp palette based on user input from palette choices
+      colors.hmg <- colorRamp(c(colorGHeat(), "white", colorGHeat2()))
+      
+      ht <- plot_ly(
+        x = colnames(vstgsea.mat),
+        y = rownames(vstgsea.mat),
+        z = vstgsea.mat,
+        colorbar = list(len=1, limits = c(-2, 2)),
+        colors = colors.hmg,
+        type = "heatmap"
+      )
+      
+      ht
     })
+ 
+   
+        # htgsea = draw(ComplexHeatmap::Heatmap(
+        #   vstgsea.mat,
+        #   name = paste(gseaht_title(), fontsize = 6),
+        #   col = colors,
+        #   #"paste(input$pathwaylist, sep = ",")",
+        #   row_names_gp = gpar(fontsize = 6),
+        #   column_km = 2,
+        #   top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("white", "white")),
+        #                                                         labels = c("prim", "mono"),
+        #                                                         labels_gp = gpar(col = "black", fontsize = 10))),
+        #   column_title = NULL,
+        #   row_title = NULL))
+        # 
+        # makeInteractiveComplexHeatmap(input, output, session, htgsea, "htgsea")
+
     
     observe({
       req(reset_trigger())
