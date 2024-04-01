@@ -271,7 +271,8 @@ GSEA_UI <- function(id) {
           condition = "input.rankedplot == true",
           shinycssloaders::withSpinner( #add loading spinners
             plotOutput(
-              ns("GSEAranked")
+              ns("GSEAranked"),
+              height = "100%"
             )
           )
         ),
