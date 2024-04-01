@@ -217,6 +217,12 @@ GSEA_UI <- function(id) {
             selected = NULL,
             options = list(maxItems = 1)
           ),
+          tags$style(
+            type = 'text/css',
+            ".selectize-input { word-wrap : break-word;}
+             .selectize-input { word-break: break-word;}
+             .selectize-dropdown {word-wrap : break-word;} "
+          ), 
           #color palette choices for volcano plot
           #colorUI(ns("color9"), "Choose color for plot", "#FF0000"),
           
@@ -234,9 +240,9 @@ GSEA_UI <- function(id) {
           h4("Heatmap Specific Options"),
 
           #color palette choices for heatmap
-          colorUI(ns("colorHM1"), "Choose 1st color", "#FF0000"),
+          colorUI(ns("colorHM1"), "Choose 1st color","#273F52"),
 
-          colorUI(ns("colorHM2"), "Choose 2nd color", "#0000FF"),
+          colorUI(ns("colorHM2"), "Choose 2nd color", "#D53031"),
           #dropdown menu of specific pathways for heatmap, reactive to pathway sets dropdown
           selectizeInput(
             ns("pathwaylistht"),
