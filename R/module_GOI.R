@@ -76,26 +76,49 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
     })
     
     
-    vst.goi.create <- function(dataset, dds, vst, gene) {
+    vst.goi.create <- function(dataset, dataset_model, dds, vst, gene) {
       
-      cond_var <- datasets[[dataset]]$PCA_var
-      meta <- colData(dds)
-      cond <- meta[, cond_var]
-      print(class(cond))
-      print("vst:")
-      print(head(vst))
-      vst.goi <- vst %>%
-        dplyr::filter(ext_gene_ensembl %in% gene) %>%
-        dplyr::select(., -ensembl_gene_id) %>%
-        t(.) %>%
-        row_to_names(row_number = 1) %>%
-        as.data.frame(.) %>%
-        rownames_to_column(var = "Sample") %>% 
-        dplyr::mutate(condition = cond) %>%
-        dplyr::rename("ext_gene_ensembl" = gene)
+      if(dataset %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
         
-      vst.goi$ext_gene_ensembl <- as.numeric(vst.goi$ext_gene_ensembl)
-      
+        cond_var <- dataset_model
+        #cond_var <- datasets[[dataset]]$PCA_var
+        meta <- colData(dds)
+        cond <- meta[, cond_var]
+        print(class(cond))
+        print("vst:")
+        print(head(vst))
+        vst.goi <- vst %>%
+          dplyr::filter(ext_gene_ensembl %in% gene) %>%
+          dplyr::select(., -ensembl_gene_id) %>%
+          t(.) %>%
+          row_to_names(row_number = 1) %>%
+          as.data.frame(.) %>%
+          rownames_to_column(var = "Sample") %>% 
+          dplyr::mutate(condition = cond) %>%
+          dplyr::rename("ext_gene_ensembl" = gene)
+        
+        vst.goi$ext_gene_ensembl <- as.numeric(vst.goi$ext_gene_ensembl)
+        
+      } else{
+        cond_var <- datasets[[dataset]]$PCA_var
+        meta <- colData(dds)
+        cond <- meta[, cond_var]
+        print(class(cond))
+        print("vst:")
+        print(head(vst))
+        vst.goi <- vst %>%
+          dplyr::filter(ext_gene_ensembl %in% gene) %>%
+          dplyr::select(., -ensembl_gene_id) %>%
+          t(.) %>%
+          row_to_names(row_number = 1) %>%
+          as.data.frame(.) %>%
+          rownames_to_column(var = "Sample") %>% 
+          dplyr::mutate(condition = cond) %>%
+          dplyr::rename("ext_gene_ensembl" = gene)
+        
+        vst.goi$ext_gene_ensembl <- as.numeric(vst.goi$ext_gene_ensembl)
+      }
+     
       return(vst.goi)
     }
     
@@ -103,7 +126,7 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
     vst.gene <- reactive({
       req(input$VSTCDgenechoice)
       
-      vst.goi <- vst.goi.create(dataset_choice$user_dataset(), dataset_dds(), vst(), input$VSTCDgenechoice)
+      vst.goi <- vst.goi.create(dataset_choice$user_dataset(), dataset_choice$user_model(), dataset_dds(), vst(), input$VSTCDgenechoice)
       gene_choice <- input$VSTCDgenechoice
       print("vst.goi:")
       print(head(vst.goi))

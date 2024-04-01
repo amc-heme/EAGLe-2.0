@@ -172,7 +172,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       print(head(meta))
       #extract individual levels from the comparison choice
       levels <- unlist(strsplit(comparison, "_vs_"))
-      print("levels:")
+      print("levelsGSEA:")
       print(levels)
       print("eval model:")
       model_term <- as.formula(paste("~", model))
@@ -180,6 +180,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = model_term)
       dds.wald <- DESeq(ddsTxi_dds, test = "Wald") 
       contrasts <- c(model, levels)
+      print("contrasts for GSEA:")
+      print(contrasts)
       results_df_GSEA <- results(dds.wald, contrast = contrasts, tidy = TRUE)
       #if BEAT or TCGA
       results_df_GSEA$row <- str_sub(results_df_GSEA$row, end=-4) 
@@ -201,7 +203,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     print(head(meta))
     #extract individual levels from the comparison choice
     levels <- unlist(strsplit(comparison, "_vs_"))
-    print("levels:")
+    print("levelsDE:")
     print(levels)
     print("eval model:")
     model_term <- as.formula(paste("~", model))
