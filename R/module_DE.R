@@ -405,8 +405,12 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     print(class(res.hm))
     #filter DE object for only significantly differentially expressed genes
     dds.mat <- res.hm %>%
-      dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2)
-    
+      dplyr::filter(padj < 0.01 & abs(`log2FoldChange`) >= 2) %>% 
+      dplyr::arrange(desc(abs(`log2FoldChange`))) %>% 
+      slice(1:50)
+    print("dds.mat:")
+    print(dds.mat)
+
     #filter vst counts matrix by sig expressed genes
     vst.mat <- vst() %>%
       dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
@@ -418,19 +422,28 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     
     vst.mat <- t(scale(t(vst.mat)))
     #only show the first 100 genes for visualization in this example(can change)
-    vst.mat <- head(vst.mat, n = 100)
+   
     print("vst.mat:")
     print(head(vst.mat))
     #create a colorRamp function based on user input in color palette choices
-    colors.hm <- colorRamp(c(colorDE(), "white", color2DE()))
+    colors.hm <- colorRamp2(c(-4, 0, 4), c(colorDE(), "white", color2DE()))
+    
+    k_number <- 
+      datasets[[dataset_choice$user_dataset()]]$k
+    k_number <- as.numeric(k_number)
+    print("k_number:")
+    print(k_number)
     #create heatmap object
-    ht <- plot_ly(
-      x = colnames(vst.mat),
-      y = rownames(vst.mat),
-      z = vst.mat,
-      colorbar = list(len=1, limits = c(-2, 2)),
-      colors = colors.hm,
-      type = "heatmap"
+    ht <- heatmaply(
+      vst.mat,
+      k_col = k_number,
+      row_text_angle = 45,
+      height = 800,
+      width = 800,
+      #colorbar = list(len=1, limits = c(-2, 2)),
+      #colors = colors.hm,
+      dendrogram = "column",
+      show_dendrogram = TRUE
     )
     # ht <- 
     #   ComplexHeatmap::Heatmap(

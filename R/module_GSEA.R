@@ -135,11 +135,11 @@ GSEA_UI <- function(id) {
         
           shinyjs::hidden(
             sliderInput(ns("wfheightslider"),
-                        "Adjust Plot Height", 200, 1200, 500)),
+                        "Adjust Plot Height", 200, 1200, 600)),
          
           shinyjs::hidden(
             sliderInput(ns("wfwidthslider"),
-                        "Adjust Plot Width", 200, 1200, 600)),
+                        "Adjust Plot Width", 200, 1200, 800)),
           
           downloadButton(
             ns("downloadranks"),

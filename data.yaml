@@ -9,6 +9,7 @@ Cancer_Discovery:
   PCA_shape: "batch"
   batch: "yes"
   batch_var: "batch"
+  k: "2"
 Ye_16:
   label: "Ye et al. 2016"
   data_path: "/data/Ye_16_dds.rds"
@@ -19,6 +20,7 @@ Ye_16:
   PCA_var: "Source"
   PCA_shape: "Source"
   batch: "no"
+  k: "5"
 Ye_20:
   label:  "Ye et al. 2020"
   data_path: "/data/Ye_20_dds.rds"
@@ -30,6 +32,7 @@ Ye_20:
   PCA_shape: "Rep"
   batch: "yes"
   batch_var: "Rep"
+  k: "2"
 Venaza:
   label: "Pollyea et al., Nature, 2018"
   data_path: "/data/venaza_dds.rds"
@@ -41,6 +44,7 @@ Venaza:
   PCA_shape: "patient"
   batch: "yes"
   batch_var: "patient"
+  k: "3"
 Lagadinou: 
   label: "Lagadinou et al., Cell Stem Cell, 2013"
   data_path: "/data/EL_AML_dds.rds"
@@ -52,6 +56,7 @@ Lagadinou:
   PCA_shape: "Batch"
   batch: "yes"
   batch_var: "Batch"
+  k: "4"
 Lee:
   label: "Lee et al., Nature, 2018"
   data_path: "/data/Lee_dds.rds"
@@ -63,6 +68,7 @@ Lee:
   PCA_shape: "Patient"
   batch: "yes"
   batch_var: "Patient"
+  k: "3"
 BEAT:
   label: "BEAT-AML"
   data_path: "/data/BEAT_AML_dds.rds"
