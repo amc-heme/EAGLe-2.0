@@ -132,7 +132,8 @@ server <-
     print("Initializing renderPlots")
     
     options(shiny.reactlog = TRUE)
-  
+    
+   
     #reactive container for reset button(change dataset action button)
     reset_trigger <- reactive({
       input$change_data
@@ -141,6 +142,15 @@ server <-
   ##Data tab ####
     dataset_choice <- data_Server("data1")
     
+    #hide GSEA tab if LRT is chosen in place of a pairwise comparison
+    observe(
+      if(dataset_choice$user_PW() == "LRT" & dataset_choice$user_dataset() %in% 
+         c("Ye_16", "Venaza","Lagadinou", "TCGA", "BEAT")) {
+        hideTab(inputId = "tabs", target = "GSEA")
+      } else {
+        showTab(inputId = "tabs", target = "GSEA")
+      }
+    )
     
     observeEvent(dataset_choice$close_tab(), {
       updateTabsetPanel(session, "page", "content")
