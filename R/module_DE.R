@@ -398,14 +398,17 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     req(input$DESeqHeat)
     ns <- NS(id)
     
+    #generate dds results table 
     res.hm <-
       generateRes(dataset_choice$user_dataset(), dds_result())
+    
     print("res.hm")
     print(head(res.hm))
     print(class(res.hm))
-    #filter DE object for only significantly differentially expressed genes
+    #filter DE object for only significantly differentially expressed genes and
+    #take the top 50 most highly expressed genes for visualization
     dds.mat <- res.hm %>%
-      dplyr::filter(padj < 0.01 & abs(`log2FoldChange`) >= 2) %>% 
+      dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>% 
       dplyr::arrange(desc(abs(`log2FoldChange`))) %>% 
       slice(1:50)
     print("dds.mat:")
@@ -426,10 +429,16 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     print("vst.mat:")
     print(head(vst.mat))
     #create a colorRamp function based on user input in color palette choices
-    colors.hm <- colorRamp2(c(-4, 0, 4), c(colorDE(), "white", color2DE()))
+    colors.hm <- colorRamp2(c(-2, 0, 2), c(colorDE(), "#FFFFFF", color2DE()))
     
     k_number <- 
-      datasets[[dataset_choice$user_dataset()]]$k
+      if(dataset_choice$user_PW() == "LRT") {
+        datasets[[dataset_choice$user_dataset()]]$k
+      } else{
+        datasets[[dataset_choice$user_dataset()]]$k_PW
+      }
+      
+    
     k_number <- as.numeric(k_number)
     print("k_number:")
     print(k_number)
@@ -440,8 +449,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       row_text_angle = 45,
       height = 800,
       width = 800,
-      #colorbar = list(len=1, limits = c(-2, 2)),
-      #colors = colors.hm,
+      # colorbar = list(len=1, limits = c(-2, 2)),
+      # colors = colors.hm,
       dendrogram = "column",
       show_dendrogram = TRUE
     )

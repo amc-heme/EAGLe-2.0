@@ -105,11 +105,12 @@ data_Server <- function(id) {
              transcriptome and metabolism.
              ROS-low LSCs from monocytic AML in particular, are less dependent
              on BCL2 therefore are more likely to be resistant to
-             Venetoclax-based therapy."
+             Venetoclax-based therapy. The analysis will be comparing ROS-low enriched LSC's
+             from monocytic cells vs primitive cells"
         )
       } else if (input$datainput == "Ye_16") {
         paste(
-          "Comparison of ranscriptomes of LSC's from blood, bone marrow, spleen,
+          "Comparison of transcriptomes of LSC's from blood, bone marrow, spleen,
            gonadal adipose tissue, and normal bone marrow in mice."
         )
       } else if (input$datainput == "Ye_20") {
@@ -123,7 +124,8 @@ data_Server <- function(id) {
       } else if (input$datainput == "Venaza") {
         paste(
           "Time zero pheresis was taken from 3 patients, then collected
-                 again at 6hr and 24hr post ven/aza treatment."
+                 again at 6hr and 24hr post ven/aza treatment. This analysis will compare
+                 24hr or 6h vs time zero (control)"
         )
       } else if (input$datainput == "Lagadinou") {
         paste(
@@ -160,14 +162,14 @@ data_Server <- function(id) {
     DEModelChoices <- function(dataset) {
       m_choices <- switch(
         dataset,
-        "Cancer_Discovery" = "LRT",
+        "Cancer_Discovery" = "condition",
         "Ye_16" = "Source",
-        "Ye_20" = "LRT",
+        "Ye_20" = "Source",
         "Venaza" = "condition",
         "Lagadinou" = "Treatment",
         "BEAT" = c("quantile", "FAB_BlastMorphology", "Denovo.Relapse"),
         "TCGA" = c("FAB", "RAS_mut", "NPM1_mut"),
-        "Lee" = "LRT",
+        "Lee" = "prior_cr",
         default = character(0)
       )
     }
@@ -187,9 +189,9 @@ data_Server <- function(id) {
     PWChoices <- function(dataset, model) { #this needs to not populate if model = "LRT"
       choices <- switch(
         paste(dataset, model, sep = "_"),
-        "Cancer_Discovery_LRT" = "LRT",
+        "Cancer_Discovery_condition" = "LRT",
         "Ye_16_Source" = c("LRT", "blood_vs_bone_marrow", "gonadal_adipose_tissue_vs_bone_marrow", "normal_bm_vs_bone_marrow", "spleen_vs_bone_marrow"),
-        "Ye_20_LRT" = "LRT",
+        "Ye_20_Source" = "LRT",
         "Venaza_condition" = c("LRT", "24hr_vs_control", "6hr_vs_control"),
         "Lagadinou_Treatment" = c("LRT","high_PTL_5uM_vs_high_no_drug", "low_no_drug_vs_high_no_drug", "low_PTL_5uM_vs_high_no_drug"),
         "BEAT_quantile" = c("q2_vs_q1", "q3_vs_q1", "q4_vs_q1"),
@@ -198,7 +200,7 @@ data_Server <- function(id) {
         "TCGA_FAB" = c("M0_vs_M5", "M1_vs_M5", "M2_vs_M5", "M3_vs_M5", "M4_vs_M5", "M6_vs_M5", "M7_vs_M5"),
         "TCGA_RAS_mut" = "wt_vs_mut",
         "TCGA_NPM1_mut" = "wt_vs_mut",
-        "Lee_LRT" = "LRT",
+        "Lee_prior_cr" = "LRT",
         default = character(0)
       )
     }
