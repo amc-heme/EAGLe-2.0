@@ -85,10 +85,23 @@ data_UI <- function(id) {
             (ns("runDE1")),
             "Continue"
           ),
+          tags$head( #css to move the pop up window to the top and middle of the screen
+            tags$style(
+              HTML(".shiny-notification {
+             position:fixed;
+             top: calc(50%);
+             left: calc(40%);
+             }
+             "
+              )
+            )
+          )
         )
       ),
       mainPanel(
-        textOutput(ns("Data_text"))
+        textOutput(ns("Data_text")),
+        textOutput(ns("LRT_alert")),
+        bsAlert("alert")
       )
     )
   )
@@ -158,6 +171,19 @@ data_Server <- function(id) {
         )
       }
     })
+    
+    observe({
+      #if(input$datainput %in% c("Ye_16", "Venaza", "Lagadinou") & input$pwc == "LRT"){
+      
+      showNotification(
+        "GSEA will not be run with LRT on datasets with more than 2 conditions.
+        If you are interested in pathway analysis, please choose a pairwise comparison",
+        type = "message",
+        duration = 15,
+        id = "gsea_message"
+      )
+      #}
+    })
     # model choice ####
     DEModelChoices <- function(dataset) {
       m_choices <- switch(
@@ -216,7 +242,15 @@ data_Server <- function(id) {
       )
     })
     
-    
+    # observeEvent(input$pwc == "LRT", {
+    #     showModal(modalDialog(
+    #       title = "You have chosen an LRT test",
+    #       paste0("GSEA will not be shown for when LRT is chosen."),
+    #       easyClose = TRUE,
+    #       footer = NULL
+    #     ))
+    #   })
+ 
     
     user_choice <- reactive({
       input$datainput
@@ -230,7 +264,7 @@ data_Server <- function(id) {
       input$pwc
     })
   
-    
+
     close_page <- reactive({
      
       input$runDE1

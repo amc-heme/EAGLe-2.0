@@ -429,7 +429,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     print("vst.mat:")
     print(head(vst.mat))
     #create a colorRamp function based on user input in color palette choices
-    colors.hm <- colorRamp2(c(-2, 0, 2), c(colorDE(), "#FFFFFF", color2DE()))
+    colors.hm <- c(colorDE(), "#FFFFFF", color2DE())
     
     k_number <- 
       if(dataset_choice$user_PW() == "LRT") {
@@ -445,12 +445,13 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     #create heatmap object
     ht <- heatmaply(
       vst.mat,
-      k_col = k_number,
+      #k_col = k_number,
       row_text_angle = 45,
-      height = 800,
-      width = 800,
-      # colorbar = list(len=1, limits = c(-2, 2)),
-      # colors = colors.hm,
+      height = 600,
+      width = 600,
+      #plot_method = "ggplot",
+      #colorbar = list(len=1, limits = c(-2, 2)),
+      colors = colors.hm,
       dendrogram = "column",
       show_dendrogram = TRUE
     )

@@ -152,6 +152,7 @@ server <-
       }
     )
     
+  
     observeEvent(dataset_choice$close_tab(), {
       updateTabsetPanel(session, "page", "content")
     })

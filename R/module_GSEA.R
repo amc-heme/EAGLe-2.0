@@ -739,15 +739,26 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst) {
       #transform and scale and transform back
       vstgsea.mat <- t(scale(t(vstgsea.mat)))
       #color function buliding a colorRamp palette based on user input from palette choices
-      colors.hmg <- colorRamp(c(colorGHeat(), "white", colorGHeat2()))
+      colors.hmg <- c(colorGHeat(), "white", colorGHeat2())
       
-      ht <- plot_ly(
-        x = colnames(vstgsea.mat),
-        y = rownames(vstgsea.mat),
-        z = vstgsea.mat,
-        colorbar = list(len=1, limits = c(-2, 2)),
+      # ht <- plot_ly(
+      #   x = colnames(vstgsea.mat),
+      #   y = rownames(vstgsea.mat),
+      #   z = vstgsea.mat,
+      #   colorbar = list(len=1, limits = c(-2, 2)),
+      #   colors = colors.hmg,
+      #   type = "heatmap"
+      # )
+      ht <- heatmaply(
+        vstgsea.mat,
+        #k_col = k_number,
+        row_text_angle = 45,
+        height = 600,
+        width = 600,
+        # colorbar = list(len=1, limits = c(-2, 2)),
         colors = colors.hmg,
-        type = "heatmap"
+        dendrogram = "column",
+        show_dendrogram = TRUE
       )
       
       ht
