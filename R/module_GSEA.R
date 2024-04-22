@@ -130,16 +130,16 @@ GSEA_UI <- function(id) {
           ),
        
           #js function to hide plot dimensions until selected
-          materialSwitch(ns("hidedimsWF"), "Custom plot dimensions",
-                         value = FALSE, right = TRUE),
+          # materialSwitch(ns("hidedimsWF"), "Custom plot dimensions",
+          #                value = FALSE, right = TRUE),
         
-          shinyjs::hidden(
-            sliderInput(ns("wfheightslider"),
-                        "Adjust Plot Height", 200, 1200, 600)),
-         
-          shinyjs::hidden(
-            sliderInput(ns("wfwidthslider"),
-                        "Adjust Plot Width", 200, 1200, 800)),
+          # shinyjs::hidden(
+          #   sliderInput(ns("wfheightslider"),
+          #               "Adjust Plot Height", 200, 1200, 600)),
+          # 
+          # shinyjs::hidden(
+          #   sliderInput(ns("wfwidthslider"),
+          #               "Adjust Plot Width", 200, 1200, 800)),
           
           downloadButton(
             ns("downloadranks"),
@@ -433,19 +433,21 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst) {
     colorWF <- 
       colorServer("color7")
  
-    observe({
-      shinyjs::toggle("wfwidthslider", condition = input$hidedimsWF)
-    })
-    
-    observe({
-      shinyjs::toggle("wfheightslider", condition = input$hidedimsWF)
-    })
-    
+    # observe({
+    #   shinyjs::toggle("wfwidthslider", condition = input$hidedimsWF)
+    # })
+    # 
+    # observe({
+    #   shinyjs::toggle("wfheightslider", condition = input$hidedimsWF)
+    # })
+    # 
     output$GSEAranked <- renderPlot(
-      width = function()
-        input$wfwidthslider,
-      height = function()
-        input$wfheightslider,
+      width = 800,
+        # function()
+        # input$wfwidthslider,
+      height = 600,
+        # function()
+        # input$wfheightslider,
       {
         if (input$rankedplot == TRUE) {
           #color object reactive to user choice from palette
