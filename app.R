@@ -1,50 +1,4 @@
-#load libraries
-library(shinythemes)
-library(thematic)
-library(shiny)
-library(kableExtra)
-library(viridisLite)
-library(magrittr)
-library(ggplot2)
-library(tidyr)
-library(viridis)
-library(tximport)
-library(cowplot)
-library(TidyMultiqc)
-library(dplyr)
-library(tidyverse)
-library(data.table)
-library(ggpubr)
-library(RColorBrewer)
-library(janitor)
-library(reactlog)
-library(DT)
-library(ggrepel)
-library(DESeq2)
-library(ggiraph)
-library(shinyWidgets)
-library(shinyjs)
-library(fgsea)
-library(plotly)
-library(BiocParallel)
-library(ComplexHeatmap)
-library(InteractiveComplexHeatmap)
-library(circlize)
-library(colourpicker)
-library(colorRamp2)
-library(ggsci)
-library(scales)
-library(esquisse)
-library(ggprism)
-library(shinycssloaders)
-library(patchwork)
-library(spatstat.utils)
-library(yaml)
-library(readr)
-library(sva)
-library(formulaic)
-library(shinydashboard)
-library(waiter)
+
 
 options(
   shiny.fullstacktrace = TRUE
@@ -178,7 +132,8 @@ server <-
     print("Initializing renderPlots")
     
     options(shiny.reactlog = TRUE)
-  
+    
+   
     #reactive container for reset button(change dataset action button)
     reset_trigger <- reactive({
       input$change_data
@@ -187,7 +142,17 @@ server <-
   ##Data tab ####
     dataset_choice <- data_Server("data1")
     
+    #hide GSEA tab if LRT is chosen in place of a pairwise comparison
+    observe(
+      if(dataset_choice$user_PW() == "LRT" & dataset_choice$user_dataset() %in% 
+         c("Ye_16", "Venaza","Lagadinou", "TCGA", "BEAT")) {
+        hideTab(inputId = "tabs", target = "GSEA")
+      } else {
+        showTab(inputId = "tabs", target = "GSEA")
+      }
+    )
     
+  
     observeEvent(dataset_choice$close_tab(), {
       updateTabsetPanel(session, "page", "content")
     })
@@ -224,7 +189,7 @@ server <-
     DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice, reset_trigger, vst) 
 
   # ##GSEA output ####
-    GSEA_Server("GSEA1", dataset_choice, DE_res, reset_trigger)
+    GSEA_Server("GSEA1", dataset_choice, DE_res, reset_trigger, vst)
     
     observeEvent(input$change_data, {
       updateTabsetPanel(session, "tabs", selected = "QC")
