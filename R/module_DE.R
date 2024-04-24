@@ -132,7 +132,7 @@ DE_UI <- function(id) {
   )
 }
 
-DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigger, vst) {
+DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigger, vst, vst_hm) {
   moduleServer(id, function(input, output, session) {
     waiter <- Waiter$new()
  
@@ -390,7 +390,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     }
   })
   
-
+    
     #Heatmap ####
   
   output$ht <- renderPlotly({
@@ -398,6 +398,18 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     req(input$DESeqHeat)
     ns <- NS(id)
     
+    if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
+      dds.file <- dataset_dds()
+      cond_var <- dataset_choice$user_model()
+      meta <- colData(dds.file)
+      cond <- meta[, cond_var]
+    } else {
+      dds.file <- dataset_dds()
+      meta <- colData(dds.file)
+      cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
+      cond <- meta[, cond_var]
+    }
+
     #generate dds results table 
     res.hm <-
       generateRes(dataset_choice$user_dataset(), dds_result())
@@ -413,7 +425,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       slice(1:50)
     print("dds.mat:")
     print(dds.mat)
-
+    
     #filter vst counts matrix by sig expressed genes
     vst.mat <- vst() %>%
       dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
@@ -453,7 +465,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       #colorbar = list(len=1, limits = c(-2, 2)),
       colors = colors.hm,
       dendrogram = "column",
-      show_dendrogram = TRUE
+      show_dendrogram = TRUE,
+      col_side_colors = cond
     )
     # ht <- 
     #   ComplexHeatmap::Heatmap(

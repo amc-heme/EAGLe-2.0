@@ -139,6 +139,8 @@ server <-
     #dataset_dds = DEseq object returned by dds.file server
     #dataset_choice = user selected dataset from data server
     vst <- vst_Server("vst1", dataset_dds, dataset_choice)
+    
+    vst_hm <- vsthm_Server("vsthm1", data_species, dataset_dds, dataset_choice)
   ## qc object
     #dataset.qc = opens path to stored qc file for chosen dataset
     #dataset_choice = user selected dataset from data server
@@ -163,7 +165,7 @@ server <-
     #dataset_choice = user selected dataset from data server
     #reset trigger = clears all previous selections and returns to landing page
     #vst = vst table 
-    DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice, reset_trigger, vst) 
+    DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice, reset_trigger, vst, vst_hm) 
 
   # ##GSEA output ####
     #dataset_choice = user selected dataset from data server
