@@ -314,7 +314,7 @@ GSEA_UI <- function(id) {
 }
 
 
-GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst) {
+GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_dds) {
   moduleServer(id, function(input, output, session) {
  
     #run GSEA for chosen pathway input
@@ -700,6 +700,21 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst) {
       req(input$heatmap)
       req(DE_res$dds_res())
       
+      
+      #determine which column needed for cluster annotations based on model choice 
+      if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
+        dds.file <- dataset_dds()
+        cond_var <- dataset_choice$user_model()
+        meta <- colData(dds.file)
+        cond <- meta[, cond_var]
+      } else {
+        dds.file <- dataset_dds()
+        meta <- colData(dds.file)
+        cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
+        cond <- meta[, cond_var]
+      }
+      
+      
       res.hmg <- DE_res$dds_res() 
       
       print("res.hmg:")
@@ -760,7 +775,8 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst) {
         # colorbar = list(len=1, limits = c(-2, 2)),
         colors = colors.hmg,
         dendrogram = "column",
-        show_dendrogram = TRUE
+        show_dendrogram = TRUE,
+        col_side_colors = cond
       )
       
       ht

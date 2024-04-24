@@ -140,7 +140,7 @@ server <-
     #dataset_choice = user selected dataset from data server
     vst <- vst_Server("vst1", dataset_dds, dataset_choice)
     
-    vst_hm <- vsthm_Server("vsthm1", data_species, dataset_dds, dataset_choice)
+    # vst_hm <- vsthm_Server("vsthm1", data_species, dataset_dds, dataset_choice)
   ## qc object
     #dataset.qc = opens path to stored qc file for chosen dataset
     #dataset_choice = user selected dataset from data server
@@ -172,7 +172,7 @@ server <-
     #DE_res = DE server returns the DE results table in tidy format 
     #reset trigger = clears all previous selections and returns to landing page
     #vst = vst table 
-    GSEA_Server("GSEA1", dataset_choice, DE_res, reset_trigger, vst)
+    GSEA_Server("GSEA1", dataset_choice, DE_res, reset_trigger, vst, dataset_dds)
     
     #returns user to QC tab after switching datasets
     observeEvent(input$change_data, {

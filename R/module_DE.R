@@ -398,6 +398,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     req(input$DESeqHeat)
     ns <- NS(id)
     
+    #determine which column needed for cluster annotations based on model choice 
     if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
       dds.file <- dataset_dds()
       cond_var <- dataset_choice$user_model()
