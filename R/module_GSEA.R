@@ -314,7 +314,7 @@ GSEA_UI <- function(id) {
 }
 
 
-GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst) {
+GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_dds) {
   moduleServer(id, function(input, output, session) {
  
     #run GSEA for chosen pathway input
@@ -700,6 +700,21 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst) {
       req(input$heatmap)
       req(DE_res$dds_res())
       
+      
+      #determine which column needed for cluster annotations based on model choice 
+      if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
+        dds.file <- dataset_dds()
+        cond_var <- dataset_choice$user_model()
+        meta <- colData(dds.file)
+        cond <- meta[, cond_var]
+      } else {
+        dds.file <- dataset_dds()
+        meta <- colData(dds.file)
+        cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
+        cond <- meta[, cond_var]
+      }
+      
+      
       res.hmg <- DE_res$dds_res() 
       
       print("res.hmg:")
@@ -718,16 +733,16 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst) {
       
       p2 <- unlist((pathwaygsea4[names(pathwaygsea4) %in% input$pathwaylistht]))
       
-      print("p:")
-      print(head(p))
+      # print("p:")
+      # print(head(p))
     
       #filter vst counts matrix for genes in pathway
       vst.myc <- vst() %>%
         mutate(., pathwayheat = ifelse(ext_gene_ensembl %in% p2, 'yes', 'no')) %>%
         dplyr::filter(pathwayheat == "yes") %>% 
         dplyr::rename("Gene" = "ext_gene_ensembl")
-      print("vst.myc:")
-      print(head(vst.myc))
+      # print("vst.myc:")
+      # print(head(vst.myc))
       #create matrix for heatmap using genes in significant DE that are in pathway of choice
       vstgsea.mat <- vst.myc %>%
         dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
@@ -736,8 +751,8 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst) {
         dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
         as.matrix()
       
-      print("vstgsea.mat:")
-      print(head(vstgsea.mat))
+      # print("vstgsea.mat:")
+      # print(head(vstgsea.mat))
       #transform and scale and transform back
       vstgsea.mat <- t(scale(t(vstgsea.mat)))
       #color function buliding a colorRamp palette based on user input from palette choices
@@ -760,7 +775,9 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst) {
         # colorbar = list(len=1, limits = c(-2, 2)),
         colors = colors.hmg,
         dendrogram = "column",
-        show_dendrogram = TRUE
+        show_dendrogram = TRUE,
+        col_side_colors = cond,
+        showticklabels = c(FALSE, FALSE)
       )
       
       ht

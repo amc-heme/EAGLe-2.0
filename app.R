@@ -46,54 +46,16 @@ names(dataset.qc) <-
 # UI ####
 ui <-
   navbarPage("EAGLe 2.0",
-             #Dataset tab ####
+            
              tabsetPanel(
                id = "page",
                type = "hidden",
-          #      div(
-          #        tags$li(
-          #          class = "dataset_info_button",
-          #          style = 'display:inline-block;',
-          #          style = 'float:top;',
-          #          dropMenu(
-          #            dropdownButton(
-          #              circle = TRUE, status = "info", icon = icon("info"),  size = 'sm', width = "50px",
-          #              tooltip = tooltipOptions(title = "Click for more information on datasets")),
-          #            h6("Summary of datasets:"),
-          #            h6("Jordan M0-M5: "),
-          #            h6("Pei et al. have previously shown that ROS-low enriched LSCs from primitive and monocytic AML 
-          #    differ significantly in their transcriptome and metabolism. 
-          #    ROS-low LSCs from monocytic AML in particular, are less dependent on BCL2 therefore are more likely to be resistant to Venetoclax-based therapy.
-          #    This section of analysis shows gene expression in primitive vs. monocytic ROS-low LSCs."),
-          #            h6("Ye et al. 2016: "),
-          #            h6("LSC gene expression from blood, bone marrow, spleen, gonadal adipose tissue, and normal bone marrow in mice."),
-          #            h6("Ye et al. 2020: "),
-          #            h6("Transcriptomes of LSCs from bone marrow and liver in mice were compared to better understand 
-          #    the biology of liver LSCs. A bcCML model (BCR-ABL + Nup98-Hoxa9) was used. 
-          #    Liver and bone marrow samples were combined from 3 mice in 3 different cohorts before sequencing."),
-          #            h6("Pollyea et al., Nature, 2018: "),
-          #            h6("Time zero pheresis was taken from 3 patients, then collected again at 6hr and 24hr post ven/aza treatment."),
-          #            h6( "Lagadinou et al., Cell Stem Cell, 2013: "),
-          #            h6("BCL-2 inhibition targets oxidative phosphorylation and selectively eradicates quiescent human leukemia stem cells. 
-          #    ROS high and ROS low LSCs were either treated with 5ul of PTL or not treated before sequencing."),
-          #            h6("Lee et al., Nature, 2018: "),
-          #            h6("Genome wide expression from 12 AML patient samples with either prior complete remission, or no prior complete remission."),
-          #            h6("TCGA: "),
-          #            h6("The Cancer Genome Atlas (TCGA) project published gene expression profiles of 151 primary AML patients 
-          #    along with their mutational profiles and clinical characteristics. This section of analysis shows gene expression 
-          #    in the TCGA-AML dataset parsed by various mutational/clinical variables including the French-American-British 
-          #    subtypes, karyotype, RAS mutation status, and NPM1 mutation status."),
-          #            h6("BEAT-AML: "),
-          #            h6("The BEAT-AML project published gene expression profiles of ~400 primary AML patients 
-          # along with their mutational profiles and clinical characteristics. 
-          # This section of analysis shows gene expression in the BEAT-AML dataseit parsed by various mutational/clinical variables 
-          #    including the French-American-British subtypes, Venetoclax response, and disease stage (de novo vs. relapse).")
-          #            
-          #          ))),
+             # landing page UI
                tabPanelBody("landing_page",
                             data_UI("data1")),
-               
+            # app content 
                tabPanelBody("content",
+                            # button to return to landing page from main app
                             actionButton(
                               "change_data",
                               icon = icon("refresh"),
@@ -120,11 +82,7 @@ ui <-
                                       goi_UI("GOI1"))
                             ))
              ))
-             # mainPanel(
-             #       
-             #       
-             # ))
-
+ 
 #Server ####
 server <- 
   function(input, output, session) {
@@ -152,11 +110,12 @@ server <-
       }
     )
     
-  
+   # close landing page and open app 
     observeEvent(dataset_choice$close_tab(), {
       updateTabsetPanel(session, "page", "content")
     })
     
+    #close main app and return to landing page
     observeEvent(input$change_data, {
       updateTabsetPanel(session, "page", "landing_page")
     })
@@ -166,31 +125,56 @@ server <-
       dataset_config[[dataset_choice$user_dataset()]]$species
     })
     
-    observe({
-      print(data_species())
-    })
+    #check 
+    # observe({
+    #   print(data_species())
+    # })
     
   ## dds object
+    # dataset = links path to chosen dataset DESeq object
+    # dataset_choice = user selected dataset from data server 
     dataset_dds <- dds.file_Server("dds1", dataset, dataset_choice)
     
   ## vst table
+    #dataset_dds = DEseq object returned by dds.file server
+    #dataset_choice = user selected dataset from data server
     vst <- vst_Server("vst1", dataset_dds, dataset_choice)
-  ## qc object
     
+    # vst_hm <- vsthm_Server("vsthm1", data_species, dataset_dds, dataset_choice)
+  ## qc object
+    #dataset.qc = opens path to stored qc file for chosen dataset
+    #dataset_choice = user selected dataset from data server
     qc_table <- qc.file_Server("qct1", dataset.qc, dataset_choice)
+    
   ## QC tab ####
-  
+    #dataset_dds = DEseq object returned by dds.file server
+    #dataset_choice = user selected dataset from data server
+    #qc_table = stored multiqc table
+    # reset trigger = clears all previous selections and returns to landing page
     QC_Server("QC1", dataset_dds, dataset_choice, qc_table, reset_trigger)
     
   ## GOI tab####
+    #dataset_dds = DEseq object returned by dds.file server
+    #dataset_choice = user selected dataset from data server
+    #vst = vst table 
     goi_Server("GOI1", dataset_choice, dataset_dds, vst)
  
   # ##DESEq #####
-    DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice, reset_trigger, vst) 
+    # data_species = needed to select appropiate t2g table
+    #dataset_dds = DEseq object returned by dds.file server
+    #dataset_choice = user selected dataset from data server
+    #reset trigger = clears all previous selections and returns to landing page
+    #vst = vst table 
+    DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice, reset_trigger, vst, vst_hm) 
 
   # ##GSEA output ####
-    GSEA_Server("GSEA1", dataset_choice, DE_res, reset_trigger, vst)
+    #dataset_choice = user selected dataset from data server
+    #DE_res = DE server returns the DE results table in tidy format 
+    #reset trigger = clears all previous selections and returns to landing page
+    #vst = vst table 
+    GSEA_Server("GSEA1", dataset_choice, DE_res, reset_trigger, vst, dataset_dds)
     
+    #returns user to QC tab after switching datasets
     observeEvent(input$change_data, {
       updateTabsetPanel(session, "tabs", selected = "QC")
     })
