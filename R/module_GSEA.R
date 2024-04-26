@@ -733,16 +733,16 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       
       p2 <- unlist((pathwaygsea4[names(pathwaygsea4) %in% input$pathwaylistht]))
       
-      print("p:")
-      print(head(p))
+      # print("p:")
+      # print(head(p))
     
       #filter vst counts matrix for genes in pathway
       vst.myc <- vst() %>%
         mutate(., pathwayheat = ifelse(ext_gene_ensembl %in% p2, 'yes', 'no')) %>%
         dplyr::filter(pathwayheat == "yes") %>% 
         dplyr::rename("Gene" = "ext_gene_ensembl")
-      print("vst.myc:")
-      print(head(vst.myc))
+      # print("vst.myc:")
+      # print(head(vst.myc))
       #create matrix for heatmap using genes in significant DE that are in pathway of choice
       vstgsea.mat <- vst.myc %>%
         dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
@@ -751,8 +751,8 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
         as.matrix()
       
-      print("vstgsea.mat:")
-      print(head(vstgsea.mat))
+      # print("vstgsea.mat:")
+      # print(head(vstgsea.mat))
       #transform and scale and transform back
       vstgsea.mat <- t(scale(t(vstgsea.mat)))
       #color function buliding a colorRamp palette based on user input from palette choices
@@ -776,7 +776,8 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         colors = colors.hmg,
         dendrogram = "column",
         show_dendrogram = TRUE,
-        col_side_colors = cond
+        col_side_colors = cond,
+        showticklabels = c(FALSE, FALSE)
       )
       
       ht

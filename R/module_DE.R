@@ -430,6 +430,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     #filter vst counts matrix by sig expressed genes
     vst.mat <- vst() %>%
       dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
+      distinct(ext_gene_ensembl, .keep_all = TRUE) %>% 
       column_to_rownames(., var = "ensembl_gene_id") %>%
       dplyr::select(., -ext_gene_ensembl) %>%
       as.matrix()
@@ -444,17 +445,17 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     #create a colorRamp function based on user input in color palette choices
     colors.hm <- c(colorDE(), "#FFFFFF", color2DE())
     
-    k_number <- 
-      if(dataset_choice$user_PW() == "LRT") {
-        datasets[[dataset_choice$user_dataset()]]$k
-      } else{
-        datasets[[dataset_choice$user_dataset()]]$k_PW
-      }
+    # k_number <- 
+    #   if(dataset_choice$user_PW() == "LRT") {
+    #     datasets[[dataset_choice$user_dataset()]]$k
+    #   } else{
+    #     datasets[[dataset_choice$user_dataset()]]$k_PW
+    #   }
       
     
-    k_number <- as.numeric(k_number)
-    print("k_number:")
-    print(k_number)
+    # k_number <- as.numeric(k_number)
+    # print("k_number:")
+    # print(k_number)
     #create heatmap object
     ht <- heatmaply(
       vst.mat,
@@ -462,31 +463,14 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       row_text_angle = 45,
       height = 600,
       width = 600,
-      #plot_method = "ggplot",
-      #colorbar = list(len=1, limits = c(-2, 2)),
       colors = colors.hm,
       dendrogram = "column",
       show_dendrogram = TRUE,
-      col_side_colors = cond
+      col_side_colors = cond,#adds labels to clusters
+      showticklabels = c(FALSE, FALSE)# removes column and row labels
     )
-    # ht <- 
-    #   ComplexHeatmap::Heatmap(
-    #     vst.mat,
-    #     name = "z scaled expression",
-    #     col = colors.hm,
-    #     row_names_gp = gpar(fontsize = 4),
-    #     row_km = 2,
-    #     # top_annotation = HeatmapAnnotation(class = anno_block(gp = gpar(fill = c("white", "white")),
-    #     #                                                       labels = c("prim", "mono"),
-    #     #                                                       labels_gp = gpar(col = "black", fontsize = 10))),
-    #     column_km = 2,
-    #     column_title = NULL,
-    #     row_title = NULL
-    #     
-    #   )
-    # ht <- draw(ht)
+   
     ht
-    #makeInteractiveComplexHeatmap(input, output, session, ht, heatmap_id = ns("ht"))
   })
    
   
