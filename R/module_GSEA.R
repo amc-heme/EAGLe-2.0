@@ -306,7 +306,8 @@ GSEA_UI <- function(id) {
         conditionalPanel(
           ns = ns,
           condition = "input.heatmap == true",
-          plotlyOutput(ns("htgsea"))
+          plotlyOutput(ns("htgsea")),
+          textOutput(ns("htwarnGSEA"))
         )
       )
     )
@@ -728,6 +729,10 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       print(head(dds.sig))
       
       
+      if(nrow(dds.sig) == 0) {
+        return(NULL)
+      }
+      
       pathwaygsea4 <- gsea_file_values[[input$filechoice]]
      
       
@@ -741,6 +746,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         mutate(., pathwayheat = ifelse(ext_gene_ensembl %in% p2, 'yes', 'no')) %>%
         dplyr::filter(pathwayheat == "yes") %>% 
         dplyr::rename("Gene" = "ext_gene_ensembl")
+   
       # print("vst.myc:")
       # print(head(vst.myc))
       #create matrix for heatmap using genes in significant DE that are in pathway of choice
@@ -779,11 +785,26 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         col_side_colors = cond,
         showticklabels = c(FALSE, FALSE)
       )
-      
+
       ht
     })
  
-   
+    output$htwarnGSEA <- renderText({
+      req(input$heatmap)
+      req(DE_res$dds_res())
+      
+      res.hmg <- DE_res$dds_res() 
+      
+      dds.sig <- res.hmg %>%
+        dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
+      
+      if(nrow(dds.sig) == 0){
+        return("No significant DEGs found in pathway")
+      }else {
+        return(NULL)
+      }
+      
+    })
         # htgsea = draw(ComplexHeatmap::Heatmap(
         #   vstgsea.mat,
         #   name = paste(gseaht_title(), fontsize = 6),

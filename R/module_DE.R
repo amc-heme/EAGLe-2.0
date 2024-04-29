@@ -125,7 +125,8 @@ DE_UI <- function(id) {
           conditionalPanel(
             ns = ns,
             condition = "input.DESeqHeat == true",
-            plotlyOutput(ns("ht"))
+            plotlyOutput(ns("ht")),
+            textOutput(ns("htwarn"))
         )
       )
     )
@@ -392,9 +393,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   
     
     #Heatmap ####
-  
+
   output$ht <- renderPlotly({
-    
     req(input$DESeqHeat)
     ns <- NS(id)
     
@@ -410,7 +410,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
       cond <- meta[, cond_var]
     }
-
+    
     #generate dds results table 
     res.hm <-
       generateRes(dataset_choice$user_dataset(), dds_result())
@@ -424,9 +424,13 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>% 
       dplyr::arrange(desc(abs(`log2FoldChange`))) %>% 
       slice(1:50)
+    
     print("dds.mat:")
     print(dds.mat)
     
+    if(nrow(dds.mat) == 0) {
+      return(NULL)
+    }
     #filter vst counts matrix by sig expressed genes
     vst.mat <- vst() %>%
       dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
@@ -471,10 +475,34 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     )
    
     ht
+ 
   })
-   
+
   
-  
+  output$htwarn <- renderText({
+    req(input$DESeqHeat)
+    
+    res.hm <- generateRes(dataset_choice$user_dataset(), dds_result())
+    dds.mat <- res.hm %>% 
+      dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>% 
+      dplyr::arrange(desc(abs(`log2FoldChange`))) %>% 
+      slice(1:50)
+    
+    if(nrow(dds.mat) == 0){
+      return("No significant DEGs found")
+    }else {
+      return(NULL)
+    }
+    
+  })
+
+
+  # output$htwarn <- renderText(
+  #   if(rownames(vst.mat()) < 1) {
+  #     "No significant DEGs found (padj <= 0.05 & log2FoldChange >= 2)"
+  #   }
+  # )
+  # 
   # download DE table
   output$downloadDEtable <- downloadHandler(
     filename = function() { paste("DESeqTable", '.csv', sep='') },
