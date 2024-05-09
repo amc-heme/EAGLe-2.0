@@ -878,6 +878,57 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       
     })
 
+    # download DE Heatmap ####
+    output$downloadheatmap <- downloadHandler(
+      filename = paste("GSEA_Heatmap", '.png', sep=''),
+      content = function(file) {
+        #generate dds results table 
+        res.hmg <- DE_res$dds_res() 
+ 
+        dds.sig <- res.hmg %>%
+          dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
+
+        if(nrow(dds.sig) == 0) {
+          return(NULL)
+        }
+        
+        pathwaygsea4 <- gsea_file_values[[input$filechoice]]
+        
+        
+        p2 <- unlist((pathwaygsea4[names(pathwaygsea4) %in% input$pathwaylistht]))
+  
+        
+        #filter vst counts matrix for genes in pathway
+        vst.myc <- vst() %>%
+          mutate(., pathwayheat = ifelse(ext_gene_ensembl %in% p2, 'yes', 'no')) %>%
+          dplyr::filter(pathwayheat == "yes") %>% 
+          dplyr::rename("Gene" = "ext_gene_ensembl")
+    
+        vstgsea.mat <- vst.myc %>%
+          dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
+          distinct(Gene, .keep_all = TRUE) %>% 
+          column_to_rownames(var = "Gene") %>%
+          dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
+          as.matrix()
+     
+        vstgsea.mat <- t(scale(t(vstgsea.mat)))
+        #create a colorRamp function based on user input in color palette choices
+        colors.hmg <- colorRamp2(c(-2, 0, 2), c(colorGHeat(), "white", colorGHeat2()))
+        ht = ComplexHeatmap::Heatmap(
+          vstgsea.mat,
+          name = "z scaled expression",
+          col = colors.hmg,
+          row_names_gp = gpar(fontsize = 6),
+          column_names_gp = gpar(fontsize = 6),
+          column_title = NULL,
+          row_title = "DEGs in Pathway"
+        ) 
+        png(file)
+        # draw heatmap object
+        draw(ht)
+        dev.off()
+      }
+    )
     
     observe({
       req(reset_trigger())
