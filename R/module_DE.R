@@ -73,15 +73,34 @@ DE_UI <- function(id) {
         colorUI(ns("color"), "Choose 1st color", "#273F52"),
         colorUI(ns("color2"), "Choose 2nd color", "#D53031"),
          hr(),
-        conditionalPanel(
-          ns = ns,
-          condition = "input.DESeqtable == true",
+
+        dropdownButton(
+          inputId = ns("download_menu"),
+          label = "Download",
+          icon = icon("sliders"),
+          status = "primary",
+          circle = FALSE,
           downloadButton(
             ns("downloadDESeq"),
             label =
-              "Download DEG Table"
+              "DEG Table"
+          ),
+          downloadButton(
+            ns("downloadDEVol"),
+            label = 
+              "Volcano"
+          ),
+          downloadButton(
+            ns("downloadDEMA"),
+            label = 
+              "MA"
+          ),
+          downloadButton(
+            ns("downloadDEHM"),
+            label =
+              "Heatmap"
           )
-        ),
+        )
         # conditionalPanel(
         #   ns = ns,
         #   condition = "input.DESeqHeat == true",

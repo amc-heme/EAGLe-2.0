@@ -63,8 +63,40 @@ QC_UI <- function(id) {
         #       "Data Table"
         #   )
         # ),
-        paletteUI(ns("palette"))
-      ),
+        paletteUI(ns("palette")),
+        # 
+        # hr(),
+        # tags$head(
+        #   tags$link(rel = "stylesheet", type = "text/css", href = "CSS.css")
+        # ),
+        # div(
+        #  id = ns("download_container"),
+        #  class = "object-container",
+        # 
+        # h4("Download plots:"),
+        # bs_accordion(id = ns("download_qc")) %>% 
+        #   bs_set_opts(panel_type = "info", open = FALSE) %>%
+        #   bs_append(title = "download QC plots", 
+                        
+                                          
+        dropdownButton(
+          inputId = ns("download_menu"),
+          label = "Download",
+          icon = icon("sliders"),
+          status = "primary",
+          circle = FALSE,
+          downloadButton(ns("downloadPCA"), label = "PCA"),
+          
+          downloadButton(ns("downloadScree"), label = "Scree"),
+          
+          downloadButton(ns("downloadMultiQC"), label = "MultiQC")
+        )     
+    
+       
+             
+        #)
+    ),
+       
       mainPanel(
         conditionalPanel(
           ns = ns,
@@ -300,7 +332,14 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
         print(pca)
       }
     })
-    
+   observe(input$download_menu)
+    #download PCA plot
+    output$downloadPCA <- downloadHandler(
+      filename = function() { paste("PCA Plot", '.png', sep='') },
+      content = function(file) {
+        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+      }
+    )
     
  #MultiQC plot function ####   
     
@@ -333,9 +372,6 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     # })
     # 
    
-    
-  
-      
         output$QCdt <- renderDataTable({
           if (input$multiqc == TRUE & dataset_choice$user_dataset() %in% 
               c("Cancer_Discovery", "Ye_16", "Ye_20","Venaza", "Lagadinou", "Lee")) {
@@ -364,7 +400,13 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
   
      
     
-
+    #download multiqc table
+        output$downloadMultiQC <- downloadHandler(
+          filename = function() { paste("MultiQC_table", '.csv', sep='')},
+          content = function(file) {
+            write.csv(multiqc_res,file)
+          }
+        )
   
     # output$QCplot <- renderPlot ({
     #   if(input$multiqc == TRUE) {
@@ -425,7 +467,6 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
       scree_df
     })
 
-    
     # PCA scree plot ####
     output$PCAvarplot <- renderPlot ({
       if(input$PCAscreeplots == TRUE) {
@@ -444,6 +485,14 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
                  "PCA variability plot")
       }
     })
+    
+    #download scree plot
+    output$downloadScree <- downloadHandler(
+      filename = function() { paste("Scree Plot", '.png', sep='') },
+      content = function(file) {
+        ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
+      }
+    )
     
     observe({
       req(reset_trigger())
