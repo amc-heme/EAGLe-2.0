@@ -45,8 +45,7 @@ names(dataset.qc) <-
 
 # UI ####
 ui <-
-  navbarPage("EAGLe 2.0",
-            
+  navbarPage("EAGLe2",
              tabsetPanel(
                id = "page",
                type = "hidden",

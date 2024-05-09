@@ -73,15 +73,35 @@ DE_UI <- function(id) {
         colorUI(ns("color"), "Choose 1st color", "#273F52"),
         colorUI(ns("color2"), "Choose 2nd color", "#D53031"),
          hr(),
-        conditionalPanel(
-          ns = ns,
-          condition = "input.DESeqtable == true",
+        
+        #dropdown menu containing download buttons
+        dropdownButton(
+          inputId = ns("download_menu"),
+          label = "Download",
+          icon = icon("sliders"),
+          status = "primary",
+          circle = FALSE,
           downloadButton(
             ns("downloadDESeq"),
             label =
-              "Download DEG Table"
+              "DEG Table"
+          ),
+          downloadButton(
+            ns("downloadDEVol"),
+            label = 
+              "Volcano"
+          ),
+          downloadButton(
+            ns("downloadDEMA"),
+            label = 
+              "MA"
+          ),
+          downloadButton(
+            ns("downloadDEHM"),
+            label =
+              "Heatmap"
           )
-        ),
+        )
         # conditionalPanel(
         #   ns = ns,
         #   condition = "input.DESeqHeat == true",
@@ -307,8 +327,9 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
        }
     })
       
+    # Download DE table ####
       output$downloadDESeq <- downloadHandler(
-        filename = function() { paste("DEGTable", '.csv', sep='')},
+        filename = paste("DEGTable", '.csv', sep=''),
         content = function(file) {
           write.csv(dds.res,file)
         }
@@ -352,7 +373,26 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     })
     }
   })
-
+# Download Volcano plot ####
+  output$downloadDEVol <- downloadHandler(
+    filename = paste("DE Volcano", '.png', sep=''),
+    content = function(file) {
+      colors <- c(colorDE(), "grey", color2DE())
+      res.vol <- generateRes(dataset_choice$user_dataset(), dds_result())
+      p <- ggplot(data=res.vol, aes(x=log2FoldChange, y=-log10(padj), col = DiffExp)) + 
+        geom_point() +
+        theme_cowplot(font_size = 14) +
+        scale_colour_manual(values = colors) +
+        theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+        theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+        theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+        ggtitle("DE Volcano Plot") +
+        coord_cartesian(xlim = c(-10, 7))
+      ggsave(p, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
+    }
+  )
+  
+ ##MA Plot ####
   
   observe({
     if(!is.null(dds_result())) {
@@ -388,9 +428,38 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
         girafe(code = print(ma))
       }
     })
-    }
+   }
   })
-  
+   # Download MA plot ####
+  output$downloadDEMA <- downloadHandler(
+    filename = paste("DE MA", '.png', sep=''),
+    content = function(file) {
+      colors <- c(colorDE(), "grey", color2DE())
+      res.ma <- generateRes(dataset_choice$user_dataset(), dds_result())
+      m <- ggplot(res.ma, 
+                   aes(
+                     x = log2(baseMean),
+                     y = `log2FoldChange`,
+                     col = DiffExp
+                   )) +
+        geom_point() +
+        geom_hline(aes(yintercept = 0)) +
+        scale_color_manual(values = colors) +
+        theme_cowplot(font_size = 14) +
+        theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+        theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+        theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+        ylim(c(
+          min(res.ma$`log2FoldChange`),
+          max(res.ma$`log2FoldChange`)
+        )) +
+        ggtitle("DE MA Plot") +
+        xlab("log2 Mean Expression") +
+        ylab("Log2 Fold Change")
+      
+      ggsave(m, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
+    }
+  )
     
     #Heatmap ####
 
@@ -415,9 +484,9 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     res.hm <-
       generateRes(dataset_choice$user_dataset(), dds_result())
     
-    print("res.hm")
-    print(head(res.hm))
-    print(class(res.hm))
+    # print("res.hm")
+    # print(head(res.hm))
+    # print(class(res.hm))
     #filter DE object for only significantly differentially expressed genes and
     #take the top 50 most highly expressed genes for visualization
     dds.mat <- res.hm %>%
@@ -425,8 +494,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       dplyr::arrange(desc(abs(`log2FoldChange`))) %>% 
       slice(1:50)
     
-    print("dds.mat:")
-    print(dds.mat)
+    # print("dds.mat:")
+    # print(dds.mat)
     
     if(nrow(dds.mat) == 0) {
       return(NULL)
@@ -444,20 +513,20 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     vst.mat <- t(scale(t(vst.mat)))
     #only show the first 100 genes for visualization in this example(can change)
    
-    print("vst.mat:")
-    print(head(vst.mat))
+    # print("vst.mat:")
+    # print(head(vst.mat))
     #create a colorRamp function based on user input in color palette choices
     colors.hm <- c(colorDE(), "#FFFFFF", color2DE())
     
-    # k_number <- 
+    # k_number <-
     #   if(dataset_choice$user_PW() == "LRT") {
     #     datasets[[dataset_choice$user_dataset()]]$k
     #   } else{
     #     datasets[[dataset_choice$user_dataset()]]$k_PW
     #   }
-      
-    
-    # k_number <- as.numeric(k_number)
+    #   
+    # 
+    #  k_number <- as.numeric(k_number)
     # print("k_number:")
     # print(k_number)
     #create heatmap object
@@ -496,37 +565,53 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     
   })
 
+# download DE Heatmap ####
+  output$downloadDEHM <- downloadHandler(
+    filename = paste("DE_Heatmap", '.png', sep=''),
+    content = function(file) {
+      #generate dds results table 
+      res.hm <-
+        generateRes(dataset_choice$user_dataset(), dds_result())
+      print("res-class:")
+      print(class(res.hm))
+      dds.mat <- res.hm %>%
+        dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>% 
+        dplyr::arrange(desc(abs(`log2FoldChange`))) %>% 
+        slice(1:50)
+      print("res-dds.mat:")
+      print(class(dds.mat))
+      #filter vst counts matrix by sig expressed genes
+      vst.mat <- vst() %>%
+        dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
+        distinct(ext_gene_ensembl, .keep_all = TRUE) %>% 
+        column_to_rownames(., var = "ensembl_gene_id") %>%
+        dplyr::select(., -ext_gene_ensembl) %>%
+        as.matrix()
+      print("vst.mat:")
+      print(class(vst.mat))
+      rownames(vst.mat) = dds.mat$Gene
+      
+      vst.mat <- t(scale(t(vst.mat)))
+     
+      #create a colorRamp function based on user input in color palette choices
+      colors.hm <- colorRamp2(c(-2, 0, 2), c(colorDE(), "white", color2DE()))
+      ht = ComplexHeatmap::Heatmap(
+        vst.mat,
+        name = "z scaled expression",
+        col = colors.hm,
+        row_names_gp = gpar(fontsize = 6),
+        column_names_gp = gpar(fontsize = 6),
+        column_title = NULL,
+        row_title = "Top DEGs"
+      ) 
+      png(file)
+      # draw heatmap object
+      draw(ht)
+      dev.off()
+    }
+    )
 
-  # output$htwarn <- renderText(
-  #   if(rownames(vst.mat()) < 1) {
-  #     "No significant DEGs found (padj <= 0.05 & log2FoldChange >= 2)"
-  #   }
-  # )
-  # 
-  # download DE table
-  output$downloadDEtable <- downloadHandler(
-    filename = function() { paste("DESeqTable", '.csv', sep='') },
-    content = function(file) {
-      write.csv(CD_DE_DT(),file)
-    }
-  )
 
-  #download Volcano
-  output$downloadDEVolcano <- downloadHandler(
-    filename = function() { paste(input$sigvaluesbutton, '.png', sep='') },
-    content = function(file) {
-      ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
-    }
-  )
-  
-  #download MA
-  output$downloadDEMA <- downloadHandler(
-    filename = function() { paste('DESeqMAplot', '.png', sep='') },
-    content = function(file) {
-      ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
-    }
-  )
-  
   DDS4GSEA <- reactiveVal(NULL)
   
   observeEvent(dataset_choice$close_tab(), { #only run DE for GSEA if the action button is pushed

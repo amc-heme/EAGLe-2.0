@@ -63,8 +63,49 @@ QC_UI <- function(id) {
         #       "Data Table"
         #   )
         # ),
-        paletteUI(ns("palette"))
-      ),
+        paletteUI(ns("palette")),
+        # 
+        # hr(),
+        # tags$head(
+        #   tags$link(rel = "stylesheet", type = "text/css", href = "CSS.css")
+        # ),
+        # div(
+        #  id = ns("download_container"),
+        #  class = "object-container",
+        # 
+        # h4("Download plots:"),
+        # bs_accordion(id = ns("download_qc")) %>% 
+        #   bs_set_opts(panel_type = "info", open = FALSE) %>%
+        #   bs_append(title = "download QC plots", 
+                        
+        #dropdown menu containing download buttons                                  
+        dropdownButton(
+          inputId = ns("download_menu"),
+          label = "Download",
+          icon = icon("sliders"),
+          status = "primary",
+          circle = FALSE,
+          downloadButton(
+            ns("downloadPCA"),
+            label =
+              "PCA"), 
+          
+          downloadButton(
+            ns("downloadScree"),
+            label =
+              "Scree"),
+          
+          downloadButton(
+            ns("downloadMultiQC"),
+            label = 
+              "MultiQC")
+        )     
+    
+       
+             
+        #)
+    ),
+       
       mainPanel(
         conditionalPanel(
           ns = ns,
@@ -280,7 +321,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
 
 
 ##PCA plot ####
-    output$PCAplot <- renderPlot ({
+    output$PCAplot <- renderPlot({
       if(input$PCAplots == TRUE) {
         pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2, color = pca_color(), shape = pca_shape(), fill = pca_color())) +
           geom_point(size = 5) + 
@@ -300,71 +341,78 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
         print(pca)
       }
     })
+ 
+    #download PCA plot ####
+    output$downloadPCA <- downloadHandler(
+      filename = paste("PCA Plot", '.png', sep=''),
+      content = function(file) {
+        pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2, color = pca_color(), shape = pca_shape(), fill = pca_color())) +
+          geom_point(size = 5) + 
+          scale_shape() +
+          scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
+          scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
+          theme_cowplot(font_size = 14) + 
+          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          xlab(paste('PC1 =', pc1(), '% variance')) + #reactive x lab for % variance
+          ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
+          ggtitle("PCA on VSD") +
+          #geom_text_repel(colour = "black", aes(label= ID,hjust=0, vjust=0)) +
+          labs(color = color_legend(), shape = shape_legend()) + #rename legends
+          guides(fill = FALSE) #hide fill legend 
+        ggsave(pca, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
+      }
+    )
     
-    
- #MultiQC plot function ####   
-    
-    
-    #reactive function for multiqc plot title
-    # QC_title <- 
-    #   reactive({
-    #     if (input$QCvar == "% mapped reads") {
-    #       print("% mapped reads per sample")
-    #     } else if (input$QCvar == "# mapped reads") {
-    #       print("# mapped reads per sample")
-    #     } else if (input$QCvar == "% uniquely mapped reads") {
-    #       print("% uniquely mapped reads per sample")
-    #     } else if (input$QCvar == "# uniquely mapped reads") {
-    #       print("# uniquely mapped reads per sample")
-    #     }
-    #   })
-    # 
-    # #create object for reactive data input based on user choice of multiqc test option
-    # QCdata <- reactive ({
-    #   if(input$QCvar == "% mapped reads") {
-    #     qc()$raw.salmon.percent_mapped
-    #   } else if(input$QCvar == "# mapped reads") {
-    #     qc()$raw.salmon.num_mapped
-    #   } else if(input$QCvar == "% uniquely mapped reads") {
-    #     qc()$raw.star.uniquely_mapped_percent
-    #   } else if(input$QCvar == "# uniquly mapped reads") {
-    #     qc()$raw.star.uniquely_mapped
-    #   }
-    # })
-    # 
-   
-    
-  
+ #MultiQC table function ####   
+
+    multiqc_res <- reactive({
+      multiqc_res <- qc_table()
       
-        output$QCdt <- renderDataTable({
-          if (input$multiqc == TRUE & dataset_choice$user_dataset() %in% 
-              c("Cancer_Discovery", "Ye_16", "Ye_20","Venaza", "Lagadinou", "Lee")) {
-        # venaza dataset does not have the same column names-need to add a 
+      multiqc_res <- multiqc_res %>%
+        mutate_at(vars(-Sample), ~ round(., digits = 3))
+      
+    })
+    
+    output$QCdt <- renderDataTable({
+      if (input$multiqc == TRUE & dataset_choice$user_dataset() %in%
+          c("Cancer_Discovery",
+            "Ye_16",
+            "Ye_20",
+            "Venaza",
+            "Lagadinou",
+            "Lee")) {
+        # venaza dataset does not have the same column names-need to add a
         # condition for that dataset
-     
+        
         multiqc_res <- qc_table()
         
-        multiqc_res <- multiqc_res %>% 
-          mutate_at(vars(-Sample), ~round(., digits = 3))
+        multiqc_res <- multiqc_res %>%
+          mutate_at(vars(-Sample), ~ round(., digits = 3))
         
-        multiqc_res <- DT::datatable(multiqc_res,
-                                     options = list(scrollX = TRUE))
-       
-        multiqc_res
-          }
-      })
-
-        output$QCdt2 <- renderText({
-          if(input$multiqc == TRUE & dataset_choice$user_dataset() %in% 
-             c("BEAT", "TCGA")) {
-            
-          paste("MultiQC data is unavailable for this dataset")
-          }
-                })
-  
-     
+        multiqc_res_DT <- DT::datatable(multiqc_res(),
+                                        options = list(scrollX = TRUE))
+        
+        multiqc_res_DT
+      }
+    })
     
-
+    output$QCdt2 <- renderText({
+      if (input$multiqc == TRUE & dataset_choice$user_dataset() %in%
+          c("BEAT", "TCGA")) {
+        paste("MultiQC data is unavailable for this dataset")
+      }
+    })
+    
+       
+    #download multiqc table
+        output$downloadMultiQC <- downloadHandler(
+          filename = paste("MultiQC_table", '.csv', sep=''),
+          content = function(file) {
+            write.csv(multiqc_res(), file = file)
+          }
+        )
   
     # output$QCplot <- renderPlot ({
     #   if(input$multiqc == TRUE) {
@@ -425,7 +473,6 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
       scree_df
     })
 
-    
     # PCA scree plot ####
     output$PCAvarplot <- renderPlot ({
       if(input$PCAscreeplots == TRUE) {
@@ -444,6 +491,28 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
                  "PCA variability plot")
       }
     })
+    
+    #download scree plot ####
+    output$downloadScree <- downloadHandler(
+      filename = paste("Scree Plot", '.png', sep=''),
+      content = function(file) {
+        scree <- ggplot(scree_variance_df(),
+               aes(x = pc,
+                   y = variance,
+                   group = 2)) +
+          geom_point(size = 2) +
+          geom_line() +
+          theme_cowplot(font_size = 14) +
+          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          labs(x = "PC",
+               y = "% Variance") +
+          labs(title =
+                 "PCA variability plot")
+        ggsave(scree,file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
+      }
+    )
     
     observe({
       req(reset_trigger())

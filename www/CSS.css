@@ -1,0 +1,8 @@
+/* CSS classes for object containers */
+
+.object-container{
+  background-color: #FFFFFF;
+  margin: 0px -2px;
+  padding: 10px 7px;
+  border-radius: 10px;
+}
