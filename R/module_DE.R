@@ -73,7 +73,8 @@ DE_UI <- function(id) {
         colorUI(ns("color"), "Choose 1st color", "#273F52"),
         colorUI(ns("color2"), "Choose 2nd color", "#D53031"),
          hr(),
-
+        
+        #dropdown menu containing download buttons
         dropdownButton(
           inputId = ns("download_menu"),
           label = "Download",
@@ -326,8 +327,9 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
        }
     })
       
+    # Download DE table ####
       output$downloadDESeq <- downloadHandler(
-        filename = function() { paste("DEGTable", '.csv', sep='')},
+        filename = paste("DEGTable", '.csv', sep=''),
         content = function(file) {
           write.csv(dds.res,file)
         }
@@ -371,7 +373,26 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     })
     }
   })
-
+# Download Volcano plot ####
+  output$downloadDEVol <- downloadHandler(
+    filename = paste("DE Volcano", '.png', sep=''),
+    content = function(file) {
+      colors <- c(colorDE(), "grey", color2DE())
+      res.vol <- generateRes(dataset_choice$user_dataset(), dds_result())
+      p <- ggplot(data=res.vol, aes(x=log2FoldChange, y=-log10(padj), col = DiffExp)) + 
+        geom_point() +
+        theme_cowplot(font_size = 14) +
+        scale_colour_manual(values = colors) +
+        theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+        theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+        theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+        ggtitle("DE Volcano Plot") +
+        coord_cartesian(xlim = c(-10, 7))
+      ggsave(p, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
+    }
+  )
+  
+ ##MA Plot ####
   
   observe({
     if(!is.null(dds_result())) {
@@ -407,9 +428,38 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
         girafe(code = print(ma))
       }
     })
-    }
+   }
   })
-  
+   # Download MA plot ####
+  output$downloadDEMA <- downloadHandler(
+    filename = paste("DE MA", '.png', sep=''),
+    content = function(file) {
+      colors <- c(colorDE(), "grey", color2DE())
+      res.ma <- generateRes(dataset_choice$user_dataset(), dds_result())
+      m <- ggplot(res.ma, 
+                   aes(
+                     x = log2(baseMean),
+                     y = `log2FoldChange`,
+                     col = DiffExp
+                   )) +
+        geom_point() +
+        geom_hline(aes(yintercept = 0)) +
+        scale_color_manual(values = colors) +
+        theme_cowplot(font_size = 14) +
+        theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+        theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+        theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+        ylim(c(
+          min(res.ma$`log2FoldChange`),
+          max(res.ma$`log2FoldChange`)
+        )) +
+        ggtitle("DE MA Plot") +
+        xlab("log2 Mean Expression") +
+        ylab("Log2 Fold Change")
+      
+      ggsave(m, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
+    }
+  )
     
     #Heatmap ####
 
@@ -522,30 +572,9 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   #   }
   # )
   # 
-  # download DE table
-  output$downloadDEtable <- downloadHandler(
-    filename = function() { paste("DESeqTable", '.csv', sep='') },
-    content = function(file) {
-      write.csv(CD_DE_DT(),file)
-    }
-  )
 
-  #download Volcano
-  output$downloadDEVolcano <- downloadHandler(
-    filename = function() { paste(input$sigvaluesbutton, '.png', sep='') },
-    content = function(file) {
-      ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
-    }
-  )
-  
-  #download MA
-  output$downloadDEMA <- downloadHandler(
-    filename = function() { paste('DESeqMAplot', '.png', sep='') },
-    content = function(file) {
-      ggsave(file, device = "png", width = 8, height = 6, units = "in",dpi = 72)
-    }
-  )
-  
+
+
   DDS4GSEA <- reactiveVal(NULL)
   
   observeEvent(dataset_choice$close_tab(), { #only run DE for GSEA if the action button is pushed

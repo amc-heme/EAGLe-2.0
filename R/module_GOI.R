@@ -41,10 +41,19 @@ goi_UI <- function(id) {
         shinyjs::hidden(sliderInput(ns("plotwidthslider"),
                                     "Adjust Plot Width", 200, 1200, 800)),
         
-        
-        
-        downloadButton(ns("downloadGenePlot"), label = "Download Plot"),
-        
+        #dropdown menu containing download button
+        dropdownButton(
+          inputId = ns("download_menu"),
+          label = "Download",
+          icon = icon("sliders"),
+          status = "primary",
+          circle = FALSE,
+          downloadButton(
+            ns("downloadGenePlot"),
+            label = 
+              NULL
+          )
+        )
       ), 
       
       mainPanel( #add loading spinner
@@ -118,7 +127,6 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
         
         vst.goi$ext_gene_ensembl <- as.numeric(vst.goi$ext_gene_ensembl)
       }
-     
       return(vst.goi)
     }
     
@@ -288,6 +296,7 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
               title = element_text(face = "bold"),
               axis.text.x = element_text(face = "bold", angle = 60, hjust = 1), 
               axis.text.y = element_text(face = "bold")) +
+            theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
             #scale_y_continuous(breaks = seq(12, 20, by = 1)) +
             #sig_label_position() + # function for adjusted pvalues position and format on plot
             ylab(input$VSTCDgenechoice) +
@@ -296,10 +305,10 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
         }) #end render plot
     
     output$downloadGenePlot <- downloadHandler(
-      filename = function() { paste('GeneCentricPlot','.png', sep='') },
+      filename = paste('GeneCentricPlot','.png', sep=''),
       content = function(file) {
         ggsave(file, device = "png", width = 8,
-               height = 8, dpi = 72)
+               height = 8, dpi = 100)
       }
     )
     
