@@ -19,6 +19,27 @@ DE_UI <- function(id) {
     titlePanel(
       "Differential Expression Tables and Plots"
     ),#end title
+    #dropMenu(
+      dropdownButton(
+        circle = TRUE,
+        status = 'info',
+        icon = icon('info'),
+        size = 'sm',
+        width = '50px',
+        tooltip =
+          tooltipOptions(title = "Information"),
+     # ), 
+      h6("1."),
+      h6("-"),
+      h6("-"),
+      br(),
+      h6("2."),
+      
+      br(),
+      h6("3."),
+      h6("-"),
+      h6("-")
+      ),
       sidebarLayout(
         sidebarPanel(
           # shinyjs::useShinyjs(),

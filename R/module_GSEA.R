@@ -30,6 +30,17 @@ GSEA_UI <- function(id) {
     titlePanel(
       "GSEA"
     ),#end title
+    #dropMenu(
+    dropdownButton(
+      circle = TRUE,
+      status = 'info',
+      icon = icon('info'),
+      size = 'sm',
+      width = '50px',
+      tooltip =
+        tooltipOptions(title = "Information")
+    ),
+      #),
     sidebarLayout(
       sidebarPanel( 
         # shinyjs::useShinyjs(),

@@ -12,7 +12,10 @@ goi_UI <- function(id) {
     titlePanel(
       "Gene Expression"
     ),
-    #h6("*p values are indicated for the comparison of gene expression between prim and mono samples"),
+    # dropMenu(
+    #   dropdownButton(circle = TRUE, status = 'info', icon = icon('info'), size = 'sm',
+    #                  width = '50px',
+    #                  tooltip = tooltipOptions(title = "Information"))),
     sidebarLayout(
       sidebarPanel(
         selectizeInput( #gene choice dropdown menu

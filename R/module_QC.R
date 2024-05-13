@@ -14,7 +14,13 @@ QC_UI <- function(id) {
       shinytheme("flatly"),
     titlePanel(
       "QC Analysis Plots"
-    ),#end title
+    ),
+    # dropMenu(
+    #   dropdownButton(circle = TRUE, status = 'info', icon = icon('info'), size = 'sm',
+    #                  width = '50px',
+    #                  tooltip = tooltipOptions(title = "Information")),
+    #   
+    #   ),
     sidebarLayout(
       sidebarPanel(
         # shinyjs::useShinyjs(),
@@ -107,6 +113,10 @@ QC_UI <- function(id) {
     ),
        
       mainPanel(
+        # dropMenu(
+        #   dropdownButton(circle = TRUE, status = 'info', icon = icon('info'), size = 'sm',
+        #                  right = T, width = '50px',
+        #                  tooltip = tooltipOptions(title = "Information"))),
         conditionalPanel(
           ns = ns,
           condition = "input['PCAplots'] == true",
