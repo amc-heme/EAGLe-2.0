@@ -142,6 +142,8 @@ DE_UI <- function(id) {
       )
     ),
         mainPanel(
+          uiOutput(ns("reactiveText")),
+          
           conditionalPanel(
             ns = ns,
             condition = "input.DESeqtable == true",
@@ -259,8 +261,19 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     return(results_df)
     }
   } 
- 
-  
+  #function for creating reactive text for each dataset to let the user know which variables were chosen and what the plots are depicting
+  text_generator <- function(dataset, model, comparison) {
+    if(dataset == "Cancer_Discovery") {
+      var_value <- unlist(strsplit("mono_vs_prim", "_vs_"))
+    } else if(dataset == "Ye_20") {
+      var_value <- unlist(strsplit("bone_marrow_vs_liver", "_vs_"))
+    } else if(dataset == "Lee") {
+      var_value <- unlist(strsplit("prior_cr_vs_no_prio_cr", "_vs_"))
+    } else {
+      var_value <- unlist(strsplit(comparison, "_vs_"))
+    }
+    return(var_value)
+  }
   generateRes <- function(dataset, de_results) {
     #mouse or human?
     is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
@@ -334,7 +347,12 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     waiter_hide()
   })
   
+  # render reactive text to explain to the user which variables are being shown for each dataset in the plots
+  output$reactiveText <- renderUI({
+    
+  })
 
+  # render DEG table ####
 
   observe({
     if(!is.null(dds_result())) { #only run after runDE action button has been selected
