@@ -9,7 +9,7 @@ dataset_config <-
   read_yaml("./data.yaml")
 
 raw_data_p <- getwd()
-print(raw_data_p)
+print(raw_data_p) 
  
 # Read RDS files from yaml
 CD <- read_rds(paste0(raw_data_p, dataset_config[["Cancer_Discovery"]]$data_path))

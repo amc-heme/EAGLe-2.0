@@ -405,9 +405,9 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
     #function for creating reactive text for each dataset to let the user know which variables were chosen and what the plots are depicting
     text_generator <- function(dataset, comparison) {
       if(dataset == "Cancer_Discovery") {
-        var_value <- unlist(strsplit("mono_vs_prim", "_vs_"))
+        var_value <- unlist(strsplit("prim_vs_mono", "_vs_"))
       } else if(dataset == "Ye_20") {
-        var_value <- unlist(strsplit("bone_marrow_vs_liver", "_vs_"))
+        var_value <- unlist(strsplit("liver_vs_bone_marrow", "_vs_"))
       } else if(dataset == "Lee") {
         var_value <- unlist(strsplit("prior_cr_vs_no_prio_cr", "_vs_"))
       } else {
