@@ -355,15 +355,19 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       text_generator(dataset_choice$user_dataset(), dataset_choice$user_PW())
     text <-
       paste(
-        "The results shown in the DEG table and plots on this page compare",
+        "The DEG table and plots below compare",
         data_text[1],
         "vs",
         data_text[2],
-        "samples from the",
+        "samples in the",
         dataset_choice$user_dataset(),
         "dataset"
       )
-    HTML(text)
+    bold_text <-
+      paste("<div style='font-size: 18px;'>",
+            text,
+            "</div>")
+    HTML(bold_text)
   })
 
   # render DEG table ####
