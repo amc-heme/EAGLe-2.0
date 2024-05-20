@@ -262,7 +262,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     }
   } 
   #function for creating reactive text for each dataset to let the user know which variables were chosen and what the plots are depicting
-  text_generator <- function(dataset, model, comparison) {
+  text_generator <- function(dataset, comparison) {
     if(dataset == "Cancer_Discovery") {
       var_value <- unlist(strsplit("mono_vs_prim", "_vs_"))
     } else if(dataset == "Ye_20") {
@@ -272,6 +272,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     } else {
       var_value <- unlist(strsplit(comparison, "_vs_"))
     }
+    print("var_value")
+    print(var_value)
     return(var_value)
   }
   generateRes <- function(dataset, de_results) {
@@ -349,7 +351,19 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   
   # render reactive text to explain to the user which variables are being shown for each dataset in the plots
   output$reactiveText <- renderUI({
-    
+    data_text <-
+      text_generator(dataset_choice$user_dataset(), dataset_choice$user_PW())
+    text <-
+      paste(
+        "The results shown in the DEG table and plots on this page compare",
+        data_text[1],
+        "vs",
+        data_text[2],
+        "samples from the",
+        dataset_choice$user_dataset(),
+        "dataset"
+      )
+    HTML(text)
   })
 
   # render DEG table ####
