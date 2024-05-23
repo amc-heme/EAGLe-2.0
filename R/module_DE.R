@@ -20,25 +20,25 @@ DE_UI <- function(id) {
       "Differential Expression Tables and Plots"
     ),#end title
     #dropMenu(
-      dropdownButton(
-        circle = TRUE,
-        status = 'info',
-        icon = icon('info'),
-        size = 'sm',
-        width = '50px',
-        tooltip =
-          tooltipOptions(title = "Information"),
-      h6("1. DEG table:"),
-      h6("-"),
-      h6("-"),
-      br(),
-      h6("2. Volcano Plot"),
-      
-      br(),
-      h6("3."),
-      h6("-"),
-      h6("-")
-      ),
+      # dropdownButton(
+      #   circle = TRUE,
+      #   status = 'info',
+      #   icon = icon('info'),
+      #   size = 'sm',
+      #   width = '50px',
+      #   tooltip =
+      #     tooltipOptions(title = "Information"),
+      # h6("1. DEG table:"),
+      # h6("-"),
+      # h6("-"),
+      # br(),
+      # h6("2. Volcano Plot"),
+      # 
+      # br(),
+      # h6("3."),
+      # h6("-"),
+      # h6("-")
+      # ),
       sidebarLayout(
         sidebarPanel(
         tagList(

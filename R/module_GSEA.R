@@ -31,15 +31,15 @@ GSEA_UI <- function(id) {
       "GSEA"
     ),#end title
     #dropMenu(
-    dropdownButton(
-      circle = TRUE,
-      status = 'info',
-      icon = icon('info'),
-      size = 'sm',
-      width = '50px',
-      tooltip =
-        tooltipOptions(title = "Information")
-    ),
+    # dropdownButton(
+    #   circle = TRUE,
+    #   status = 'info',
+    #   icon = icon('info'),
+    #   size = 'sm',
+    #   width = '50px',
+    #   tooltip =
+    #     tooltipOptions(title = "Information")
+    # ),
       #),
     sidebarLayout(
       sidebarPanel( 
@@ -405,11 +405,11 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
     #function for creating reactive text for each dataset to let the user know which variables were chosen and what the plots are depicting
     text_generator <- function(dataset, comparison) {
       if(dataset == "Cancer_Discovery") {
-        var_value <- unlist(strsplit("prim_vs_mono", "_vs_"))
+        var_value <- unlist(strsplit("primitive_vs_monocytic", "_vs_"))
       } else if(dataset == "Ye_20") {
         var_value <- unlist(strsplit("liver_vs_bone_marrow", "_vs_"))
       } else if(dataset == "Lee") {
-        var_value <- unlist(strsplit("prior_cr_vs_no_prio_cr", "_vs_"))
+        var_value <- unlist(strsplit("prior complete remission_vs_no_prior complete remission", "_vs_"))
       } else {
         var_value <- unlist(strsplit(comparison, "_vs_"))
       }
@@ -428,13 +428,24 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
           data_text[2],
           "samples in the",
           dataset_choice$user_dataset(),
-          "dataset"
+          "dataset.")
+        text2 <-  paste(
+          data_text[1],
+          "= positive NES",
+          ",",
+          # "</div><br><div>",
+          # "<div style='font-size: 18px;'>",
+          data_text[2],
+          "= negative NES."
         )
-      large_text <-
+      large_text_style <-
         paste("<div style='font-size: 18px;'>",
               text,
+              "</div><br><div>",
+              "<div style='font-size: 18px;'>",
+              text2,
               "</div>")
-      HTML(large_text)
+      HTML(large_text_style)
     })
     
     #reactive expression to run fgsea and load results table for each chosen pathway
