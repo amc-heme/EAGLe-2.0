@@ -63,7 +63,10 @@ goi_UI <- function(id) {
         shinycssloaders::withSpinner(
           plotOutput(
             ns("VSTCDplot")
-          )
+          ) #,
+          # plotOutput(
+          #   ns("HPAplot")
+          # )
         )
       )
     )

@@ -78,7 +78,9 @@ ui <-
                               
                               #Gene expression analysis ####
                               tabPanel("Gene Expression",
-                                      goi_UI("GOI1"))
+                                      goi_UI("GOI1")),
+                              tabPanel("Normal Tissue",
+                                       HPA_UI("HPA1"))
                             ))
              ))
  
@@ -177,6 +179,10 @@ server <-
     observeEvent(input$change_data, {
       updateTabsetPanel(session, "tabs", selected = "QC")
     })
+    
+    #Human Protein Atlas- normal tissue tab ####
+    
+    HPA_Server("HPA1")
 
   } #end server
 
