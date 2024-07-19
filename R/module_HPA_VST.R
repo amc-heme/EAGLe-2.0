@@ -3,14 +3,12 @@
 datasets <- 
   read_yaml("./data.yaml")
 raw_data <- getwd()
-dds.HPA <- read_rds(paste0(raw_data, datasets[["HPA"]]$data_path))
 #read in t2g files for human and mouse
 t2g_hs <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_hs.rds")
 t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_mm.rds")
 
-HPAvst_Server <- function(id) {
+HPAvst_Server <- function(id, dds.HPA) {
   moduleServer(id, function(input, output, session) {
-    
     # function for creating vst file
     vst.create <- function(dds, dataset){
       
@@ -31,13 +29,11 @@ HPAvst_Server <- function(id) {
           dplyr::select(-ext_gene) %>%
           dplyr::select(ext_gene_ensembl, everything()) %>%
           na.omit(.)
-        
-        print("HPAvst.table:")
-        print(head(HPAvst.table))
+     
         HPAvst.table
     }
     vst.HPA <- reactive({
-      vst.create(dds.HPA, datasets[["HPA"]])
+      vst.create(dds.HPA(), datasets[["HPA"]])
     })
     return(vst.HPA)
   })

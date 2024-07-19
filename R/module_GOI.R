@@ -314,7 +314,7 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
       filename = paste('GeneCentricPlot','.png', sep=''),
       content = function(file) {
         ggsave(file, device = "png", width = 8,
-               height = 8, dpi = 100)
+               height = 8, dpi = 100, bg = "white")
       }
     )
     

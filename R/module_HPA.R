@@ -1,7 +1,7 @@
 datasets <- 
   read_yaml("./data.yaml")
 raw_data <- getwd()
-dds.HPA <- read_rds(paste0(raw_data, datasets[["HPA"]]$data_path))
+
 t2g_hs <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_hs.rds")
 t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_mm.rds")
 
@@ -71,7 +71,7 @@ HPA_UI <- function(id) {
   )
 }
 
-HPA_Server <- function(id, vst.HPA) {
+HPA_Server <- function(id, dds.HPA, vst.HPA) {
   moduleServer(id, function(input, output, session) {
 
     ##Gene Centric output ####
@@ -92,9 +92,6 @@ HPA_Server <- function(id, vst.HPA) {
         cond_var <- datasets[["HPA"]]$PCA_var
         meta <- colData(dds)
         cond <- meta[, cond_var]
-        print(class(cond))
-        print("vst:")
-        print(head(vst))
         vst.goi <- vst %>%
           dplyr::filter(ext_gene_ensembl %in% gene) %>%
           dplyr::select(., -ensembl_gene_id) %>%
@@ -113,10 +110,8 @@ HPA_Server <- function(id, vst.HPA) {
     vst.gene <- reactive({
       req(input$VSTgenechoice)
       
-      vst.goi <- vst.HPA.create(datasets[["HPA"]], dds.HPA, vst.HPA(), input$VSTgenechoice)
+      vst.goi <- vst.HPA.create(datasets[["HPA"]], dds.HPA(), vst.HPA(), input$VSTgenechoice)
       gene_choice <- input$VSTCDgenechoice
-      print("vst.goi:")
-      print(head(vst.goi))
       vst.goi
     })
     
@@ -169,8 +164,8 @@ HPA_Server <- function(id, vst.HPA) {
     output$downloadHPAPlot <- downloadHandler(
       filename = paste('HPAPlot','.png', sep=''),
       content = function(file) {
-        ggsave(file, device = "png", width = 8,
-               height = 8, dpi = 100)
+        ggsave(file, device = "png", width = 10,
+               height = 8, dpi = 100, bg = "white")
       }
     )
     
