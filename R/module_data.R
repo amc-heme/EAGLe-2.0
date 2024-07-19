@@ -60,7 +60,7 @@ data_UI <- function(id) {
         )
       ),
       mainPanel(
-        textOutput(ns("Data_text")),
+        uiOutput(ns("Data_text")),
         textOutput(ns("LRT_alert")),
         bsAlert("alert")
       )
@@ -71,9 +71,9 @@ data_UI <- function(id) {
 data_Server <- function(id) {
   moduleServer(id, function(input, output, session){
     
-    output$Data_text <- renderText({
+    output$Data_text <- renderUI({
       if (input$datainput == "Cancer_Discovery") {
-        paste(
+        intro <- paste(
           "Pei et al. have previously shown that ROS-low enriched LSCs
              from primitive and monocytic AML differ significantly in their
              transcriptome and metabolism.
@@ -82,34 +82,92 @@ data_Server <- function(id) {
              Venetoclax-based therapy. The analysis will be comparing ROS-low enriched LSC's
              from monocytic cells vs primitive cells"
         )
+        info <-
+          paste(
+            "**GSEA will not be run with LRT on datasets with more than 2 conditions.
+        If you are interested in pathway analysis, please choose a pairwise comparison"
+          )
+       
+       intro_style <-
+         paste("<div style='font-size: 18px;'>",
+               intro,
+               "</div><br><br><div>",
+               "<div style='font-size: 18px;'>",
+               info,
+               "</div>")
+        HTML(intro_style)
       } else if (input$datainput == "Ye_16") {
-        paste(
+       intro <-  paste(
           "Comparison of transcriptomes of LSC's from blood, bone marrow, spleen,
            gonadal adipose tissue, and normal bone marrow in mice."
         )
+       intro_style <- paste("<div style='font-size: 18px;'>", intro, "</div>")
+       HTML(intro_style)
       } else if (input$datainput == "Ye_20") {
-        paste(
+        intro <- paste(
           "Transcriptomes of LSCs from bone marrow and liver in mice
                were compared to better understand the biology of liver LSCs.
                A bcCML model (BCR-ABL + Nup98-Hoxa9) was used. Liver and bone
                marrow samples were combined from 3 mice in 3 different cohorts
                before sequencing."
         )
+        info <-
+          paste(
+            "**GSEA will not be run with LRT on datasets with more than 2 conditions.
+        If you are interested in pathway analysis, please choose a pairwise comparison"
+          )
+        
+        intro_style <-
+          paste("<div style='font-size: 18px;'>",
+                intro,
+                "</div><br><br><div>",
+                "<div style='font-size: 18px;'>",
+                info,
+                "</div>")
+        HTML(intro_style)
       } else if (input$datainput == "Venaza") {
-        paste(
+        intro <- paste(
           "Time zero pheresis was taken from 3 patients, then collected
                  again at 6hr and 24hr post ven/aza treatment. This analysis will compare
                  24hr or 6h vs time zero (control)"
         )
+        info <-
+          paste(
+            "**GSEA will not be run with LRT on datasets with more than 2 conditions.
+        If you are interested in pathway analysis, please choose a pairwise comparison"
+          )
+        
+        intro_style <-
+          paste("<div style='font-size: 18px;'>",
+                intro,
+                "</div><br><br><div>",
+                "<div style='font-size: 18px;'>",
+                info,
+                "</div>")
+        HTML(intro_style)
       } else if (input$datainput == "Lagadinou") {
-        paste(
+       intro <- paste(
           "BCL-2 inhibition targets oxidative phosphorylation and
                selectively eradicates quiescent human leukemia stem cells.
                ROS high and ROS low LSCs were either treated with 5ul of PTL
                or not treated before sequencing."
         )
+       info <-
+         paste(
+           "**GSEA will not be run with LRT on datasets with more than 2 conditions.
+        If you are interested in pathway analysis, please choose a pairwise comparison"
+         )
+       
+       intro_style <-
+         paste("<div style='font-size: 18px;'>",
+               intro,
+               "</div><br><br><div>",
+               "<div style='font-size: 18px;'>",
+               info,
+               "</div>")
+       HTML(intro_style)
       } else if (input$datainput == "TCGA") {
-        paste(
+        intro <- paste(
           "The Cancer Genome Atlas (TCGA) project published gene expression
               profiles of 151 primary AML patients along with their mutational
               profiles and clinical characteristics. The TCGA-AML dataset parsed
@@ -117,35 +175,77 @@ data_Server <- function(id) {
               French-American-British subtypes, karyotype, RAS mutation status,
               and NPM1 mutation status."
         )
+        info <-
+          paste(
+            "**GSEA will not be run with LRT on datasets with more than 2 conditions.
+        If you are interested in pathway analysis, please choose a pairwise comparison"
+          )
+        
+        intro_style <-
+          paste("<div style='font-size: 18px;'>",
+                intro,
+                "</div><br><br><div>",
+                "<div style='font-size: 18px;'>",
+                info,
+                "</div>")
+        HTML(intro_style)
       } else if (input$datainput == "BEAT") {
-        paste(
+        intro <- paste(
           "The BEAT-AML project published gene expression profiles of ~400
               primary AML patients along with their mutational profiles and clinical
               characteristics. The BEAT-AML dataset was parsed by various 
               mutational/clinical variables including the French-American-British
               subtypes, Venetoclax response, and disease stage (de novo vs. relapse)."
         )
+        info <-
+          paste(
+            "**GSEA will not be run with LRT on datasets with more than 2 conditions.
+        If you are interested in pathway analysis, please choose a pairwise comparison"
+          )
+        
+        intro_style <-
+          paste("<div style='font-size: 18px;'>",
+                intro,
+                "</div><br><br><div>",
+                "<div style='font-size: 18px;'>",
+                info,
+                "</div>")
+        HTML(intro_style)
       } else{
-        paste(
+        intro <- paste(
           "Genome wide expression from 12 AML patient samples with either
               prior complete remission, or no prior complete remission."
         )
+        info <-
+          paste(
+            "**GSEA will not be run with LRT on datasets with more than 2 conditions.
+        If you are interested in pathway analysis, please choose a pairwise comparison"
+          )
+        
+        intro_style <-
+          paste("<div style='font-size: 18px;'>",
+                intro,
+                "</div><br><br><div>",
+                "<div style='font-size: 18px;'>",
+                info,
+                "</div>")
+        HTML(intro_style)
       }
     })
     #notification bubble to let the user know that gsea tab will not shwo with LRT
-    observe({
-      showNotification(
-        "GSEA will not be run with LRT on datasets with more than 2 conditions.
-        If you are interested in pathway analysis, please choose a pairwise comparison",
-        type = "message",
-        duration = 15,
-        id = "gsea_message"
-      )
-    })
+    # observe({
+    #   showNotification(
+    #     "GSEA will not be run with LRT on datasets with more than 2 conditions.
+    #     If you are interested in pathway analysis, please choose a pairwise comparison",
+    #     type = "message",
+    #     duration = 15,
+    #     id = "gsea_message"
+    #   )
+    # })
     
-    observeEvent(input$runDE1, {
-      removeNotification("gsea_message")
-    })
+    # observeEvent(input$runDE1, {
+    #   removeNotification("gsea_message")
+    # })
     # model choice ####
     DEModelChoices <- function(dataset) {
       m_choices <- switch(

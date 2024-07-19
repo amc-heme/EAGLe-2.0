@@ -9,8 +9,7 @@ dataset_config <-
   read_yaml("./data.yaml")
 
 raw_data_p <- getwd()
-print(raw_data_p)
- 
+
 # Read RDS files from yaml
 CD <- read_rds(paste0(raw_data_p, dataset_config[["Cancer_Discovery"]]$data_path))
 Ye16 <- read_rds(paste0(raw_data_p, dataset_config[["Ye_16"]]$data_path))
@@ -78,7 +77,9 @@ ui <-
                               
                               #Gene expression analysis ####
                               tabPanel("Gene Expression",
-                                      goi_UI("GOI1"))
+                                      goi_UI("GOI1")),
+                              tabPanel("Normal Tissue",
+                                       HPA_UI("HPA1"))
                             ))
              ))
  
@@ -123,22 +124,22 @@ server <-
     data_species <- reactive({
       dataset_config[[dataset_choice$user_dataset()]]$species
     })
-    
-    #check 
-    # observe({
-    #   print(data_species())
-    # })
-    
+ 
   ## dds object
     # dataset = links path to chosen dataset DESeq object
     # dataset_choice = user selected dataset from data server 
     dataset_dds <- dds.file_Server("dds1", dataset, dataset_choice)
     
+    #dds file for HPA needs to be made each time the app loads to show the normal tissue plot
+    dds.HPA <- HPAdds.file_Server("HPAdds1", dataset)
   ## vst table
     #dataset_dds = DEseq object returned by dds.file server
     #dataset_choice = user selected dataset from data server
     vst <- vst_Server("vst1", dataset_dds, dataset_choice)
     
+    vst.HPA <- HPAvst_Server("HPAvst1", dds.HPA)
+    
+    #waiter_hide()
     # vst_hm <- vsthm_Server("vsthm1", data_species, dataset_dds, dataset_choice)
   ## qc object
     #dataset.qc = opens path to stored qc file for chosen dataset
@@ -172,6 +173,11 @@ server <-
     #reset trigger = clears all previous selections and returns to landing page
     #vst = vst table 
     GSEA_Server("GSEA1", dataset_choice, DE_res, reset_trigger, vst, dataset_dds)
+    
+  # ##Human Protein Atlas- normal tissue tab ####
+    # dds.HPA = HPA dds file 
+    # vst.HPA = vst table created for HPA dataset
+    HPA_Server("HPA1", dds.HPA, vst.HPA)
     
     #returns user to QC tab after switching datasets
     observeEvent(input$change_data, {

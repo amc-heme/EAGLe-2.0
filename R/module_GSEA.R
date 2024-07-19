@@ -30,6 +30,17 @@ GSEA_UI <- function(id) {
     titlePanel(
       "GSEA"
     ),#end title
+    #dropMenu(
+    # dropdownButton(
+    #   circle = TRUE,
+    #   status = 'info',
+    #   icon = icon('info'),
+    #   size = 'sm',
+    #   width = '50px',
+    #   tooltip =
+    #     tooltipOptions(title = "Information")
+    # ),
+      #),
     sidebarLayout(
       sidebarPanel( 
         # shinyjs::useShinyjs(),
@@ -269,6 +280,7 @@ GSEA_UI <- function(id) {
       ),
 
       mainPanel(
+        uiOutput(ns("reactiveTextGSEA")),
         conditionalPanel(
           ns = ns,
           condition = "input.fgseaTable == true",
@@ -390,7 +402,51 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       pathway_ranks(DE_res$res_tidy(), ens2gene())
     })
     
-    
+    #function for creating reactive text for each dataset to let the user know which variables were chosen and what the plots are depicting
+    text_generator <- function(dataset, comparison) {
+      if(dataset == "Cancer_Discovery") {
+        var_value <- unlist(strsplit("primitive_vs_monocytic", "_vs_"))
+      } else if(dataset == "Ye_20") {
+        var_value <- unlist(strsplit("liver_vs_bone_marrow", "_vs_"))
+      } else if(dataset == "Lee") {
+        var_value <- unlist(strsplit("prior complete remission_vs_no_prior complete remission", "_vs_"))
+      } else {
+        var_value <- unlist(strsplit(comparison, "_vs_"))
+      }
+      return(var_value)
+    }
+    # render reactive text to explain to the user which variables are being shown for each dataset in the plots
+    output$reactiveTextGSEA <- renderUI({
+      data_text <-
+        text_generator(dataset_choice$user_dataset(), dataset_choice$user_PW())
+      text <-
+        paste(
+          "The table and plots below show gene set enrichment analysis results
+          from the comparison of",
+          data_text[1],
+          "vs",
+          data_text[2],
+          "samples in the",
+          dataset_choice$user_dataset(),
+          "dataset.")
+        text2 <-  paste(
+          data_text[1],
+          "= positive NES",
+          ",",
+          # "</div><br><div>",
+          # "<div style='font-size: 18px;'>",
+          data_text[2],
+          "= negative NES."
+        )
+      large_text_style <-
+        paste("<div style='font-size: 18px;'>",
+              text,
+              "</div><br><div>",
+              "<div style='font-size: 18px;'>",
+              text2,
+              "</div>")
+      HTML(large_text_style)
+    })
     
     #reactive expression to run fgsea and load results table for each chosen pathway
     gseafile <-

@@ -19,12 +19,29 @@ DE_UI <- function(id) {
     titlePanel(
       "Differential Expression Tables and Plots"
     ),#end title
+    #dropMenu(
+      # dropdownButton(
+      #   circle = TRUE,
+      #   status = 'info',
+      #   icon = icon('info'),
+      #   size = 'sm',
+      #   width = '50px',
+      #   tooltip =
+      #     tooltipOptions(title = "Information"),
+      # h6("1. DEG table:"),
+      # h6("-"),
+      # h6("-"),
+      # br(),
+      # h6("2. Volcano Plot"),
+      # 
+      # br(),
+      # h6("3."),
+      # h6("-"),
+      # h6("-")
+      # ),
       sidebarLayout(
         sidebarPanel(
-          # shinyjs::useShinyjs(),
-          # id = "side-panel-de",
         tagList(
-
         materialSwitch(
           inputId =
             (ns("DESeqtable")),
@@ -121,6 +138,8 @@ DE_UI <- function(id) {
       )
     ),
         mainPanel(
+          uiOutput(ns("reactiveText")),
+          
           conditionalPanel(
             ns = ns,
             condition = "input.DESeqtable == true",
@@ -215,11 +234,15 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   runDETest <- function(dds, model, comparison) {
     # return dds if LRT is chosen
     if(comparison == "LRT") {
+      print("resultsNames")
+      print(resultsNames(dds))
       return(results(dds))
     } else{
     #extract counts and metadata from preloaded dds object
     dds_counts <- counts(dds)
     meta <- colData(dds)
+    print("resultsNames")
+    print(resultsNames(dds))
     print("colnames colData:")
     print(head(meta))
     #extract individual levels from the comparison choice
@@ -238,8 +261,21 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     return(results_df)
     }
   } 
- 
-  
+  #function for creating reactive text for each dataset to let the user know which variables were chosen and what the plots are depicting
+  text_generator <- function(dataset, comparison) {
+    if(dataset == "Cancer_Discovery") {
+      var_value <- unlist(strsplit("primitive_vs_monocytic", "_vs_"))
+    } else if(dataset == "Ye_20") {
+      var_value <- unlist(strsplit("liver_vs_bone marrow", "_vs_"))
+    }else if(dataset == "Lee") {
+      var_value <- unlist(strsplit("prior complete remission_vs_no prior complete remission", "_vs_"))
+    } else{
+      var_value <- unlist(strsplit(comparison, "_vs_"))
+    }
+    print("var_value")
+    print(var_value)
+    return(var_value)
+  }
   generateRes <- function(dataset, de_results) {
     #mouse or human?
     is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
@@ -313,7 +349,51 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     waiter_hide()
   })
   
-
+  # render reactive text to explain to the user which variables are being shown for each dataset in the plots
+  output$reactiveText <- renderUI({
+    data_text <-
+      text_generator(dataset_choice$user_dataset(), dataset_choice$user_PW())
+    if(dataset_choice$user_PW() =="LRT" & !(dataset_choice$user_dataset() %in% 
+       c("Cancer_Discovery", "Ye_20", "Lee"))) {
+      text <-
+        paste(
+          "The DEG table and plots below show results from the likelihood ratio
+           test, testing all conditions in the",
+          dataset_choice$user_dataset(),
+          "dataset."
+        )
+    }else if(dataset_choice$user_PW() =="LRT" & dataset_choice$user_dataset() %in% 
+              c("Cancer_Discovery", "Ye_20", "Lee")){
+      text <-
+        paste(
+          "The DEG table and plots below compare",
+          data_text[1],
+          "vs",
+          data_text[2],
+          "samples in the",
+          dataset_choice$user_dataset(),
+          "dataset"
+        )
+    }else{
+      text <-
+        paste(
+          "The DEG table and plots below compare",
+          data_text[1],
+          "vs",
+          data_text[2],
+          "samples in the",
+          dataset_choice$user_dataset(),
+          "dataset"
+        )
+    }
+    bold_text <-
+      paste("<div style='font-size: 18px;'>",
+            text,
+            "</div>")
+    HTML(bold_text)
+  })
+  
+  # render DEG table ####
 
   observe({
     if(!is.null(dds_result())) { #only run after runDE action button has been selected
@@ -351,7 +431,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   
   output$volplot <- 
     renderGirafe({
-     
+      vol_text <-
+        text_generator(dataset_choice$user_dataset(), dataset_choice$user_PW())
       #colors <- c(viridis(15)[10], "grey", magma(15)[9])
       colors <- c(colorDE(), "grey", color2DE())
       if(input$DESeqvolcano == TRUE) { #only create plot if the  volcano switch is toggled
@@ -361,9 +442,19 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
           col = DiffExp,
           tooltip = Gene
         )) +
+          labs(
+            caption = paste(
+             vol_text[1],
+            "(positive)",
+            "vs",
+            vol_text[2],
+            "(negative)"
+          )) +
           geom_point_interactive(size = 1, alpha = 0.5) +
           theme_cowplot(font_size = 14) +
-          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"),
+                plot.caption =
+                  element_text(hjust = 0.5)) +
           scale_color_manual(values = colors) +
           ggtitle("DE Volcano Plot") +
           coord_cartesian(xlim = c(-10, 7))
@@ -402,6 +493,8 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   output$MAplot <- 
     renderGirafe ({
       #colors <- c(viridis(15)[10], "grey", magma(15)[9])
+      ma_text <-
+        text_generator(dataset_choice$user_dataset(), dataset_choice$user_PW())
       colors <- c(colorDE(), "grey", color2DE())
       #colors <- c(color3DE(), "grey", color4DE())#object for colors on volcano based on user input called from palette module
       if(input$DESeqMA == TRUE) { #only call plot if the MA plot switch is toggled
@@ -416,11 +509,25 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
           geom_hline(aes(yintercept = 0)) +
           scale_color_manual(values = colors) +
           theme_cowplot(font_size = 14) +
-          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
           ylim(c(
             min(res.ma$`log2FoldChange`),
             max(res.ma$`log2FoldChange`)
           )) +
+          labs(
+            caption = paste(
+                            ma_text[1],
+                            "(positive)",
+                            "vs",
+                            ma_text[2],
+                            "(negative)"
+            )) +
+          theme(axis.title =
+                  element_text(face = "bold"),
+                title = 
+                  element_text(face = "bold"),
+                plot.caption =
+                  element_text(hjust = 0.5)
+                )+
           ggtitle("DE MA Plot") +
           xlab("log2 Mean Expression") +
           ylab("Log2 Fold Change")
