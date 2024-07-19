@@ -1,6 +1,7 @@
 datasets <- 
   read_yaml("./data.yaml")
 raw_data <- getwd()
+dds.HPA <- read_rds(paste0(raw_data, datasets[["HPA"]]$data_path))
 t2g_hs <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_hs.rds")
 t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_mm.rds")
 
@@ -70,33 +71,10 @@ HPA_UI <- function(id) {
   )
 }
 
-HPA_Server <- function(id) {
+HPA_Server <- function(id, vst.HPA) {
   moduleServer(id, function(input, output, session) {
 
     ##Gene Centric output ####
-    
-    #create HPA vst table
-    vst.HPA <- reactive({
-      dds.HPA <- read_rds(paste0(raw_data, datasets[["HPA"]]$data_path))
-      
-      vsd <- vst(dds.HPA, blind = F)
-      
-       vst.table <- data.frame(assay(vsd), check.names = FALSE) %>%
-        janitor::clean_names()  %>%
-        rownames_to_column(., var = "ensembl_gene_id") %>%
-        left_join(unique(dplyr::select(t2g_hs, c(
-          ensembl_gene_id, ext_gene
-        ))), ., by = 'ensembl_gene_id') %>%
-        dplyr::mutate(ext_gene_ensembl = case_when(ext_gene == "" ~ ensembl_gene_id, TRUE ~ ext_gene)) %>%  #if any blank ext_gene name, add ensembl gene id instead
-        dplyr::select(-ext_gene) %>%
-        dplyr::select(ext_gene_ensembl, everything()) %>%
-        na.omit(.)
-       print("HPA VST table:")
-       print(head(vst.table))
-       vst.table
-    })
-      
-    
     
     observe({
       gene_choices <- vst.HPA()$ext_gene_ensembl
@@ -107,6 +85,39 @@ HPA_Server <- function(id) {
         selected = NULL,
         server = TRUE
       )
+    })
+    
+    vst.HPA.create <- function(dataset, dds, vst, gene) {
+    
+        cond_var <- datasets[["HPA"]]$PCA_var
+        meta <- colData(dds)
+        cond <- meta[, cond_var]
+        print(class(cond))
+        print("vst:")
+        print(head(vst))
+        vst.goi <- vst %>%
+          dplyr::filter(ext_gene_ensembl %in% gene) %>%
+          dplyr::select(., -ensembl_gene_id) %>%
+          t(.) %>%
+          row_to_names(row_number = 1) %>%
+          as.data.frame(.) %>%
+          rownames_to_column(var = "Sample") %>% 
+          dplyr::mutate(condition = cond) %>%
+          dplyr::rename("ext_gene_ensembl" = gene)
+        
+        vst.goi$ext_gene_ensembl <- as.numeric(vst.goi$ext_gene_ensembl)
+      
+      return(vst.goi)
+    }
+    
+    vst.gene <- reactive({
+      req(input$VSTgenechoice)
+      
+      vst.goi <- vst.HPA.create(datasets[["HPA"]], dds.HPA, vst.HPA(), input$VSTgenechoice)
+      gene_choice <- input$VSTCDgenechoice
+      print("vst.goi:")
+      print(head(vst.goi))
+      vst.goi
     })
     
     colorpaletteHPA <- 
@@ -126,34 +137,8 @@ HPA_Server <- function(id) {
         width = function() input$plotwidthslider,
         height = function() input$plotheightslider,
         {
-    
-     req(input$VSTgenechoice)
-    
-    gene_choice <- input$VSTgenechoice
-    dds <- read_rds(paste0(raw_data, datasets[["HPA"]]$data_path))
-    meta <- colData(dds)
-    print("metadata HPA:")
-    print(head(meta))
-    cond <- meta[, "Tissue"]
-    
-    print("VSTHPA:")
-    print(head(vst.HPA()))
-    
-    vst.goi <- vst.HPA() %>%
-      dplyr::filter(ext_gene_ensembl %in% gene_choice) %>%
-      dplyr::select(., -ensembl_gene_id) %>%
-      t(.) %>%
-      row_to_names(row_number = 1) %>%
-      as.data.frame(.) %>%
-      rownames_to_column(var = "Sample") %>%
-      dplyr::mutate(condition = cond) 
-    
-    vst.goi$ext_gene_ensembl <- as.numeric(vst.goi$ext_gene_ensembl)
-  
-    print("VSTgoi:")
-    print(head(vst.goi))
     #plot output
-      ggplot(vst.goi,
+      ggplot(vst.gene(),
                  aes(
                    x = condition,
                    y = ext_gene_ensembl,

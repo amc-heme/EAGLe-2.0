@@ -108,7 +108,7 @@ HPA:
   species: "human"
   t2g: "t2g_hs"
   ID: "id"
-  PCA_var: "no"
+  PCA_var: "Tissue"
   PCA_shape: "no"
   batch: "no"
   batch_var: "no"

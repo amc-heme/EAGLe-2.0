@@ -141,6 +141,7 @@ server <-
     #dataset_choice = user selected dataset from data server
     vst <- vst_Server("vst1", dataset_dds, dataset_choice)
     
+    vst.HPA <- HPAvst_Server("HPAvst1")
     # vst_hm <- vsthm_Server("vsthm1", data_species, dataset_dds, dataset_choice)
   ## qc object
     #dataset.qc = opens path to stored qc file for chosen dataset
@@ -182,7 +183,7 @@ server <-
     
     #Human Protein Atlas- normal tissue tab ####
     
-    HPA_Server("HPA1")
+    HPA_Server("HPA1", vst.HPA)
 
   } #end server
 
