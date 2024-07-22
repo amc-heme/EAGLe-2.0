@@ -7,8 +7,9 @@ raw_data <- getwd()
 t2g_hs <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_hs.rds")
 t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_mm.rds")
 
-HPAvst_Server <- function(id, dds.HPA) {
+HPAvst_Server <- function(id, dataset_choice, dds.HPA) {
   moduleServer(id, function(input, output, session) {
+    waiter <- Waiter$new(html = span("Loading Data"))
     # function for creating vst file
     vst.create <- function(dds, dataset){
       
@@ -32,7 +33,9 @@ HPAvst_Server <- function(id, dds.HPA) {
      
         HPAvst.table
     }
-    vst.HPA <- reactive({
+    vst.HPA <- eventReactive(dataset_choice$close_tab(), {
+      waiter$show()
+      on.exit(waiter$hide())
       vst.create(dds.HPA(), datasets[["HPA"]])
     })
     return(vst.HPA)

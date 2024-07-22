@@ -45,11 +45,12 @@ names(dataset.qc) <-
 # UI ####
 ui <-
   navbarPage("EAGLe2",
-             tabsetPanel(
+              tabsetPanel(
                id = "page",
                type = "hidden",
              # landing page UI
                tabPanelBody("landing_page",
+                            waiter::useWaiter(),
                             data_UI("data1")),
             # app content 
                tabPanelBody("content",
@@ -137,9 +138,8 @@ server <-
     #dataset_choice = user selected dataset from data server
     vst <- vst_Server("vst1", dataset_dds, dataset_choice)
     
-    vst.HPA <- HPAvst_Server("HPAvst1", dds.HPA)
-    
-    #waiter_hide()
+    vst.HPA <- HPAvst_Server("HPAvst1", dataset_choice, dds.HPA)
+ 
     # vst_hm <- vsthm_Server("vsthm1", data_species, dataset_dds, dataset_choice)
   ## qc object
     #dataset.qc = opens path to stored qc file for chosen dataset
@@ -165,8 +165,8 @@ server <-
     #dataset_choice = user selected dataset from data server
     #reset trigger = clears all previous selections and returns to landing page
     #vst = vst table 
-    DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice, reset_trigger, vst, vst_hm) 
-
+    DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice, reset_trigger, vst, vst_hm)
+ 
   # ##GSEA output ####
     #dataset_choice = user selected dataset from data server
     #DE_res = DE server returns the DE results table in tidy format 
@@ -177,8 +177,9 @@ server <-
   # ##Human Protein Atlas- normal tissue tab ####
     # dds.HPA = HPA dds file 
     # vst.HPA = vst table created for HPA dataset
+   
     HPA_Server("HPA1", dds.HPA, vst.HPA)
-    
+
     #returns user to QC tab after switching datasets
     observeEvent(input$change_data, {
       updateTabsetPanel(session, "tabs", selected = "QC")

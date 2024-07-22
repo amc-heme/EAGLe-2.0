@@ -331,7 +331,7 @@ GSEA_UI <- function(id) {
           ns = ns,
           condition = "input.heatmap == true",
           plotlyOutput(ns("htgsea")),
-          textOutput(ns("htwarnGSEA"))
+          uiOutput(ns("htwarnGSEA"))
         )
       )
     )
@@ -428,7 +428,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
           data_text[2],
           "samples in the",
           dataset_choice$user_dataset(),
-          "dataset.")
+          "dataset.  Hover cursor over points on the plots for gene or pathway names.")
         text2 <-  paste(
           data_text[1],
           "= positive NES",
@@ -917,7 +917,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       ht
     })
  
-    output$htwarnGSEA <- renderText({
+    output$htwarnGSEA <- renderUI({
       req(input$heatmap)
       req(DE_res$dds_res())
       
@@ -927,7 +927,10 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
       
       if(nrow(dds.sig) == 0){
-        return("No significant DEGs found in pathway")
+        div(
+          style = "text-align: center; font-size: 18px; color: red;",
+       "No significant DEGs found in pathway"
+        )
       }else {
         return(NULL)
       }

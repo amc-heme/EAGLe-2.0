@@ -62,8 +62,6 @@ vst_Server <- function(id, dataset_dds, dataset_choice) {
           dplyr::select(ext_gene_ensembl, everything()) %>%
           na.omit(.)
       }
-      print("vst.table:")
-      print(head(vst.table))
       vst.table
     }
     vst.global <- reactive({
