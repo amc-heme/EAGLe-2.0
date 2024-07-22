@@ -9,7 +9,7 @@ t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_mm.rds")
 
 HPAvst_Server <- function(id, dataset_choice, dds.HPA) {
   moduleServer(id, function(input, output, session) {
-    waiter <- Waiter$new()
+    waiter <- Waiter$new(html = span("Loading Data"))
     # function for creating vst file
     vst.create <- function(dds, dataset){
       

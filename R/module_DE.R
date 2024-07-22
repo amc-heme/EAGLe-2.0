@@ -165,7 +165,7 @@ DE_UI <- function(id) {
             ns = ns,
             condition = "input.DESeqHeat == true",
             plotlyOutput(ns("ht")),
-            textOutput(ns("htwarn"))
+            uiOutput(ns("htwarn"))
         )
       )
     )
@@ -174,7 +174,7 @@ DE_UI <- function(id) {
 
 DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigger, vst, vst_hm) {
   moduleServer(id, function(input, output, session) {
-    waiter <- Waiter$new()
+    waiter1 <- Waiter$new(html = span("Loading Data"))
  
   runDETest_GSEA <- function(dataset, dds, model, comparison) {
     # return dds if LRT is chosen
@@ -272,8 +272,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     } else{
       var_value <- unlist(strsplit(comparison, "_vs_"))
     }
-    print("var_value")
-    print(var_value)
+
     return(var_value)
   }
   generateRes <- function(dataset, de_results) {
@@ -342,11 +341,11 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   #have DE run when runDE button is clicked
   observeEvent(dataset_choice$close_tab(), {
    
-   waiter_show()
+   waiter1$show()
 
       dds_result(runDETest(dataset_dds(), dataset_choice$user_model(), dataset_choice$user_PW()))
 
-    waiter_hide()
+    waiter1$hide()
   })
   
   # render reactive text to explain to the user which variables are being shown for each dataset in the plots
@@ -590,10 +589,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     #generate dds results table 
     res.hm <-
       generateRes(dataset_choice$user_dataset(), dds_result())
-    
-    # print("res.hm")
-    # print(head(res.hm))
-    # print(class(res.hm))
+
     #filter DE object for only significantly differentially expressed genes and
     #take the top 50 most highly expressed genes for visualization
     dds.mat <- res.hm %>%
@@ -618,25 +614,11 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     rownames(vst.mat) = dds.mat$Gene
     
     vst.mat <- t(scale(t(vst.mat)))
-    #only show the first 100 genes for visualization in this example(can change)
-   
-    # print("vst.mat:")
-    # print(head(vst.mat))
+
+
     #create a colorRamp function based on user input in color palette choices
     colors.hm <- c(colorDE(), "#FFFFFF", color2DE())
-    
-    # k_number <-
-    #   if(dataset_choice$user_PW() == "LRT") {
-    #     datasets[[dataset_choice$user_dataset()]]$k
-    #   } else{
-    #     datasets[[dataset_choice$user_dataset()]]$k_PW
-    #   }
-    #   
-    # 
-    #  k_number <- as.numeric(k_number)
-    # print("k_number:")
-    # print(k_number)
-    #create heatmap object
+
     ht <- heatmaply(
       vst.mat,
       #k_col = k_number,
@@ -655,7 +637,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   })
 
   
-  output$htwarn <- renderText({
+  output$htwarn <- renderUI({
     req(input$DESeqHeat)
     
     res.hm <- generateRes(dataset_choice$user_dataset(), dds_result())
@@ -665,11 +647,13 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       slice(1:50)
     
     if(nrow(dds.mat) == 0){
-      return("No significant DEGs found")
+      div(
+        style = "text-align: center; font-size: 18px; color: red;",
+        "No significant DEGs found"
+        )
     }else {
       return(NULL)
     }
-    
   })
 
 # download DE Heatmap ####
@@ -722,7 +706,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   DDS4GSEA <- reactiveVal(NULL)
   
   observeEvent(dataset_choice$close_tab(), { #only run DE for GSEA if the action button is pushed
-    waiter$show(
+    waiter1$show(
       #spin_fading_circles()
     )
 
@@ -730,7 +714,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
                               dataset_choice$user_model(),
                               dataset_choice$user_PW()))
 
-   waiter$hide()
+   waiter1$hide()
   })
 
      #only generate the res table if all choices have been selected and runDE is pushed
