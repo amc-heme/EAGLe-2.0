@@ -10,6 +10,7 @@ HPA_UI <- function(id) {
   fluidPage(
     theme=
       shinytheme("flatly"),
+    useWaiter(),
     titlePanel(
       "Normal Tissue Expression"
     ),
@@ -77,18 +78,18 @@ HPA_Server <- function(id, dds.HPA, vst.HPA) {
     ##Gene Centric output ####
     
     observe({
-      gene_choices <- vst.HPA()$ext_gene_ensembl
-      updateSelectizeInput(
-        session,
-        "VSTgenechoice",
-        choices = gene_choices,
-        selected = NULL,
-        server = TRUE
-      )
+      req(vst.HPA())
+        gene_choices <- vst.HPA()$ext_gene_ensembl
+        updateSelectizeInput(
+          session,
+          "VSTgenechoice",
+          choices = gene_choices,
+          selected = NULL,
+          server = TRUE
+        )
     })
     
     vst.HPA.create <- function(dataset, dds, vst, gene) {
-    
         cond_var <- datasets[["HPA"]]$PCA_var
         meta <- colData(dds)
         cond <- meta[, cond_var]
