@@ -428,7 +428,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
           data_text[2],
           "samples in the",
           dataset_choice$user_dataset(),
-          "dataset.")
+          "dataset.  Hover cursor over points on the plots for gene or pathway names.")
         text2 <-  paste(
           data_text[1],
           "= positive NES",

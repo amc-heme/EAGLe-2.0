@@ -359,7 +359,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
           "The DEG table and plots below show results from the likelihood ratio
            test, testing all conditions in the",
           dataset_choice$user_dataset(),
-          "dataset."
+          "dataset. Hover cursor over points on the plots for gene names."
         )
     }else if(dataset_choice$user_PW() =="LRT" & dataset_choice$user_dataset() %in% 
               c("Cancer_Discovery", "Ye_20", "Lee")){
@@ -371,7 +371,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
           data_text[2],
           "samples in the",
           dataset_choice$user_dataset(),
-          "dataset"
+          "dataset. Hover cursor over points on the plots for gene names."
         )
     }else{
       text <-
@@ -382,7 +382,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
           data_text[2],
           "samples in the",
           dataset_choice$user_dataset(),
-          "dataset"
+          "dataset. Hover cursor over points on the plots for gene names."
         )
     }
     bold_text <-
