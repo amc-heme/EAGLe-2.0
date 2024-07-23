@@ -4,8 +4,8 @@ library(InteractiveComplexHeatmap)
 datasets <- 
   read_yaml("./data.yaml")
 raw_data <- getwd()
-t2g_hs <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_hs.rds")
-t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_mm.rds")
+t2g_hs <- read_rds(paste0(raw_data, "/data/t2g_hs.rds"))
+t2g_mm <- read_rds(paste0(raw_data, "/data/t2g_mm.rds"))
 
 #choose relevant comparisons for the user to choose from and have them run on the fly
 DE_UI <- function(id) {

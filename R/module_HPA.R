@@ -2,8 +2,8 @@ datasets <-
   read_yaml("./data.yaml")
 raw_data <- getwd()
 
-t2g_hs <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_hs.rds")
-t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_mm.rds")
+t2g_hs <- read_rds(paste0(raw_data, "/data/t2g_hs.rds"))
+t2g_mm <- read_rds(paste0(raw_data, "/data/t2g_mm.rds"))
 
 HPA_UI <- function(id) {
   ns <- NS(id)
