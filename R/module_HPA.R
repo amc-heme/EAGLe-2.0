@@ -165,7 +165,33 @@ HPA_Server <- function(id, dds.HPA, vst.HPA) {
     output$downloadHPAPlot <- downloadHandler(
       filename = paste('HPAPlot','.png', sep=''),
       content = function(file) {
-        ggsave(file, device = "png", width = 10,
+        hpa.plot <- ggplot(vst.gene(),
+               aes(
+                 x = condition,
+                 y = ext_gene_ensembl,
+                 #color = condition,
+                 fill = condition
+               )) +
+          geom_boxplot() +
+          #Gene_facet() + #reactive faceting
+          scale_fill_viridis_d(option = colorpaletteHPA()) + #reactive  scale_fill_manual from module
+          scale_color_viridis_d(option = colorpaletteHPA()) + #reactive scale_color_manual from module
+          geom_point(alpha = 0.5,
+                     position = position_jitterdodge(jitter.width = 0.2),
+                     aes(color = condition)) +
+          theme_cowplot(font_size = 14) +
+          theme(
+            axis.title = element_text(face = "bold"),
+            title = element_text(face = "bold"),
+            axis.text.x = element_text(face = "bold", angle = 60, hjust = 1), 
+            axis.text.y = element_text(face = "bold")) +
+          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          #scale_y_continuous(breaks = seq(12, 20, by = 1)) +
+          #sig_label_position() + # function for adjusted pvalues position and format on plot
+          ylab(input$VSTgenechoice) +
+          xlab("") +
+          ggtitle("Normal Tissue Expression")
+        ggsave(hpa.plot, file = file, device = "png", width = 10,
                height = 8, dpi = 100, bg = "white")
       }
     )

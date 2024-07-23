@@ -174,7 +174,7 @@ DE_UI <- function(id) {
 
 DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigger, vst, vst_hm) {
   moduleServer(id, function(input, output, session) {
-    waiter1 <- Waiter$new(html = span("Loading Data"))
+    waiter1 <- Waiter$new(html = span("Loading Data (this can take up to 8 minutes to complete for TCGA and BEAT datasets)"))
  
   runDETest_GSEA <- function(dataset, dds, model, comparison) {
     # return dds if LRT is chosen

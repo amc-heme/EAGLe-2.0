@@ -313,7 +313,33 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
     output$downloadGenePlot <- downloadHandler(
       filename = paste('GeneCentricPlot','.png', sep=''),
       content = function(file) {
-        ggsave(file, device = "png", width = 8,
+        goi.plot <- ggplot(vst.gene(),
+               aes(
+                 x = condition,
+                 y = ext_gene_ensembl,
+                 #color = condition,
+                 fill = condition
+               )) +
+          geom_boxplot() +
+          #Gene_facet() + #reactive faceting
+          scale_fill_viridis_d(option = colorpaletteGene()) + #reactive  scale_fill_manual from module
+          scale_color_viridis_d(option = colorpaletteGene()) + #reactive scale_color_manual from module
+          geom_point(alpha = 0.5,
+                     position = position_jitterdodge(jitter.width = 0.2),
+                     aes(color = condition)) +
+          theme_cowplot(font_size = 14) +
+          theme(
+            axis.title = element_text(face = "bold"),
+            title = element_text(face = "bold"),
+            axis.text.x = element_text(face = "bold", angle = 60, hjust = 1), 
+            axis.text.y = element_text(face = "bold")) +
+          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          #scale_y_continuous(breaks = seq(12, 20, by = 1)) +
+          #sig_label_position() + # function for adjusted pvalues position and format on plot
+          ylab(input$VSTCDgenechoice) +
+          xlab("") +
+          ggtitle("Gene Expression")
+        ggsave(goi.plot, file = file, device = "png", width = 8,
                height = 8, dpi = 100, bg = "white")
       }
     )
