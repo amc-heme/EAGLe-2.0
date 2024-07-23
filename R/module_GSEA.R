@@ -822,7 +822,8 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
     #reactive expression for selected pathway choice for heatmap
     observe({
       pathwaygsea3 <- gsea_file_values[[input$filechoice]]
-      updateSelectizeInput(session,"pathwaylistht", choices = names(pathwaygsea3), server = TRUE)})
+      updateSelectizeInput(session,"pathwaylistht", choices = names(pathwaygsea3),
+                           server = TRUE)})
     #reactive expression of title for heatmap
     # gseaht_title <-
     #   eventReactive(input$pathwaylistht, {

@@ -420,9 +420,14 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
         output$downloadMultiQC <- downloadHandler(
           filename = paste("MultiQC_table", '.csv', sep=''),
           content = function(file) {
+            shiny::req(!dataset_choice$user_dataset() %in% c("BEAT", "TCGA"))
             write.csv(multiqc_res(), file = file)
           }
         )
+        
+        observe({
+          toggleState("downloadMultiQC", !dataset_choice$user_dataset() %in% c("BEAT", "TCGA"))
+        })
   
     # output$QCplot <- renderPlot ({
     #   if(input$multiqc == TRUE) {

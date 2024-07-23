@@ -9,7 +9,7 @@ t2g_mm <- read_rds(paste0(raw_data, "/data/t2g_mm.rds"))
 
 HPAvst_Server <- function(id, dataset_choice, dds.HPA) {
   moduleServer(id, function(input, output, session) {
-    waiter <- Waiter$new(html = span("Loading Data"))
+    waiter <- Waiter$new(html = span("Loading Data (almost done!)"))
     # function for creating vst file
     vst.create <- function(dds, dataset){
       
