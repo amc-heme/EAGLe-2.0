@@ -2,8 +2,8 @@
 datasets <- 
   read_yaml("./data.yaml")
 raw_data <- getwd()
-t2g_hs <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_hs.rds")
-t2g_mm <- read_rds("~/Documents/GitHub/EAGLe-2.0/data/t2g_mm.rds")
+t2g_hs <- read_rds("data/t2g_hs.rds")
+t2g_mm <- read_rds("data/t2g_mm.rds")
 
 vst_Server <- function(id, dataset_dds, dataset_choice) {
   moduleServer(id, function(input, output, session) {
