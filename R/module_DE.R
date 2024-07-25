@@ -164,7 +164,9 @@ DE_UI <- function(id) {
           conditionalPanel(
             ns = ns,
             condition = "input.DESeqHeat == true",
-            plotlyOutput(ns("ht")),
+            shinycssloaders::withSpinner(
+            plotlyOutput(ns("ht"))
+            ),
             uiOutput(ns("htwarn"))
         )
       )
