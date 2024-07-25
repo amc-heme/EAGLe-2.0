@@ -141,7 +141,7 @@ server <-
     vst.HPA <- HPAvst_Server("HPAvst1", dataset_choice, dds.HPA)
  
     # vst_hm <- vsthm_Server("vsthm1", data_species, dataset_dds, dataset_choice)
-  ## qc object
+  ## qc objections 
     #dataset.qc = opens path to stored qc file for chosen dataset
     #dataset_choice = user selected dataset from data server
     qc_table <- qc.file_Server("qct1", dataset.qc, dataset_choice)
