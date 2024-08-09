@@ -14,10 +14,6 @@ HPA_UI <- function(id) {
     titlePanel(
       "Normal Tissue Expression"
     ),
-    # dropMenu(
-    #   dropdownButton(circle = TRUE, status = 'info', icon = icon('info'), size = 'sm',
-    #                  width = '50px',
-    #                  tooltip = tooltipOptions(title = "Information"))),
     sidebarLayout(
       sidebarPanel(
         selectizeInput( #gene choice dropdown menu

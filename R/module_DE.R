@@ -19,26 +19,6 @@ DE_UI <- function(id) {
     titlePanel(
       "Differential Expression Tables and Plots"
     ),#end title
-    #dropMenu(
-      # dropdownButton(
-      #   circle = TRUE,
-      #   status = 'info',
-      #   icon = icon('info'),
-      #   size = 'sm',
-      #   width = '50px',
-      #   tooltip =
-      #     tooltipOptions(title = "Information"),
-      # h6("1. DEG table:"),
-      # h6("-"),
-      # h6("-"),
-      # br(),
-      # h6("2. Volcano Plot"),
-      # 
-      # br(),
-      # h6("3."),
-      # h6("-"),
-      # h6("-")
-      # ),
       sidebarLayout(
         sidebarPanel(
         tagList(
@@ -201,8 +181,6 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       dds.wald <- DESeq(ddsTxi_dds, test = "Wald") 
       contrasts <- c(model, levels)
       results_df_GSEA <- results(dds.wald, contrast = contrasts, tidy = TRUE)
-      #if BEAT or TCGA
-     # results_df_GSEA$row <- str_sub(results_df_GSEA$row, end=-4) 
       print("res_GSEA:")
       print(head(results_df_GSEA))
       return(results_df_GSEA)
