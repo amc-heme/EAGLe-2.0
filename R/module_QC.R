@@ -1,9 +1,5 @@
 ## QC tab module
-library(viridis)
-library(ggplot2)
-library(DESeq2)
-library(TidyMultiqc)
-library(cowplot)
+
 datasets.pca <- 
   read_yaml("./data.yaml")
 
@@ -15,16 +11,8 @@ QC_UI <- function(id) {
     titlePanel(
       "QC Analysis Plots"
     ),
-    # dropMenu(
-    #   dropdownButton(circle = TRUE, status = 'info', icon = icon('info'), size = 'sm',
-    #                  width = '50px',
-    #                  tooltip = tooltipOptions(title = "Information")),
-    #   
-    #   ),
     sidebarLayout(
       sidebarPanel(
-        # shinyjs::useShinyjs(),
-        # id = "side-panel-qc",
         materialSwitch(
           inputId =
             ns("PCAplots"),
@@ -55,35 +43,7 @@ QC_UI <- function(id) {
           right =
             TRUE
         ),
-        
-        # conditionalPanel(
-        #   ns = ns,
-        #   condition = "input['multiqc'] == true",
-        #   selectInput( #choose type of multiqc test to visualize
-        #     ns("QCvar"),
-        #     label=
-        #       "Choose MultiQC table and plots",
-        #     choices =
-        #       c("Data Table", "% mapped reads"),
-        #     selected =
-        #       "Data Table"
-        #   )
-        # ),
         paletteUI(ns("palette")),
-        # 
-        # hr(),
-        # tags$head(
-        #   tags$link(rel = "stylesheet", type = "text/css", href = "CSS.css")
-        # ),
-        # div(
-        #  id = ns("download_container"),
-        #  class = "object-container",
-        # 
-        # h4("Download plots:"),
-        # bs_accordion(id = ns("download_qc")) %>% 
-        #   bs_set_opts(panel_type = "info", open = FALSE) %>%
-        #   bs_append(title = "download QC plots", 
-                        
         #dropdown menu containing download buttons                                  
         dropdownButton(
           inputId = ns("download_menu"),
@@ -106,17 +66,9 @@ QC_UI <- function(id) {
             label = 
               "MultiQC")
         )     
-    
-       
-             
-        #)
     ),
        
       mainPanel(
-        # dropMenu(
-        #   dropdownButton(circle = TRUE, status = 'info', icon = icon('info'), size = 'sm',
-        #                  right = T, width = '50px',
-        #                  tooltip = tooltipOptions(title = "Information"))),
         conditionalPanel(
           ns = ns,
           condition = "input['PCAplots'] == true",
@@ -154,57 +106,36 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
       dds.file <- dds 
  
       meta <- colData(dds.file) #get colData from dds
-      print("colnames colData:")
-      print(head(meta)) #make sure it's correct
-      
+ 
       batch_variable <- datasets.pca[[dataset]]$batch_var #get batch variable from yaml
       batch_variable <- gsub("\"", "", batch_variable) #remove quotes
-      print("batch_var:")
-      print(batch_variable)
-      
-      
+    
       pca.id <- datasets.pca[[dataset]]$ID #define ID column using yaml
   
       has_batch <- grepl("yes", datasets.pca[[dataset]]$batch)
-      print(has_batch)
       
       if(has_batch) {
         # variance stabilize the counts table
         vsd <- 
           vst(dds.file, blind = F)
-        
         batch1 <- meta[, batch_variable] #define batch variable from colData
-        print("batch1:")
-        print(batch1)
-        
         condition_variable <- datasets.pca[[dataset]]$PCA_var
-
-        # model.form <- create.formula(outcome.name = NULL,
-        #                              input.names = condition_variable,
-        #                              dat = meta)
-        #condition_variable <- as.formula(paste("~", condition_variable))
         condition_dat <- colData(vsd)[[condition_variable]]
         design_matrix <- model.matrix(~condition_dat)
         print("model:")
         print(head(design_matrix))
-        
+
         assay(vsd) <- limma::removeBatchEffect(assay(vsd),
                                                batch = batch1,
                                                design = design_matrix)
-        
-        # assay(vsd) <- ComBat(assay(vsd), batch = batch1, mod=model.matrix(model.form,
-        #                                                                   data = colData(vsd))) #remove batch effect
-        
         vpca <- 
           data.frame(prcomp(t(assay(vsd)))$x) %>%
           as_tibble(rownames = "ID") %>%
           left_join(., as_tibble(colData(vsd)), by = c("ID" = pca.id))
         
       } else{
-        
         # variance stabilize the counts table
         vsd <- 
-          #print(head(vst(dds(), blind = F)))
           vst(dds.file, blind = F)
         
         vpca <- 
@@ -213,7 +144,6 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
           left_join(., as_tibble(colData(vsd)), by = c("ID" = pca.id))
         
       } 
-      print(head(vpca))
       return(vpca)
     }
  
@@ -264,7 +194,6 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
         color_var <- meta[, color_v]
         color_var <- factor(color_var)
       }
-   
       return(color_var)
     }
     
@@ -306,15 +235,11 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     #run color function after dataset is chosen by user
     pca_color <- reactive({
       pca_color <- color_var(dataset_choice$user_dataset(), dataset_dds(), dataset_choice$user_model())
-      print("pca_color")
-      print(pca_color)
     })
     
     #run shape function after dataset is chosen by user
     pca_shape <- reactive({
       pca_shape <- shape_var(dataset_choice$user_dataset(), dataset_dds(), dataset_choice$user_model())
-      print("pca_shape")
-      print(pca_shape)
     })
     
     
@@ -345,7 +270,6 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
            xlab(paste('PC1 =', pc1(), '% variance')) + #reactive x lab for % variance
            ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
           ggtitle("PCA on VSD") +
-          #geom_text_repel(colour = "black", aes(label= ID,hjust=0, vjust=0)) +
           labs(color = color_legend(), shape = shape_legend()) + #rename legends
           guides(fill = FALSE) #hide fill legend 
         print(pca)
@@ -368,7 +292,6 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
           xlab(paste('PC1 =', pc1(), '% variance')) + #reactive x lab for % variance
           ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
           ggtitle("PCA on VSD") +
-          #geom_text_repel(colour = "black", aes(label= ID,hjust=0, vjust=0)) +
           labs(color = color_legend(), shape = shape_legend()) + #rename legends
           guides(fill = FALSE) #hide fill legend 
         ggsave(pca, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
@@ -428,47 +351,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
         observe({
           toggleState("downloadMultiQC", !dataset_choice$user_dataset() %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS"))
         })
-  
-    # output$QCplot <- renderPlot ({
-    #   if(input$multiqc == TRUE) {
-    #     ggplot(
-    #       qc_table(),
-    #       aes(
-    #         x = Sample,
-    #         y = QCdata()
-    #       )) +
-    #       geom_point() +
-    #       theme_cowplot (font_size = 18) +
-    #       ggtitle(QC_title()) +
-    #       theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
-    #               element_text(angle = 60, hjust = 1)) 
-    #   }
-    # })
-    # ggplot(multiqc_general_stats,
-    #        aes(x = Sample, y = Salmon_percent_mapped, color = Source)) +
-    #   geom_point() +
-    #   theme_cowplot() +
-    #   #scale_color_manual(color = colors) +
-    #   theme(
-    #     axis.title = element_text(face = "bold"),
-    #     title = element_text(face = "bold"),
-    #     axis.text.x =
-    #       element_text(angle = 60, hjust = 1)
-    #   ) +
-    #   ggtitle("Salmon: % Mapped Reads ") +
-    #   xlab("Sample") +
-    #   ylab("% mapped") 
-    
-    # PCA Scree data ####
-  
-    #batch corrected PCA variance
-    # PC_var <- reactive({
-    #   PC_var <- data.frame(PC =paste0("PC", 1:12), variance =(((vsd.pca()$sdev) ^ 2 / sum((vsd.pca()$sdev) ^ 2)) * 100))
-    #   lorder <- as.vector(outer(c("PC"), 1:12, paste, sep = ""))
-    #   PC_var$PC <- factor(PC_var$PC,levels = lorder_bc)
-    #   PC_var
-    # })
-   
+ 
     scree_variance_fun <- function(dds) {
       vsd <- vsd_fun(dds)
       scree.var <- prcomp(t(assay(vsd)))

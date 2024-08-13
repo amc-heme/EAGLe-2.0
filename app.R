@@ -98,12 +98,9 @@ ui <-
 #Server ####
 server <- 
   function(input, output, session) {
-    # check to make sure server is initiating
-    print("Initializing renderPlots")
-    
+
     options(shiny.reactlog = TRUE)
     
-   
     #reactive container for reset button(change dataset action button)
     reset_trigger <- reactive({
       input$change_data
@@ -148,28 +145,27 @@ server <-
   #   #dataset_dds = DEseq object returned by dds.file server
   #   #dataset_choice = user selected dataset from data server
      vst <- vst_Server("vst1", dataset_dds, dataset_choice)
-  #   
+
      vst.HPA <- HPAvst_Server("HPAvst1", dataset_choice)
-  # 
-    # vst_hm <- vsthm_Server("vsthm1", data_species, dataset_dds, dataset_choice)
-  # ## qc objections 
+
+  # ## qc objects 
   #   #dataset.qc = opens path to stored qc file for chosen dataset
   #   #dataset_choice = user selected dataset from data server
      qc_table <- qc.file_Server("qct1", dataset.qc, dataset_choice)
-  #   
+  
   # ## QC tab ####
   #   #dataset_dds = DEseq object returned by dds.file server
   #   #dataset_choice = user selected dataset from data server
   #   #qc_table = stored multiqc table
   #   # reset trigger = clears all previous selections and returns to landing page
     QC_Server("QC1", dataset_dds, dataset_choice, qc_table, reset_trigger)
-  #   
+
   # ## GOI tab####
   #   #dataset_dds = DEseq object returned by dds.file server
   #   #dataset_choice = user selected dataset from data server
   #   #vst = vst table 
      goi_Server("GOI1", dataset_choice, dataset_dds, vst)
-  # 
+
   # # ##DESEq #####
   #   # data_species = needed to select appropiate t2g table
   #   #dataset_dds = DEseq object returned by dds.file server
@@ -177,18 +173,17 @@ server <-
   #   #reset trigger = clears all previous selections and returns to landing page
   #   #vst = vst table 
      DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice, reset_trigger, vst, vst_hm)
-  # 
+
   # # ##GSEA output ####
   #   #dataset_choice = user selected dataset from data server
   #   #DE_res = DE server returns the DE results table in tidy format 
   #   #reset trigger = clears all previous selections and returns to landing page
   #   #vst = vst table 
      GSEA_Server("GSEA1", dataset_choice, DE_res, reset_trigger, vst, dataset_dds)
-  #   
+
   # # ##Human Protein Atlas- normal tissue tab ####
   #   # dds.HPA = HPA dds file 
   #   # vst.HPA = vst table created for HPA dataset
-  #  
      HPA_Server("HPA1", vst.HPA, dds.HPA)
 
     #returns user to QC tab after switching datasets

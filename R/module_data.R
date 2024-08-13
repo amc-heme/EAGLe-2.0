@@ -240,16 +240,6 @@ data_Server <- function(id) {
         HTML(intro_style)
       }
     })
-    #notification bubble to let the user know that gsea tab will not shwo with LRT
-    # observe({
-    #   showNotification(
-    #     "GSEA will not be run with LRT on datasets with more than 2 conditions.
-    #     If you are interested in pathway analysis, please choose a pairwise comparison",
-    #     type = "message",
-    #     duration = 15,
-    #     id = "gsea_message"
-    #   )
-    # })
     
     observeEvent(input$runDE1, {
       removeNotification("gsea_message")
