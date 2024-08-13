@@ -258,7 +258,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
         meta <- colData(dds)
         color_var <- meta[, color_v]
         color_var <- factor(color_var)
-      } else if(dataset %in% c("BEAT", "TCGA")){
+      } else if(dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")){
         color_v <- model
         meta <- colData(dds)
         color_var <- meta[, color_v]
@@ -276,7 +276,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
         shape_var <- meta[, shape_v]
         shape_var <- factor(shape_var)
         
-      } else if(dataset %in% c("BEAT", "TCGA")){
+      } else if(dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")){
         shape_v <- model
         meta <- colData(dds)
         shape_var <- meta[, shape_v]
@@ -288,7 +288,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     color_label <- function(dataset, model) {
       if(dataset %in% c("Cancer_Discovery", "Ye_16", "Ye_20", "Venaza", "Lagadinou", "Lee")) {
         color_l <- datasets.pca[[dataset]]$PCA_var
-      } else if(dataset %in% c("BEAT", "TCGA")) {
+      } else if(dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")) {
         color_l <- model
       }
       color_l
@@ -297,7 +297,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     shape_label <- function(dataset, model) {
       if(dataset %in% c("Cancer_Discovery", "Ye_16", "Ye_20", "Venaza", "Lagadinou", "Lee")){
         shape_l <- datasets.pca[[dataset]]$PCA_shape
-      } else if(dataset %in% c("BEAT", "TCGA")) {
+      } else if(dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")) {
         shape_l <- model
       }
      
@@ -420,13 +420,13 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
         output$downloadMultiQC <- downloadHandler(
           filename = paste("MultiQC_table", '.csv', sep=''),
           content = function(file) {
-            shiny::req(!dataset_choice$user_dataset() %in% c("BEAT", "TCGA"))
+            shiny::req(!dataset_choice$user_dataset() %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS"))
             write.csv(multiqc_res(), file = file)
           }
         )
         
         observe({
-          toggleState("downloadMultiQC", !dataset_choice$user_dataset() %in% c("BEAT", "TCGA"))
+          toggleState("downloadMultiQC", !dataset_choice$user_dataset() %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS"))
         })
   
     # output$QCplot <- renderPlot ({

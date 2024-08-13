@@ -35,7 +35,7 @@ vst_Server <- function(id, dataset_dds, dataset_choice) {
           dplyr::select(-ext_gene) %>%
           dplyr::select(ext_gene_ensembl, everything()) %>%
           na.omit(.)
-      } else if (is_hs & dataset %in% c("BEAT", "TCGA")) {
+      } else if (is_hs & dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")) {
         vst.table <- data.frame(assay(vsd), check.names = FALSE) %>%
           janitor::clean_names()  %>%
           rownames_to_column(., var = "ensembl_gene_id") %>% 

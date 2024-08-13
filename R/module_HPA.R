@@ -68,7 +68,7 @@ HPA_UI <- function(id) {
   )
 }
 
-HPA_Server <- function(id, dds.HPA, vst.HPA) {
+HPA_Server <- function(id, vst.HPA, dds.HPA) {
   moduleServer(id, function(input, output, session) {
 
     ##Gene Centric output ####

@@ -143,32 +143,32 @@ server <-
     dataset_dds <- dds.file_Server("dds1", dataset, dataset_choice)
   #   
   #   #dds file for HPA needs to be made each time the app loads to show the normal tissue plot
-  #   dds.HPA <- HPAdds.file_Server("HPAdds1", dataset)
+     dds.HPA <- HPAdds.file_Server("HPAdds1", dataset)
   # ## vst table
   #   #dataset_dds = DEseq object returned by dds.file server
   #   #dataset_choice = user selected dataset from data server
-  #   vst <- vst_Server("vst1", dataset_dds, dataset_choice)
+     vst <- vst_Server("vst1", dataset_dds, dataset_choice)
   #   
-  #   vst.HPA <- HPAvst_Server("HPAvst1", dataset_choice, dds.HPA)
+     vst.HPA <- HPAvst_Server("HPAvst1", dataset_choice)
   # 
-  #   # vst_hm <- vsthm_Server("vsthm1", data_species, dataset_dds, dataset_choice)
+    # vst_hm <- vsthm_Server("vsthm1", data_species, dataset_dds, dataset_choice)
   # ## qc objections 
   #   #dataset.qc = opens path to stored qc file for chosen dataset
   #   #dataset_choice = user selected dataset from data server
-  #   qc_table <- qc.file_Server("qct1", dataset.qc, dataset_choice)
+     qc_table <- qc.file_Server("qct1", dataset.qc, dataset_choice)
   #   
   # ## QC tab ####
   #   #dataset_dds = DEseq object returned by dds.file server
   #   #dataset_choice = user selected dataset from data server
   #   #qc_table = stored multiqc table
   #   # reset trigger = clears all previous selections and returns to landing page
-  #   QC_Server("QC1", dataset_dds, dataset_choice, qc_table, reset_trigger)
+    QC_Server("QC1", dataset_dds, dataset_choice, qc_table, reset_trigger)
   #   
   # ## GOI tab####
   #   #dataset_dds = DEseq object returned by dds.file server
   #   #dataset_choice = user selected dataset from data server
   #   #vst = vst table 
-  #   goi_Server("GOI1", dataset_choice, dataset_dds, vst)
+     goi_Server("GOI1", dataset_choice, dataset_dds, vst)
   # 
   # # ##DESEq #####
   #   # data_species = needed to select appropiate t2g table
@@ -183,13 +183,13 @@ server <-
   #   #DE_res = DE server returns the DE results table in tidy format 
   #   #reset trigger = clears all previous selections and returns to landing page
   #   #vst = vst table 
-  #   GSEA_Server("GSEA1", dataset_choice, DE_res, reset_trigger, vst, dataset_dds)
+     GSEA_Server("GSEA1", dataset_choice, DE_res, reset_trigger, vst, dataset_dds)
   #   
   # # ##Human Protein Atlas- normal tissue tab ####
   #   # dds.HPA = HPA dds file 
   #   # vst.HPA = vst table created for HPA dataset
   #  
-  #   HPA_Server("HPA1", dds.HPA, vst.HPA)
+     HPA_Server("HPA1", vst.HPA, dds.HPA)
 
     #returns user to QC tab after switching datasets
     observeEvent(input$change_data, {

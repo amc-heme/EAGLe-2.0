@@ -93,7 +93,7 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
     
     vst.goi.create <- function(dataset, dataset_model, dds, vst, gene) {
       
-      if(dataset %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
+      if(dataset %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")){
         
         cond_var <- dataset_model
         #cond_var <- datasets[[dataset]]$PCA_var
