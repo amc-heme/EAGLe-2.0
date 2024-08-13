@@ -122,8 +122,6 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
         condition_variable <- datasets.pca[[dataset]]$PCA_var
         condition_dat <- colData(vsd)[[condition_variable]]
         design_matrix <- model.matrix(~condition_dat)
-        print("model:")
-        print(head(design_matrix))
 
         assay(vsd) <- limma::removeBatchEffect(assay(vsd),
                                                batch = batch1,
@@ -357,8 +355,6 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
       scree.var <- prcomp(t(assay(vsd)))
       num_pcs <- length(scree.var$sdev)
       scree_variance <- data.frame(pc = paste0("PC", 1:num_pcs), variance = (((scree.var$sdev) ^ 2 / sum((scree.var$sdev) ^ 2)) * 100))
-      print("scree var:")
-      print(head(scree_variance))
       lorder <- as.vector(outer(c("PC"), 1:12, paste, sep = ""))
       scree_variance$pc <- factor(scree_variance$pc, levels = lorder)
       return(scree_variance)
@@ -366,8 +362,6 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     
     scree_variance_df <- reactive({
       scree_df <- scree_variance_fun(dataset_dds())
-      print("scree df:")
-      print(head(scree_df))
       scree_df
     })
 
