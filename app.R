@@ -138,9 +138,9 @@ server <-
     })
  
   ## dds object
-    # dataset = links path to chosen dataset DESeq object
-    # dataset_choice = user selected dataset from data server 
-  #   dataset_dds <- dds.file_Server("dds1", dataset, dataset_choice)
+  #dataset = links path to chosen dataset DESeq object
+  #dataset_choice = user selected dataset from data server
+    dataset_dds <- dds.file_Server("dds1", dataset, dataset_choice)
   #   
   #   #dds file for HPA needs to be made each time the app loads to show the normal tissue plot
   #   dds.HPA <- HPAdds.file_Server("HPAdds1", dataset)
@@ -176,7 +176,7 @@ server <-
   #   #dataset_choice = user selected dataset from data server
   #   #reset trigger = clears all previous selections and returns to landing page
   #   #vst = vst table 
-  #   DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice, reset_trigger, vst, vst_hm)
+     DE_res <- DE_Server("DEtab1", data_species, dataset_dds, dataset_choice, reset_trigger, vst, vst_hm)
   # 
   # # ##GSEA output ####
   #   #dataset_choice = user selected dataset from data server

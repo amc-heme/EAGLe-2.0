@@ -184,21 +184,21 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       print("res_GSEA:")
       print(head(results_df_GSEA))
       return(results_df_GSEA)
-    } else if(comparison != "LRT" & dataset %in% c("BEAT", "TCGA")) {
+    } else if(comparison != "LRT" & dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")) {
       #extract counts and metadata from preloaded dds object
-      dds_counts <- counts(dds)
-      meta <- colData(dds)
-      print("colnames colData:")
-      print(head(meta))
-      #extract individual levels from the comparison choice
+      # dds_counts <- counts(dds)
+      # meta <- colData(dds)
+      # print("colnames colData:")
+      # print(head(meta))
+      # #extract individual levels from the comparison choice
       levels <- unlist(strsplit(comparison, "_vs_"))
       print("levelsGSEA:")
       print(levels)
-      print("eval model:")
-      model_term <- as.formula(paste("~", model))
-      print(model_term)
-      ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = model_term)
-      dds.wald <- DESeq(ddsTxi_dds, test = "Wald") 
+      # print("eval model:")
+      # model_term <- as.formula(paste("~", model))
+      # print(model_term)
+      # ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = model_term)
+      dds.wald <- dds
       contrasts <- c(model, levels)
       print("contrasts for GSEA:")
       print(contrasts)
@@ -217,6 +217,15 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       print("resultsNames")
       print(resultsNames(dds))
       return(results(dds))
+    } else if(comparison != "LRT" & dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")) {
+      levels <- unlist(strsplit(comparison, "_vs_"))
+      print("levelsDE:")
+      print(levels)
+      dds.wald <- dds
+      contrasts <- c(model, levels)
+      print("this is contrasts")
+      print(contrasts)
+      results_df <- results(dds.wald, contrast = contrasts)
     } else{
     #extract counts and metadata from preloaded dds object
     dds_counts <- counts(dds)
@@ -259,7 +268,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     #mouse or human?
     is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
     
-    if (is_hs & dataset %in% c("BEAT", "TCGA")) {
+    if (is_hs & dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")) {
       res <- data.frame(de_results) %>%
         rownames_to_column(., var = 'ensembl_gene_id')
       
