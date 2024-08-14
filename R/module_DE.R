@@ -151,33 +151,22 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       #extract counts and metadata from preloaded dds object
       dds_counts <- counts(dds)
       meta <- colData(dds)
-      print("colnames colData:")
-      print(head(meta))
       #extract individual levels from the comparison choice
       levels <- unlist(strsplit(comparison, "_vs_"))
-      print("levels:")
-      print(levels)
-      print("eval model:")
       model_term <- as.formula(paste("~", model))
       print(model_term)
       ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = model_term)
       dds.wald <- DESeq(ddsTxi_dds, test = "Wald") 
       contrasts <- c(model, levels)
       results_df_GSEA <- results(dds.wald, contrast = contrasts, tidy = TRUE)
-      print("res_GSEA:")
-      print(head(results_df_GSEA))
       return(results_df_GSEA)
     } else if(comparison != "LRT" & dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")) {
       levels <- unlist(strsplit(comparison, "_vs_"))
       dds.wald <- dds
       contrasts <- c(model, levels)
-      print("contrasts for GSEA:")
-      print(contrasts)
       results_df_GSEA <- results(dds.wald, contrast = contrasts, tidy = TRUE)
       #if BEAT or TCGA
       results_df_GSEA$row <- str_sub(results_df_GSEA$row, end=-4) 
-      print("res_GSEA:")
-      print(head(results_df_GSEA))
       return(results_df_GSEA)
     }
   } #this is what needs to be sent to GSEA#

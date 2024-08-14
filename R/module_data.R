@@ -36,7 +36,7 @@ data_UI <- function(id) {
           ),
           selectizeInput(
             ns("DEmodel"),
-            label = "Choose a metadata variable from dataset",
+            label = "Metadata value to be tested:",
             choices = NULL,
             selected = NULL,
             options = list(maxItems = 1)
@@ -49,7 +49,6 @@ data_UI <- function(id) {
             options = list(maxItems = 1)
           ),
           hr(),
-         
           actionButton(
             (ns("runDE1")),
             "Continue"
@@ -78,7 +77,7 @@ data_UI <- function(id) {
 
 data_Server <- function(id) {
   moduleServer(id, function(input, output, session){
-    
+    shinyjs::disable("runDE1")
     output$Data_text <- renderUI({
       if (input$datainput == "Cancer_Discovery") {
         intro <- paste(
@@ -240,7 +239,17 @@ data_Server <- function(id) {
         HTML(intro_style)
       }
     })
-    
+    #disable the "continue" button whenever the user changes dataset choice
+    observeEvent(input$datainput,{
+      shinyjs::disable("runDE1")
+    })
+    #enable the "continue" button after the dataset information loads and a model and pairwise choice have been made to prevent the app crashing
+    observe({
+      req(input$DEmodel)
+      req(input$pwc)
+      shinyjs::enable("runDE1")
+    })
+    #remove the gsea message when the "continue" button is selected
     observeEvent(input$runDE1, {
       removeNotification("gsea_message")
     })
@@ -329,7 +338,7 @@ data_Server <- function(id) {
   
 
     close_page <- reactive({
-     
+    
       input$runDE1
   
     })

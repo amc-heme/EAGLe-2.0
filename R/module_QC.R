@@ -88,7 +88,7 @@ QC_UI <- function(id) {
           condition = "input['multiqc'] == true",
           
           DTOutput(ns("QCdt")),
-          textOutput(ns("QCdt2"))
+          uiOutput(ns("QCdt2"))
           
         )
       )
@@ -230,6 +230,11 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
      
       shape_l
     }
+    
+    shape_number <- reactive({
+      shape_n <- datasets.pca[[dataset_choice$user_dataset()]]$shape_num
+      shape_n
+    })
     #run color function after dataset is chosen by user
     pca_color <- reactive({
       pca_color <- color_var(dataset_choice$user_dataset(), dataset_dds(), dataset_choice$user_model())
@@ -256,9 +261,10 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
 ##PCA plot ####
     output$PCAplot <- renderPlot({
       if(input$PCAplots == TRUE) {
+        shapes <- seq(1, shape_number())
         pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2, color = pca_color(), shape = pca_shape(), fill = pca_color())) +
           geom_point(size = 5) + 
-          scale_shape() +
+          scale_shape_manual(values = shapes) +
           scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
           scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
           theme_cowplot(font_size = 14) + 
@@ -329,10 +335,15 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
       }
     })
     
-    output$QCdt2 <- renderText({
+    output$QCdt2 <- renderUI({
       if (input$multiqc == TRUE & dataset_choice$user_dataset() %in%
-          c("BEAT", "TCGA")) {
-        paste("MultiQC data is unavailable for this dataset")
+          c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")) {
+        div(
+          style = "text-align: center; font-size: 18px; color: red;",
+          "MultiQC data is unavailable for this dataset"
+          )
+      } else {
+        return(NULL)
       }
     })
     
