@@ -202,7 +202,9 @@ data_Server <- function(id) {
               primary AML patients along with their mutational profiles and clinical
               characteristics. The BEAT-AML dataset was parsed by various 
               mutational/clinical variables including the French-American-British
-              subtypes, Venetoclax response, and disease stage (de novo vs. relapse)."
+              subtypes, Venetoclax response quantile, and disease stage (de novo vs. relapse).
+          <br/> Venetoclax response quantiles were split with q1 being the top 25% of samples with the highest 
+          AUC values and q4 being the bottom 25% of samples with the lowest AUC values."
         )
         info <-
           paste(
