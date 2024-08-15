@@ -66,7 +66,7 @@ Lee:
   ID: "SRR"
   PCA_var: "prior_cr"
   PCA_shape: "Patient"
-  shape_num: "3"
+  shape_num: "12"
   batch: "yes"
   batch_var: "Patient"
 BEAT_quantile:
