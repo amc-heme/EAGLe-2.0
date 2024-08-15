@@ -31,21 +31,8 @@ GSEA_UI <- function(id) {
     titlePanel(
       "GSEA"
     ),#end title
-    #dropMenu(
-    # dropdownButton(
-    #   circle = TRUE,
-    #   status = 'info',
-    #   icon = icon('info'),
-    #   size = 'sm',
-    #   width = '50px',
-    #   tooltip =
-    #     tooltipOptions(title = "Information")
-    # ),
-      #),
     sidebarLayout(
       sidebarPanel( 
-        # shinyjs::useShinyjs(),
-        # id = "side-panel-gsea",
         h4("Choose gmt file to load pathway sets"),
         #dropdown menu for molecular pathways 
         selectInput(ns("filechoice"), label = NULL,
@@ -131,42 +118,9 @@ GSEA_UI <- function(id) {
           #slider scale to choose how many pathways to load
           sliderInput(ns("howmanypathways"), "Choose How Many Pathways to Rank",
                       min = 5, max = 50, value = 15
-          ),
-       
-          #js function to hide plot dimensions until selected
-          # materialSwitch(ns("hidedimsWF"), "Custom plot dimensions",
-          #                value = FALSE, right = TRUE),
-        
-          # shinyjs::hidden(
-          #   sliderInput(ns("wfheightslider"),
-          #               "Adjust Plot Height", 200, 1200, 600)),
-          # 
-          # shinyjs::hidden(
-          #   sliderInput(ns("wfwidthslider"),
-          #               "Adjust Plot Width", 200, 1200, 800)),
-          
-        
+          )
         ),
-      
-        #GSEA Moustache ####
-        # conditionalPanel(
-        #   ns = ns,
-        #   condition = "input.moustache == true",
-        #   h4("Moustache Plot Specific Options"),
-        #   
-        #   #hr(),
-        #   #color palette choices for muostache plot
-        #   #colorUI(ns("color8"), "Choose color for plot", "#FF0000"),
-        #   
-        #   hr(), 
-        #   # 
-        #   # downloadButton(
-        #   #   ns("downloadmoustache"),
-        #   #   label =
-        #   #     "Download Moustache Plot"
-        #   # )
-        # ),
-        # 
+
          hr(),
         #GSEA Enrichment plot ####
         conditionalPanel(
@@ -372,8 +326,6 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       } else{
         ens2gene <- t2g_mm[, c(2,3)]
       }
-      print("ens2gene:")
-      print(head(ens2gene))
       return(ens2gene)
     }
     #ens2gene object based on user specified dataset choice
@@ -386,8 +338,6 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       #add the human name of the gene to the last column
       result <- inner_join(DE_results, ensgene, by = c("row" = "ensembl_gene_id"))
       colnames(result)[8] <- 'HS_Symbol'
-      print("res4GSEA:")
-      print(head(result))
       # select only the human gene symbol and the 'stat' from the results,
       result <- result %>% 
         dplyr::select(HS_Symbol, stat) %>% 
@@ -436,8 +386,6 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
           data_text[1],
           "= positive NES",
           ",",
-          # "</div><br><div>",
-          # "<div style='font-size: 18px;'>",
           data_text[2],
           "= negative NES."
         )
@@ -508,11 +456,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
  
     output$GSEAranked <- renderPlot(
       width = 800,
-        # function()
-        # input$wfwidthslider,
       height = 600,
-        # function()
-        # input$wfheightslider,
       {
         if (input$rankedplot == TRUE) {
           #color object reactive to user choice from palette
@@ -611,8 +555,6 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
             scale_color_manual(values = colors) +
             ylab('adjusted p-value') +
             ggtitle("Pathways from GSEA") +
-            #only label pathways that sig
-            #geom_text_repel(colour = "black", aes(label= ifelse(padj <0.05, as.character(pathway), ""), hjust=0,vjust=0)) +
             coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1)) 
           girafe(code = print(ma))
         }
@@ -722,10 +664,6 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       
       dds.res.v <- #This should probably be filtered for only DE genes
         DE_res$dds_res()
-      
-      print("class-res:")
-      print(class(dds.res.v))
-      print(head(dds.res.v))
       
       pathwaygsea2 <- gsea_file_values[[input$filechoice]]
       

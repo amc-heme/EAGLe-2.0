@@ -14,10 +14,6 @@ HPA_UI <- function(id) {
     titlePanel(
       "Normal Tissue Expression"
     ),
-    # dropMenu(
-    #   dropdownButton(circle = TRUE, status = 'info', icon = icon('info'), size = 'sm',
-    #                  width = '50px',
-    #                  tooltip = tooltipOptions(title = "Information"))),
     sidebarLayout(
       sidebarPanel(
         selectizeInput( #gene choice dropdown menu
@@ -72,7 +68,7 @@ HPA_UI <- function(id) {
   )
 }
 
-HPA_Server <- function(id, dds.HPA, vst.HPA) {
+HPA_Server <- function(id, vst.HPA, dds.HPA) {
   moduleServer(id, function(input, output, session) {
 
     ##Gene Centric output ####
@@ -138,11 +134,9 @@ HPA_Server <- function(id, dds.HPA, vst.HPA) {
                  aes(
                    x = condition,
                    y = ext_gene_ensembl,
-                   #color = condition,
                    fill = condition
                  )) +
             geom_boxplot() +
-            #Gene_facet() + #reactive faceting
             scale_fill_viridis_d(option = colorpaletteHPA()) + #reactive  scale_fill_manual from module
             scale_color_viridis_d(option = colorpaletteHPA()) + #reactive scale_color_manual from module
             geom_point(alpha = 0.5,
@@ -155,8 +149,6 @@ HPA_Server <- function(id, dds.HPA, vst.HPA) {
               axis.text.x = element_text(face = "bold", angle = 60, hjust = 1), 
               axis.text.y = element_text(face = "bold")) +
             theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-            #scale_y_continuous(breaks = seq(12, 20, by = 1)) +
-            #sig_label_position() + # function for adjusted pvalues position and format on plot
             ylab(input$VSTgenechoice) +
             xlab("") +
             ggtitle("Normal Tissue Expression")
@@ -169,11 +161,9 @@ HPA_Server <- function(id, dds.HPA, vst.HPA) {
                aes(
                  x = condition,
                  y = ext_gene_ensembl,
-                 #color = condition,
                  fill = condition
                )) +
           geom_boxplot() +
-          #Gene_facet() + #reactive faceting
           scale_fill_viridis_d(option = colorpaletteHPA()) + #reactive  scale_fill_manual from module
           scale_color_viridis_d(option = colorpaletteHPA()) + #reactive scale_color_manual from module
           geom_point(alpha = 0.5,
@@ -186,8 +176,6 @@ HPA_Server <- function(id, dds.HPA, vst.HPA) {
             axis.text.x = element_text(face = "bold", angle = 60, hjust = 1), 
             axis.text.y = element_text(face = "bold")) +
           theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          #scale_y_continuous(breaks = seq(12, 20, by = 1)) +
-          #sig_label_position() + # function for adjusted pvalues position and format on plot
           ylab(input$VSTgenechoice) +
           xlab("") +
           ggtitle("Normal Tissue Expression")

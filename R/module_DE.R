@@ -14,31 +14,10 @@ DE_UI <- function(id) {
     theme =
       shinytheme("flatly"),
     useWaiter(),
-    #waiter_on_busy(),
     useShinyjs(),
     titlePanel(
       "Differential Expression Tables and Plots"
     ),#end title
-    #dropMenu(
-      # dropdownButton(
-      #   circle = TRUE,
-      #   status = 'info',
-      #   icon = icon('info'),
-      #   size = 'sm',
-      #   width = '50px',
-      #   tooltip =
-      #     tooltipOptions(title = "Information"),
-      # h6("1. DEG table:"),
-      # h6("-"),
-      # h6("-"),
-      # br(),
-      # h6("2. Volcano Plot"),
-      # 
-      # br(),
-      # h6("3."),
-      # h6("-"),
-      # h6("-")
-      # ),
       sidebarLayout(
         sidebarPanel(
         tagList(
@@ -119,22 +98,6 @@ DE_UI <- function(id) {
               "Heatmap"
           )
         )
-        # conditionalPanel(
-        #   ns = ns,
-        #   condition = "input.DESeqHeat == true",
-        #   #js function to hide plot dimensions until selected
-        #   materialSwitch(ns("hidedimsHM"), "Custom plot dimensions",
-        #                  value = FALSE, right = TRUE),
-        #   
-        #   shinyjs::hidden(
-        #     sliderInput(ns("hmheightslider"),
-        #                 "Adjust Plot Height", 200, 1200, 600)),
-        #   
-        #   shinyjs::hidden(
-        #     sliderInput(ns("hmwidthslider"),
-        #                 "Adjust Plot Width", 200, 1200, 800)),
-        #   
-        # )
       )
     ),
         mainPanel(
@@ -176,7 +139,7 @@ DE_UI <- function(id) {
 
 DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigger, vst, vst_hm) {
   moduleServer(id, function(input, output, session) {
-    waiter1 <- Waiter$new(html = span("Loading Data (this can take up to 8 minutes to complete for TCGA and BEAT datasets)"))
+    waiter1 <- Waiter$new(html = span("Loading Data"))
  
   runDETest_GSEA <- function(dataset, dds, model, comparison) {
     # return dds if LRT is chosen
@@ -188,77 +151,45 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       #extract counts and metadata from preloaded dds object
       dds_counts <- counts(dds)
       meta <- colData(dds)
-      print("colnames colData:")
-      print(head(meta))
       #extract individual levels from the comparison choice
       levels <- unlist(strsplit(comparison, "_vs_"))
-      print("levels:")
-      print(levels)
-      print("eval model:")
       model_term <- as.formula(paste("~", model))
       print(model_term)
       ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = model_term)
       dds.wald <- DESeq(ddsTxi_dds, test = "Wald") 
       contrasts <- c(model, levels)
       results_df_GSEA <- results(dds.wald, contrast = contrasts, tidy = TRUE)
-      #if BEAT or TCGA
-     # results_df_GSEA$row <- str_sub(results_df_GSEA$row, end=-4) 
-      print("res_GSEA:")
-      print(head(results_df_GSEA))
       return(results_df_GSEA)
-    } else if(comparison != "LRT" & dataset %in% c("BEAT", "TCGA")) {
-      #extract counts and metadata from preloaded dds object
-      dds_counts <- counts(dds)
-      meta <- colData(dds)
-      print("colnames colData:")
-      print(head(meta))
-      #extract individual levels from the comparison choice
+    } else if(comparison != "LRT" & dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")) {
       levels <- unlist(strsplit(comparison, "_vs_"))
-      print("levelsGSEA:")
-      print(levels)
-      print("eval model:")
-      model_term <- as.formula(paste("~", model))
-      print(model_term)
-      ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = model_term)
-      dds.wald <- DESeq(ddsTxi_dds, test = "Wald") 
+      dds.wald <- dds
       contrasts <- c(model, levels)
-      print("contrasts for GSEA:")
-      print(contrasts)
       results_df_GSEA <- results(dds.wald, contrast = contrasts, tidy = TRUE)
       #if BEAT or TCGA
       results_df_GSEA$row <- str_sub(results_df_GSEA$row, end=-4) 
-      print("res_GSEA:")
-      print(head(results_df_GSEA))
       return(results_df_GSEA)
     }
   } #this is what needs to be sent to GSEA#
 
-  runDETest <- function(dds, model, comparison) {
+  runDETest <- function(dataset, dds, model, comparison) {
     # return dds if LRT is chosen
     if(comparison == "LRT") {
-      print("resultsNames")
-      print(resultsNames(dds))
       return(results(dds))
+    } else if(comparison != "LRT" & dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")) {
+      levels <- unlist(strsplit(comparison, "_vs_"))
+      dds.wald <- dds
+      contrasts <- c(model, levels)
+      results_df <- results(dds.wald, contrast = contrasts)
     } else{
     #extract counts and metadata from preloaded dds object
     dds_counts <- counts(dds)
     meta <- colData(dds)
-    print("resultsNames")
-    print(resultsNames(dds))
-    print("colnames colData:")
-    print(head(meta))
     #extract individual levels from the comparison choice
     levels <- unlist(strsplit(comparison, "_vs_"))
-    print("levelsDE:")
-    print(levels)
-    print("eval model:")
     model_term <- as.formula(paste("~", model))
-    print(model_term)
     ddsTxi_dds <- DESeqDataSetFromMatrix(dds_counts, colData = meta, design = model_term)
     dds.wald <- DESeq(ddsTxi_dds, test = "Wald") 
     contrasts <- c(model, levels)
-    print("this is contrasts")
-    print(contrasts)
     results_df <- results(dds.wald, contrast = contrasts)
     return(results_df)
     }
@@ -281,7 +212,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     #mouse or human?
     is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
     
-    if (is_hs & dataset %in% c("BEAT", "TCGA")) {
+    if (is_hs & dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")) {
       res <- data.frame(de_results) %>%
         rownames_to_column(., var = 'ensembl_gene_id')
       
@@ -345,7 +276,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
    
    waiter1$show()
 
-      dds_result(runDETest(dataset_dds(), dataset_choice$user_model(), dataset_choice$user_PW()))
+      dds_result(runDETest(dataset_choice$user_dataset(), dataset_dds(), dataset_choice$user_model(), dataset_choice$user_PW()))
 
     waiter1$hide()
   })
@@ -493,11 +424,9 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       
   output$MAplot <- 
     renderGirafe ({
-      #colors <- c(viridis(15)[10], "grey", magma(15)[9])
       ma_text <-
         text_generator(dataset_choice$user_dataset(), dataset_choice$user_PW())
       colors <- c(colorDE(), "grey", color2DE())
-      #colors <- c(color3DE(), "grey", color4DE())#object for colors on volcano based on user input called from palette module
       if(input$DESeqMA == TRUE) { #only call plot if the MA plot switch is toggled
         ma <- ggplot(res.ma, 
                      aes(
@@ -598,10 +527,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>% 
       dplyr::arrange(desc(abs(`log2FoldChange`))) %>% 
       slice(1:50)
-    
-    # print("dds.mat:")
-    # print(dds.mat)
-    
+  
     if(nrow(dds.mat) == 0) {
       return(NULL)
     }
@@ -623,7 +549,6 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
 
     ht <- heatmaply(
       vst.mat,
-      #k_col = k_number,
       row_text_angle = 45,
       height = 600,
       width = 600,
@@ -665,14 +590,10 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       #generate dds results table 
       res.hm <-
         generateRes(dataset_choice$user_dataset(), dds_result())
-      print("res-class:")
-      print(class(res.hm))
       dds.mat <- res.hm %>%
         dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>% 
         dplyr::arrange(desc(abs(`log2FoldChange`))) %>% 
         slice(1:50)
-      print("res-dds.mat:")
-      print(class(dds.mat))
       #filter vst counts matrix by sig expressed genes
       vst.mat <- vst() %>%
         dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
@@ -680,8 +601,6 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
         column_to_rownames(., var = "ensembl_gene_id") %>%
         dplyr::select(., -ext_gene_ensembl) %>%
         as.matrix()
-      print("vst.mat:")
-      print(class(vst.mat))
       rownames(vst.mat) = dds.mat$Gene
       
       vst.mat <- t(scale(t(vst.mat)))
