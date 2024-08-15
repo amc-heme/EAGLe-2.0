@@ -288,7 +288,7 @@ data_Server <- function(id) {
     
     
     PWChoices <- function(dataset, model) { 
-      if(dataset %in% c("Cancer_Discovery", "Ye_16", "Y_20", "Venaza", "Lagadinou", "Lee")) {
+      if(dataset %in% c("Cancer_Discovery", "Ye_16", "Ye_20", "Venaza", "Lagadinou", "Lee")) {
       choices <- switch(
         paste(dataset, model, sep = "_"),
         "Cancer_Discovery_condition" = "LRT",
