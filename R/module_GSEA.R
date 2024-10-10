@@ -399,12 +399,18 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       HTML(large_text_style)
     })
     
+    fgseaRes <- reactive({
+      pathwaygsea <- gsea_file_values[[input$filechoice]]
+      fgsea::fgsea(pathways = pathwaygsea,
+                   stats = ranks(),
+                   nproc = 10)
+    })
     #reactive expression to run fgsea and load results table for each chosen pathway
     gseafile <-
       eventReactive(input$filechoice,{
-        pathwaygsea <- gsea_file_values[[input$filechoice]]
-        fgseaRes <- fgsea::fgsea(pathways = pathwaygsea, stats = ranks(), nproc = 10)
-        fgseaResTidy <- fgseaRes %>%
+        # pathwaygsea <- gsea_file_values[[input$filechoice]]
+        # fgseaRes <- fgsea::fgsea(pathways = pathwaygsea, stats = ranks(), nproc = 10)
+        fgseaResTidy <- fgseaRes() %>%
           as_tibble() %>%
           dplyr::select(., -pval,-log2err, -ES) %>% 
           arrange(desc(NES))
@@ -418,16 +424,12 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         fwrite(gseafile(),file, sep=",", sep2=c("", " ", ""))
       }
     )
-
+    
+      
     #filter Res table for chosen pathway to show in a waterfall plot
     gseafile_waterfall <-
       reactive({
-        pathwaygsea <- gsea_file_values[[input$filechoice]]
-        fgseaRes <-
-          fgsea::fgsea(pathways = pathwaygsea,
-                       stats = ranks(),
-                       nproc = 10)
-        fgseaResTidy <- fgseaRes %>%
+        fgseaResTidy <- fgseaRes() %>%
           as_tibble() %>%
           dplyr::select(., -pval,-log2err, -ES) %>% 
           arrange(desc(NES))
@@ -519,13 +521,13 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
     #new column added to state significance 
     toplotMoustache <-
       reactive({
-        pathwaygsea <- gsea_file_values[[input$filechoice]]
-        fgseaRes <-
-          fgsea::fgsea(pathways = pathwaygsea,
-                       stats = ranks(),
-                       nproc = 10)
+        # pathwaygsea <- gsea_file_values[[input$filechoice]]
+        # fgseaRes <-
+        #   fgsea::fgsea(pathways = pathwaygsea,
+        #                stats = ranks(),
+        #                nproc = 10)
         fgseaResTidy <-
-          fgseaRes %>%
+          fgseaRes() %>%
           as_tibble() %>%
           dplyr::select(., -pval,-log2err, -ES) %>% 
           arrange(desc(NES))
@@ -597,12 +599,12 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       })
     #fgsea run for selected pathway, tidy results table, filter for top up or down pathway to plot, or plot pathway of choice
     output$GSEAenrichment <- renderPlot ({
-      pathwaygsea <- gsea_file_values[[input$filechoice]]
-      fgseaRes <-
-        fgsea::fgsea(pathways = pathwaygsea,
-                     stats = ranks(),
-                     nproc = 10)
-      fgseaResTidy <- fgseaRes %>%
+       pathwaygsea <- gsea_file_values[[input$filechoice]]
+      # fgseaRes <-
+      #   fgsea::fgsea(pathways = pathwaygsea,
+      #                stats = ranks(),
+      #                nproc = 10)
+      fgseaResTidy <- fgseaRes() %>%
         as_tibble() %>%
         dplyr::select(., -pval,-log2err, -ES) %>% 
         arrange(desc(NES))
@@ -623,12 +625,12 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
     output$downloadeplot <- downloadHandler(
       filename = paste("Enrichment Plot", '.png', sep=''),
       content = function(file) {
-        pathwaygsea <- gsea_file_values[[input$filechoice]]
-        fgseaRes <-
-          fgsea::fgsea(pathways = pathwaygsea,
-                       stats = ranks(),
-                       nproc = 10)
-        fgseaResTidy <- fgseaRes %>%
+        # pathwaygsea <- gsea_file_values[[input$filechoice]]
+        # fgseaRes <-
+        #   fgsea::fgsea(pathways = pathwaygsea,
+        #                stats = ranks(),
+        #                nproc = 10)
+        fgseaResTidy <- fgseaRes() %>%
           as_tibble() %>%
           dplyr::select(., -pval,-log2err, -ES) %>% 
           arrange(desc(NES))
@@ -806,12 +808,12 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       req(input$filechoice)
       req(input$heatmap)
       
-      pathwaygsea3 <- gsea_file_values[[input$filechoice]]
-      fgseaRes3 <-
-        fgsea::fgsea(pathways = pathwaygsea3,
-                     stats = ranks(),
-                     nproc = 10)
-      fgseaResTidy3 <- fgseaRes3 %>%
+       pathwaygsea3 <- gsea_file_values[[input$filechoice]]
+      # fgseaRes3 <-
+      #   fgsea::fgsea(pathways = pathwaygsea3,
+      #                stats = ranks(),
+      #                nproc = 10)
+      fgseaResTidy3 <- fgseaRes() %>%
         as_tibble() %>%
         dplyr::select(., -pval,-log2err, -ES) %>% 
         arrange(desc(NES))
@@ -838,17 +840,11 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       req(input$pathwaylistht)
       
       #determine which column needed for cluster annotations based on model choice 
-      if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
-        dds.file <- dataset_dds()
-        cond_var <- dataset_choice$user_model()
-        meta <- colData(dds.file)
-        cond <- meta[, cond_var]
-      } else {
         dds.file <- dataset_dds()
         meta <- colData(dds.file)
         cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
         cond <- meta[, cond_var]
-      }
+      
       
       res.hmg <- DE_res$dds_res() 
 
