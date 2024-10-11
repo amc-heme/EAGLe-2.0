@@ -33,7 +33,7 @@ GSEA_UI <- function(id) {
     ),#end title
     sidebarLayout(
       sidebarPanel( 
-        h4("Choose gmt file to load pathway sets"),
+        h4("Choose a gene list to load pathway sets"),
         #dropdown menu for molecular pathways 
         selectInput(ns("filechoice"), label = NULL,
                     choices = c(Hallmark = "hallmark", GOall = "goall", GOmolecular = "GOmolec", 
