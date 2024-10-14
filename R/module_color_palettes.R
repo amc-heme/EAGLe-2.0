@@ -11,7 +11,7 @@ paletteUI <- function(id, choices) {
                     "Set2" = brewer.pal(8, "Set2"),
                     "Dark2" = brewer.pal(8, "Dark2"),
                     "Paired" = brewer.pal(12, "Paired"),
-                    "Pastel1" = brewer.pal(9, "Pastel1")
+                    "RdYlGn" = brewer.pal(11, "RdYlGn")
                   )
                 ))
 }
