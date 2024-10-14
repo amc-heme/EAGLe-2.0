@@ -1,9 +1,4 @@
-library(shiny) 
-library(colourpicker)
-library(circlize)
-library(ggsci)
-library(scales)
-library(esquisse)
+library(RColorBrewer)
 
 paletteUI <- function(id, choices) {
   ns <- NS(id)
@@ -11,12 +6,12 @@ paletteUI <- function(id, choices) {
   palettePicker(ns("palette"),
                 "Choose a color palette",
                 choices = list(
-                  "Viridis" = list(
-                    "viridis" = viridis_pal(option = "viridis")(12),
-                    "magma" = viridis_pal(option = "magma")(12),
-                    "mako" = viridis_pal(option = "mako")(12),
-                    "plasma" = viridis_pal(option = "plasma")(12),
-                    "cividis" = viridis_pal(option = "cividis")(12)
+                  "RColorBrewer" = list(
+                    "Set1" = brewer.pal(9, "Set1"),
+                    "Set2" = brewer.pal(8, "Set2"),
+                    "Dark2" = brewer.pal(8, "Dark2"),
+                    "Paired" = brewer.pal(12, "Paired"),
+                    "Pastel1" = brewer.pal(9, "Pastel1")
                   )
                 ))
 }
@@ -30,13 +25,3 @@ paletteServer <- function(id) {
     return(color)
   })
 }
-
-
-paletteApp <- function() {
-  ui <- fluidPage(paletteUI("palette"))
-  server <- function(input, output, session) {
-    paletteServer("palette")
-  }
-  shinyApp(ui, server)
-}
-paletteApp()

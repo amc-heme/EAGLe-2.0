@@ -333,8 +333,8 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
         ) +
           geom_point(size = 5) +
           scale_shape_manual(values = shapes) +
-          scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
-          scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
+          scale_fill_brewer(palette = colorpaletteQC()) + #scale_fill_manual reactive function
+          scale_color_brewer(palette = colorpaletteQC()) + #scale_color manual reactive function
           theme_cowplot(font_size = 14) +
           theme(axis.title = element_text(face = "bold"),
                 title = element_text(face = "bold")) +

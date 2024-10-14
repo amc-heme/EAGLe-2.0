@@ -156,8 +156,8 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
                    fill = condition
                  )) +
             geom_boxplot() +
-            scale_fill_viridis_d(option = colorpaletteGene()) + #reactive  scale_fill_manual from module
-            scale_color_viridis_d(option = colorpaletteGene()) + #reactive scale_color_manual from module
+            scale_fill_brewer(palette = colorpaletteGene()) + #reactive  scale_fill_manual from module
+            scale_color_brewer(palette = colorpaletteGene()) + #reactive scale_color_manual from module
             geom_point(alpha = 0.5,
                        position = position_jitterdodge(jitter.width = 0.2),
                        aes(color = condition)) +
@@ -183,8 +183,8 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
                  fill = condition
                )) +
           geom_boxplot() +
-          scale_fill_viridis_d(option = colorpaletteGene()) + #reactive  scale_fill_manual from module
-          scale_color_viridis_d(option = colorpaletteGene()) + #reactive scale_color_manual from module
+          scale_fill_brewer(palette = colorpaletteGene()) + #reactive  scale_fill_manual from module
+          scale_color_brewer(palette = colorpaletteGene()) + #reactive scale_color_manual from module
           geom_point(alpha = 0.5,
                      position = position_jitterdodge(jitter.width = 0.2),
                      aes(color = condition)) +
