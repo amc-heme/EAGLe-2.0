@@ -10,47 +10,36 @@ dataset_config <-
 
 raw_data_p <- getwd()
 
-# Read RDS files from yaml
-CD <- read_rds(paste0(raw_data_p, dataset_config[["Cancer_Discovery"]]$data_path))
-Ye16 <- read_rds(paste0(raw_data_p, dataset_config[["Ye_16"]]$data_path))
-Ye20 <- read_rds(paste0(raw_data_p, dataset_config[["Ye_20"]]$data_path))
-Venaza <- read_rds(paste0(raw_data_p, dataset_config[["Venaza"]]$data_path))
-Lagadinou <- read_rds(paste0(raw_data_p, dataset_config[["Lagadinou"]]$data_path))
-Lee <- read_rds(paste0(raw_data_p, dataset_config[["Lee"]]$data_path))
-BEAT_quantile <- read_rds(paste0(raw_data_p, dataset_config[["BEAT_quantile"]]$data_path))
-BEAT_FAB <- read_rds(paste0(raw_data_p, dataset_config[["BEAT_FAB"]]$data_path))
-BEAT_Denovo.Relapse <- read_rds(paste0(raw_data_p, dataset_config[["BEAT_Denovo.Relapse"]]$data_path))
-TCGA_FAB <- read_rds(paste0(raw_data_p, dataset_config[["TCGA_FAB"]]$data_path))
-TCGA_NPM1 <- read_rds(paste0(raw_data_p, dataset_config[["TCGA_NPM1"]]$data_path))
-TCGA_RAS <- read_rds(paste0(raw_data_p, dataset_config[["TCGA_RAS"]]$data_path))
-HPA <- read_rds(paste0(raw_data_p, dataset_config[["HPA"]]$data_path))
-dataset <- list(CD, Ye16, Ye20, Venaza, Lagadinou, Lee, BEAT_quantile, BEAT_FAB,
-                BEAT_Denovo.Relapse, TCGA_FAB, TCGA_NPM1, TCGA_RAS, HPA)
+#load the datasets
+load_datasets <- function(raw_data_p, dataset_config) {
+  dataset_keys <- names(dataset_config)
+  
+  dataset_path <- lapply(dataset_keys, function(key) {
+    read_rds(paste0(raw_data_p, dataset_config[[key]]$data_path))
+  })
+  return(dataset_path)
+}
 
-# Read QC RDS files from yaml
-CD.qc <- read_rds(paste0(raw_data_p, dataset_config[["Cancer_Discovery"]]$qc_path))
-Ye16.qc <- read_rds(paste0(raw_data_p, dataset_config[["Ye_16"]]$qc_path))
-Ye20.qc <- read_rds(paste0(raw_data_p, dataset_config[["Ye_20"]]$qc_path))
-Venaza.qc <- read_rds(paste0(raw_data_p, dataset_config[["Venaza"]]$qc_path))
-Lagadinou.qc <- read_rds(paste0(raw_data_p, dataset_config[["Lagadinou"]]$qc_path))
-Lee.qc <- read_rds(paste0(raw_data_p, dataset_config[["Lee"]]$qc_path))
-BEAT.quantile.qc <- read_rds(paste0(raw_data_p, dataset_config[["BEAT_quantile"]]$qc_path))
-BEAT.FAB.qc <- read_rds(paste0(raw_data_p, dataset_config[["BEAT_FAB"]]$qc_path))
-BEAT.DR.qc <- read_rds(paste0(raw_data_p, dataset_config[["BEAT_Denovo.Relapse"]]$qc_path))
-TCGA.FAB.qc <- read_rds(paste0(raw_data_p, dataset_config[["TCGA_FAB"]]$qc_path))
-TCGA.NPM1.qc <- read_rds(paste0(raw_data_p, dataset_config[["TCGA_NPM1"]]$qc_path))
-TCGA.RAS.qc <- read_rds(paste0(raw_data_p, dataset_config[["TCGA_RAS"]]$qc_path))
-HPA.qc <- read_rds(paste0(raw_data_p, dataset_config[["HPA"]]$qc_path))
-dataset.qc <- list(CD.qc, Ye16.qc, Ye20.qc, Venaza.qc, Lagadinou.qc, Lee.qc,
-                   BEAT.quantile.qc, BEAT.FAB.qc, BEAT.DR.qc, TCGA.FAB.qc,
-                   TCGA.NPM1.qc, TCGA.RAS.qc, HPA.qc)
+dataset <- load_datasets(raw_data_p, dataset_config)
 
-# Add dataset names to list generated
-names(dataset) <- 
+#load the multiqc files
+load_qc <- function(raw_data_p, dataset_config) {
+  dataset_keys <- names(dataset_config)
+  
+  dataqc_path <- lapply(dataset_keys, function(key) {
+    read_rds(paste0(raw_data_p, dataset_config[[key]]$qc_path))
+  })
+  return(dataqc_path)
+}
+
+dataset.qc <- load_qc(raw_data_p, dataset_config)
+
+ # Add dataset names to list generated
+names(dataset) <-
   names(dataset_config)
 
 # Add dataset names to qc list generated
-names(dataset.qc) <- 
+names(dataset.qc) <-
   names(dataset_config)
 
 # UI ####

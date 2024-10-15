@@ -115,6 +115,12 @@ HPA_Server <- function(id, vst.HPA, dds.HPA) {
     colorpaletteHPA <- 
       paletteServer("palette13")
     
+    extended_palette <- function(palette_name, n_colors){
+      
+     max_colors <- brewer.pal.info[palette_name, "maxcolors"]
+      
+      colorRampPalette(brewer.pal(max_colors,palette_name))(n_colors)
+    }
     
     observe({
       shinyjs::toggle("plotwidthslider", condition = input$hidedims)
@@ -137,8 +143,8 @@ HPA_Server <- function(id, vst.HPA, dds.HPA) {
                    fill = condition
                  )) +
             geom_boxplot() +
-            scale_fill_viridis_d(option = colorpaletteHPA()) + #reactive  scale_fill_manual from module
-            scale_color_viridis_d(option = colorpaletteHPA()) + #reactive scale_color_manual from module
+            scale_fill_manual(values = extended_palette(colorpaletteHPA(), 32)) + #reactive  scale_fill_manual from module
+            scale_color_manual(values = extended_palette(colorpaletteHPA(), 32)) + #reactive scale_color_manual from module
             geom_point(alpha = 0.5,
                        position = position_jitterdodge(jitter.width = 0.2),
                        aes(color = condition)) +
@@ -164,8 +170,8 @@ HPA_Server <- function(id, vst.HPA, dds.HPA) {
                  fill = condition
                )) +
           geom_boxplot() +
-          scale_fill_viridis_d(option = colorpaletteHPA()) + #reactive  scale_fill_manual from module
-          scale_color_viridis_d(option = colorpaletteHPA()) + #reactive scale_color_manual from module
+          scale_fill_brewer(palette = colorpaletteHPA()) + #reactive  scale_fill_manual from module
+          scale_color_brewer(palette = colorpaletteHPA()) + #reactive scale_color_manual from module
           geom_point(alpha = 0.5,
                      position = position_jitterdodge(jitter.width = 0.2),
                      aes(color = condition)) +

@@ -162,8 +162,15 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     pc_variance <- function(dds) {
       vsd <- vsd_fun(dds)
       vsd.pca.var <- prcomp(t(assay(vsd)))
-      pc_variance <- data.frame(pc1 = round(vsd.pca.var$sdev[1] ^ 2 / sum(vsd.pca.var$sdev ^ 2)*100,1),
-                                pc2 = round(vsd.pca.var$sdev[2] ^ 2 / sum(vsd.pca.var$sdev ^ 2)*100,1))
+      pc_variance <-
+        data.frame(
+          pc1 =
+            round(vsd.pca.var$sdev[1] ^ 2 / sum(vsd.pca.var$sdev ^ 2) *
+                    100, 1),
+          pc2 =
+            round(vsd.pca.var$sdev[2] ^ 2 / sum(vsd.pca.var$sdev ^ 2) *
+                    100, 1)
+        )
      return(pc_variance)
     }
     
@@ -181,12 +188,24 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     
     #variable to use for color distinctions on plot
     color_var <- function(dataset, dds, model) {
-      if(dataset %in% c("Cancer_Discovery", "Ye_16", "Ye_20", "Venaza", "Lagadinou", "Lee")){
+      if (dataset %in% c("Cancer_Discovery",
+                         "Ye_16",
+                         "Ye_20",
+                         "Venaza",
+                         "Lagadinou",
+                         "Lee")) {
         color_v <- datasets.pca[[dataset]]$PCA_var
         meta <- colData(dds)
         color_var <- meta[, color_v]
         color_var <- factor(color_var)
-      } else if(dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")){
+      } else if (dataset %in% c(
+        "BEAT_quantile",
+        "BEAT_FAB",
+        "BEAT_Denovo.Relapse",
+        "TCGA_FAB",
+        "TCGA_NPM1",
+        "TCGA_RAS"
+      )) {
         color_v <- model
         meta <- colData(dds)
         color_var <- meta[, color_v]
@@ -197,13 +216,25 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     
     #variable to use for shape distinctions on plot
     shape_var <- function(dataset, dds, model) {
-      if(dataset %in% c("Cancer_Discovery", "Ye_16", "Ye_20", "Venaza", "Lagadinou", "Lee")) {
+      if (dataset %in% c("Cancer_Discovery",
+                         "Ye_16",
+                         "Ye_20",
+                         "Venaza",
+                         "Lagadinou",
+                         "Lee")) {
         shape_v <- datasets.pca[[dataset]]$PCA_shape
         meta <- colData(dds)
         shape_var <- meta[, shape_v]
         shape_var <- factor(shape_var)
         
-      } else if(dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")){
+      } else if (dataset %in% c(
+        "BEAT_quantile",
+        "BEAT_FAB",
+        "BEAT_Denovo.Relapse",
+        "TCGA_FAB",
+        "TCGA_NPM1",
+        "TCGA_RAS"
+      )) {
         shape_v <- model
         meta <- colData(dds)
         shape_var <- meta[, shape_v]
@@ -213,21 +244,45 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     } 
      
     color_label <- function(dataset, model) {
-      if(dataset %in% c("Cancer_Discovery", "Ye_16", "Ye_20", "Venaza", "Lagadinou", "Lee")) {
+      if (dataset %in% c("Cancer_Discovery",
+                         "Ye_16",
+                         "Ye_20",
+                         "Venaza",
+                         "Lagadinou",
+                         "Lee")) {
         color_l <- datasets.pca[[dataset]]$PCA_var
-      } else if(dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")) {
+      } else if (dataset %in% c(
+        "BEAT_quantile",
+        "BEAT_FAB",
+        "BEAT_Denovo.Relapse",
+        "TCGA_FAB",
+        "TCGA_NPM1",
+        "TCGA_RAS"
+      )) {
         color_l <- model
       }
       color_l
     }
     
     shape_label <- function(dataset, model) {
-      if(dataset %in% c("Cancer_Discovery", "Ye_16", "Ye_20", "Venaza", "Lagadinou", "Lee")){
+      if (dataset %in% c("Cancer_Discovery",
+                         "Ye_16",
+                         "Ye_20",
+                         "Venaza",
+                         "Lagadinou",
+                         "Lee")) {
         shape_l <- datasets.pca[[dataset]]$PCA_shape
-      } else if(dataset %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")) {
+      } else if (dataset %in% c(
+        "BEAT_quantile",
+        "BEAT_FAB",
+        "BEAT_Denovo.Relapse",
+        "TCGA_FAB",
+        "TCGA_NPM1",
+        "TCGA_RAS"
+      )) {
         shape_l <- model
       }
-     
+      
       shape_l
     }
     
@@ -237,12 +292,16 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     })
     #run color function after dataset is chosen by user
     pca_color <- reactive({
-      pca_color <- color_var(dataset_choice$user_dataset(), dataset_dds(), dataset_choice$user_model())
+      pca_color <- color_var(dataset_choice$user_dataset(),
+                             dataset_dds(),
+                             dataset_choice$user_model())
     })
     
     #run shape function after dataset is chosen by user
     pca_shape <- reactive({
-      pca_shape <- shape_var(dataset_choice$user_dataset(), dataset_dds(), dataset_choice$user_model())
+      pca_shape <- shape_var(dataset_choice$user_dataset(),
+                             dataset_dds(),
+                             dataset_choice$user_model())
     })
     
     
@@ -260,45 +319,71 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
 
 ##PCA plot ####
     output$PCAplot <- renderPlot({
-      if(input$PCAplots == TRUE) {
+      if (input$PCAplots == TRUE) {
         shapes <- seq(1, shape_number())
-        pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2, color = pca_color(), shape = pca_shape(), fill = pca_color())) +
-          geom_point(size = 5) + 
+        pca <- ggplot(
+          vsd.pca(),
+          aes(
+            x = PC1,
+            y = PC2,
+            color = pca_color(),
+            shape = pca_shape(),
+            fill = pca_color()
+          )
+        ) +
+          geom_point(size = 5) +
           scale_shape_manual(values = shapes) +
-          scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
-          scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
-          theme_cowplot(font_size = 14) + 
-          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-           xlab(paste('PC1 =', pc1(), '% variance')) + #reactive x lab for % variance
-           ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
-          ggtitle("PCA on VSD") +
-          labs(color = color_legend(), shape = shape_legend()) + #rename legends
-          guides(fill = FALSE) #hide fill legend 
-        print(pca)
-      }
-    })
- 
-    #download PCA plot ####
-    output$downloadPCA <- downloadHandler(
-      filename = paste("PCA Plot", '.png', sep=''),
-      content = function(file) {
-        pca <- ggplot(vsd.pca(), aes(x = PC1, y = PC2, color = pca_color(), shape = pca_shape(), fill = pca_color())) +
-          geom_point(size = 5) + 
-          scale_shape() +
-          scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
-          scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
-          theme_cowplot(font_size = 14) + 
-          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+          scale_fill_brewer(palette = colorpaletteQC()) + #scale_fill_manual reactive function
+          scale_color_brewer(palette = colorpaletteQC()) + #scale_color manual reactive function
+          theme_cowplot(font_size = 14) +
+          theme(axis.title = element_text(face = "bold"),
+                title = element_text(face = "bold")) +
           theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
           theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
           xlab(paste('PC1 =', pc1(), '% variance')) + #reactive x lab for % variance
           ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
           ggtitle("PCA on VSD") +
           labs(color = color_legend(), shape = shape_legend()) + #rename legends
-          guides(fill = FALSE) #hide fill legend 
-        ggsave(pca, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
+          guides(fill = FALSE) #hide fill legend
+        print(pca)
+      }
+    })
+ 
+    #download PCA plot ####
+    output$downloadPCA <- downloadHandler(
+      filename = paste("PCA Plot", '.png', sep = ''),
+      content = function(file) {
+        pca <- ggplot(vsd.pca(),
+                      aes(
+                        x = PC1,
+                        y = PC2,
+                        color = pca_color(),
+                        shape = pca_shape(),
+                        fill = pca_color()
+                      )) +
+          geom_point(size = 5) +
+          scale_shape() +
+          scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
+          scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
+          theme_cowplot(font_size = 14) +
+          theme(axis.title = element_text(face = "bold"),
+                title = element_text(face = "bold")) +
+          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          xlab(paste('PC1 =', pc1(), '% variance')) + #reactive x lab for % variance
+          ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
+          ggtitle("PCA on VSD") +
+          labs(color = color_legend(), shape = shape_legend()) + #rename legends
+          guides(fill = FALSE) #hide fill legend
+        ggsave(
+          pca,
+          file = file,
+          device = "png",
+          width = 8,
+          height = 6,
+          units = "in",
+          dpi = 100
+        )
       }
     )
     
@@ -337,11 +422,16 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     
     output$QCdt2 <- renderUI({
       if (input$multiqc == TRUE & dataset_choice$user_dataset() %in%
-          c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS")) {
-        div(
-          style = "text-align: center; font-size: 18px; color: red;",
-          "MultiQC data is unavailable for this dataset"
-          )
+          c(
+            "BEAT_quantile",
+            "BEAT_FAB",
+            "BEAT_Denovo.Relapse",
+            "TCGA_FAB",
+            "TCGA_NPM1",
+            "TCGA_RAS"
+          )) {
+        div(style = "text-align: center; font-size: 18px; color: red;",
+            "MultiQC data is unavailable for this dataset")
       } else {
         return(NULL)
       }
@@ -349,26 +439,65 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     
        
     #download multiqc table
-        output$downloadMultiQC <- downloadHandler(
-          filename = paste("MultiQC_table", '.csv', sep=''),
-          content = function(file) {
-            shiny::req(!dataset_choice$user_dataset() %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS"))
-            write.csv(multiqc_res(), file = file)
-          }
+    output$downloadMultiQC <- downloadHandler(
+      filename = paste("MultiQC_table", '.csv', sep = ''),
+      content = function(file) {
+        shiny::req(
+          !dataset_choice$user_dataset() %in% c(
+            "BEAT_quantile",
+            "BEAT_FAB",
+            "BEAT_Denovo.Relapse",
+            "TCGA_FAB",
+            "TCGA_NPM1",
+            "TCGA_RAS"
+          )
         )
+        write.csv(multiqc_res(), file = file)
+      }
+    )
         
-        observe({
-          toggleState("downloadMultiQC", !dataset_choice$user_dataset() %in% c("BEAT_quantile", "BEAT_FAB", "BEAT_Denovo.Relapse", "TCGA_FAB", "TCGA_NPM1", "TCGA_RAS"))
-        })
+    observe({
+      toggleState(
+        "downloadMultiQC",
+        !dataset_choice$user_dataset() %in% c(
+          "BEAT_quantile",
+          "BEAT_FAB",
+          "BEAT_Denovo.Relapse",
+          "TCGA_FAB",
+          "TCGA_NPM1",
+          "TCGA_RAS"
+        )
+      )
+    })
  
     scree_variance_fun <- function(dds) {
+      if (dataset_choice$user_dataset() %in% c(
+        "BEAT_quantile",
+        "BEAT_FAB",
+        "BEAT_Denovo.Relapse",
+        "TCGA_FAB",
+        "TCGA_NPM1",
+        "TCGA_RAS"
+      )) {
       vsd <- vsd_fun(dds)
       scree.var <- prcomp(t(assay(vsd)))
       num_pcs <- length(scree.var$sdev)
-      scree_variance <- data.frame(pc = paste0("PC", 1:num_pcs), variance = (((scree.var$sdev) ^ 2 / sum((scree.var$sdev) ^ 2)) * 100))
+      scree_variance <- data.frame(pc = paste0("PC", 1:num_pcs), variance = (((scree.var$sdev) ^ 2 / sum((scree.var$sdev) ^ 2
+      )) * 100))
       lorder <- as.vector(outer(c("PC"), 1:12, paste, sep = ""))
       scree_variance$pc <- factor(scree_variance$pc, levels = lorder)
+      scree_variance <- scree_variance[complete.cases(scree_variance), ]
       return(scree_variance)
+      } else{
+        vsd <- vsd_fun(dds)
+        scree.var <- prcomp(t(assay(vsd)))
+        num_pcs <- length(scree.var$sdev)
+        scree_variance <- data.frame(pc = paste0("PC", 1:num_pcs), variance = (((scree.var$sdev) ^ 2 / sum((scree.var$sdev) ^ 2
+        )) * 100))
+        lorder <- as.vector(outer(c("PC"), 1:num_pcs, paste, sep = ""))
+        scree_variance$pc <- factor(scree_variance$pc, levels = lorder)
+        return(scree_variance)
+      }
     }
     
     scree_variance_df <- reactive({
@@ -378,18 +507,14 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
 
     # PCA scree plot ####
     output$PCAvarplot <- renderPlot ({
-      if(input$PCAscreeplots == TRUE) {
-
-        ggplot(scree_variance_df(),
-               aes(x = pc,
-                   y = variance,
-                   group = 2)) +
+      if (input$PCAscreeplots == TRUE) {
+        ggplot(scree_variance_df(), aes(x = pc, y = variance, group = 2)) +
           geom_point(size = 2) +
           geom_line() +
           theme_cowplot(font_size = 14) +
-          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-          labs(x = "PC",
-               y = "% Variance") +
+          theme(axis.title = element_text(face = "bold"),
+                title = element_text(face = "bold")) +
+          labs(x = "PC", y = "% Variance") +
           labs(title =
                  "PCA variability plot")
       }
@@ -397,23 +522,28 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     
     #download scree plot ####
     output$downloadScree <- downloadHandler(
-      filename = paste("Scree Plot", '.png', sep=''),
+      filename = paste("Scree Plot", '.png', sep = ''),
       content = function(file) {
-        scree <- ggplot(scree_variance_df(),
-               aes(x = pc,
-                   y = variance,
-                   group = 2)) +
+        scree <- ggplot(scree_variance_df(), aes(x = pc, y = variance, group = 2)) +
           geom_point(size = 2) +
           geom_line() +
           theme_cowplot(font_size = 14) +
-          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+          theme(axis.title = element_text(face = "bold"),
+                title = element_text(face = "bold")) +
           theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
           theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          labs(x = "PC",
-               y = "% Variance") +
+          labs(x = "PC", y = "% Variance") +
           labs(title =
                  "PCA variability plot")
-        ggsave(scree,file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
+        ggsave(
+          scree,
+          file = file,
+          device = "png",
+          width = 8,
+          height = 6,
+          units = "in",
+          dpi = 100
+        )
       }
     )
     
