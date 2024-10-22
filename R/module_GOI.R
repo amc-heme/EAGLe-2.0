@@ -174,7 +174,7 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
         }) #end render plot
     
     output$downloadGenePlot <- downloadHandler(
-      filename = paste('GeneCentricPlot','.png', sep=''),
+      filename = paste('GeneCentricPlot','.svg', sep=''),
       content = function(file) {
         goi.plot <- ggplot(vst.gene(),
                aes(
@@ -198,7 +198,7 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
           ylab(input$VSTCDgenechoice) +
           xlab("") +
           ggtitle("Gene Expression")
-        ggsave(goi.plot, file = file, device = "png", width = 8,
+        ggsave(goi.plot, file = file, device = "svg", width = 8,
                height = 8, dpi = 100, bg = "white")
       }
     )

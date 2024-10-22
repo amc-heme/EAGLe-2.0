@@ -161,7 +161,7 @@ HPA_Server <- function(id, vst.HPA, dds.HPA) {
         }) #end render plot
     
     output$downloadHPAPlot <- downloadHandler(
-      filename = paste('HPAPlot','.png', sep=''),
+      filename = paste('HPAPlot','.svg', sep=''),
       content = function(file) {
         hpa.plot <- ggplot(vst.gene(),
                aes(
@@ -170,8 +170,8 @@ HPA_Server <- function(id, vst.HPA, dds.HPA) {
                  fill = condition
                )) +
           geom_boxplot() +
-          scale_fill_brewer(palette = colorpaletteHPA()) + #reactive  scale_fill_manual from module
-          scale_color_brewer(palette = colorpaletteHPA()) + #reactive scale_color_manual from module
+          scale_fill_manual(values = extended_palette(colorpaletteHPA(), 32)) + #reactive  scale_fill_manual from module
+          scale_color_manual(values = extended_palette(colorpaletteHPA(), 32)) + #reactive scale_color_manual from module
           geom_point(alpha = 0.5,
                      position = position_jitterdodge(jitter.width = 0.2),
                      aes(color = condition)) +
@@ -185,7 +185,7 @@ HPA_Server <- function(id, vst.HPA, dds.HPA) {
           ylab(input$VSTgenechoice) +
           xlab("") +
           ggtitle("Normal Tissue Expression")
-        ggsave(hpa.plot, file = file, device = "png", width = 10,
+        ggsave(hpa.plot, file = file, device = "svg", width = 10,
                height = 8, dpi = 100, bg = "white")
       }
     )

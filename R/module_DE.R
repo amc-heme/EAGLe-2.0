@@ -398,7 +398,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   })
 # Download Volcano plot ####
   output$downloadDEVol <- downloadHandler(
-    filename = paste("DE Volcano", '.png', sep=''),
+    filename = paste("DE Volcano", '.svg', sep=''),
     content = function(file) {
       colors <- c(colorDE(), "grey", color2DE())
       res.vol <- generateRes(dataset_choice$user_dataset(), dds_result())
@@ -411,7 +411,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
         theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
         ggtitle("DE Volcano Plot") +
         coord_cartesian(xlim = c(-10, 7))
-      ggsave(p, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
+      ggsave(p, file = file, device = "svg", width = 8, height = 6, units = "in",dpi = 100)
     }
   )
   
@@ -469,7 +469,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   })
    # Download MA plot ####
   output$downloadDEMA <- downloadHandler(
-    filename = paste("DE MA", '.png', sep=''),
+    filename = paste("DE MA", '.svg', sep=''),
     content = function(file) {
       colors <- c(colorDE(), "grey", color2DE())
       res.ma <- generateRes(dataset_choice$user_dataset(), dds_result())
@@ -494,7 +494,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
         xlab("log2 Mean Expression") +
         ylab("Log2 Fold Change")
       
-      ggsave(m, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
+      ggsave(m, file = file, device = "svg", width = 8, height = 6, units = "in",dpi = 100)
     }
   )
     
@@ -585,7 +585,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
 
 # download DE Heatmap ####
   output$downloadDEHM <- downloadHandler(
-    filename = paste("DE_Heatmap", '.png', sep=''),
+    filename = paste("DE_Heatmap", '.svg', sep=''),
     content = function(file) {
       #generate dds results table 
       res.hm <-
@@ -616,7 +616,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
         column_title = NULL,
         row_title = "Top DEGs"
       ) 
-      png(file)
+      svg(file)
       # draw heatmap object
       draw(ht)
       dev.off()

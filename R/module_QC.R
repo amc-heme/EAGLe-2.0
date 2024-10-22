@@ -351,7 +351,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
  
     #download PCA plot ####
     output$downloadPCA <- downloadHandler(
-      filename = paste("PCA Plot", '.png', sep = ''),
+      filename = paste("PCA Plot", '.svg', sep = ''),
       content = function(file) {
         pca <- ggplot(vsd.pca(),
                       aes(
@@ -363,8 +363,8 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
                       )) +
           geom_point(size = 5) +
           scale_shape() +
-          scale_fill_viridis_d(option = colorpaletteQC()) + #scale_fill_manual reactive function
-          scale_color_viridis_d(option = colorpaletteQC()) + #scale_color manual reactive function
+          scale_fill_brewer(palette = colorpaletteQC()) + #scale_fill_manual reactive function
+          scale_color_brewer(palette = colorpaletteQC()) + #scale_color manual reactive function
           theme_cowplot(font_size = 14) +
           theme(axis.title = element_text(face = "bold"),
                 title = element_text(face = "bold")) +
@@ -378,7 +378,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
         ggsave(
           pca,
           file = file,
-          device = "png",
+          device = "svg",
           width = 8,
           height = 6,
           units = "in",
@@ -522,7 +522,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     
     #download scree plot ####
     output$downloadScree <- downloadHandler(
-      filename = paste("Scree Plot", '.png', sep = ''),
+      filename = paste("Scree Plot", '.svg', sep = ''),
       content = function(file) {
         scree <- ggplot(scree_variance_df(), aes(x = pc, y = variance, group = 2)) +
           geom_point(size = 2) +
@@ -538,7 +538,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
         ggsave(
           scree,
           file = file,
-          device = "png",
+          device = "svg",
           width = 8,
           height = 6,
           units = "in",

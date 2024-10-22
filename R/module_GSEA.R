@@ -479,7 +479,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
     
     #download button output- waterfall plot ####
     output$downloadranks <- downloadHandler(
-      filename = function() { paste("Waterfall Plot", '.png', sep='') },
+      filename = function() { paste("Waterfall Plot", '.svg', sep='') },
       content = function(file) {
         
         colors <- c("grey", colorWF())
@@ -498,7 +498,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
           theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
           theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF"))  
         
-        ggsave(w, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
+        ggsave(w, file = file, device = "svg", width = 8, height = 6, units = "in",dpi = 100)
       }
     )
     #reactive wrapper for js functions to hide or show plot dimensions based on toggle switch
@@ -557,7 +557,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
     )
     #download button output - moustache plot ####
     output$downloadmoustache <- downloadHandler(
-      filename = paste("Moustache Plot", '.png', sep=''),
+      filename = paste("Moustache Plot", '.svg', sep=''),
       content = function(file) {
         
         colors <- c('grey', colorM())
@@ -575,7 +575,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
           geom_text_repel(colour = "black", aes(label= ifelse(padj <0.05, as.character(pathway), ""), hjust=0,vjust=0)) +
           coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1)) 
         
-      ggsave(mous, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
+      ggsave(mous, file = file, device = "svg", width = 8, height = 6, units = "in",dpi = 100)
       }
     )
     
@@ -612,8 +612,9 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
     })
     #download button output- enrichment plot ####
     output$downloadeplot <- downloadHandler(
-      filename = paste("Enrichment Plot", '.png', sep=''),
+      filename = paste("Enrichment Plot", '.svg', sep=''),
       content = function(file) {
+        pathwaygsea <- gsea_file_values[[input$filechoice]]
         fgseaResTidy <- fgseaRes() %>%
           as_tibble() %>%
           dplyr::select(., -pval,-log2err, -ES) %>% 
@@ -630,7 +631,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
           e <- plotEnrichment(pathwaygsea[[input$pathwaylisteplot]],
                          ranks()) + labs(title= input$pathwaylisteplot)
         }
-        ggsave(e, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
+        ggsave(e, file = file, device = "svg", width = 8, height = 6, units = "in",dpi = 100)
       }
     )
     
@@ -700,7 +701,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
   
     #download button output- volcano plot ####
     output$downloadvolcano <- downloadHandler(
-      filename = paste("Volcano Plot", '.png', sep=''),
+      filename = paste("Volcano Plot", '.svg', sep=''),
       content = function(file) {
         
         gseavol_title <-
@@ -739,7 +740,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         ) +
         ggtitle(gseavol_title) + #reactive title
           xlab("log2foldchange")
-        ggsave(v, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
+        ggsave(v, file = file, device = "svg", width = 8, height = 6, units = "in",dpi = 100)
       })
 
     
@@ -890,7 +891,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
 
     # download DE Heatmap ####
     output$downloadheatmap <- downloadHandler(
-      filename = paste("GSEA_Heatmap", '.png', sep=''),
+      filename = paste("GSEA_Heatmap", '.svg', sep=''),
       content = function(file) {
         #generate dds results table 
         res.hmg <- DE_res$dds_res() 
@@ -933,7 +934,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
           column_title = NULL,
           row_title = "DEGs in Pathway"
         ) 
-        png(file)
+        svg(file)
         # draw heatmap object
         draw(ht)
         dev.off()
