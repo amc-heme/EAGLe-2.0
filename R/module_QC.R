@@ -44,28 +44,56 @@ QC_UI <- function(id) {
             TRUE
         ),
         paletteUI(ns("palette")),
-        #dropdown menu containing download buttons                                  
+        #dropdown menu containing download buttons 
+        # dropdownButton(
+        #   inputId = ns("download"),
+        #   status = "info",
+        #   up = TRUE,
+        #   label = "",
+        #   size = "sm",
+        #   icon = icon("download"),
+          # Dropdown content
+          #div(
+       # )
         dropdownButton(
           inputId = ns("download_menu"),
           label = "Download",
           icon = icon("sliders"),
           status = "primary",
           circle = FALSE,
+          selectInput(
+            inputId = ns("plot_type"),
+            label = "Select Plot",
+            choices = c("PCA", "Scree", "MultiQC"),
+            selected = "PCA"
+          ),
+          selectInput(
+            inputId = ns("file_type"),
+            label = "Select File Type",
+            choices = c(".png" = "png", ".svg" = "svg"),
+            selected = "png"
+          ),
           downloadButton(
-            ns("downloadPCA"),
-            label =
-              "PCA"), 
-          
-          downloadButton(
-            ns("downloadScree"),
-            label =
-              "Scree"),
-          
-          downloadButton(
-            ns("downloadMultiQC"),
-            label = 
-              "MultiQC")
-        )     
+            outputId = ns("confirm_download"),
+            label = "Download",
+            class = "confirm-download",
+            icon = NULL
+          )
+          # downloadButton(
+          #   ns("downloadPCA"),
+          #   label =
+          #     "PCA"), 
+          # 
+          # downloadButton(
+          #   ns("downloadScree"),
+          #   label =
+          #     "Scree"),
+          # 
+          # downloadButton(
+          #   ns("downloadMultiQC"),
+          #   label =
+          #     "MultiQC")
+        )
     ),
        
       mainPanel(
@@ -91,6 +119,39 @@ QC_UI <- function(id) {
           uiOutput(ns("QCdt2"))
           
         )
+        # conditionalPanel(
+        #   ns = ns,
+        #   condition = "input['downloadPCA'] == true",
+        #   ## UI for download button ####
+        #   #if (input$downloadPCA == TRUE){
+        #     # div(
+        #     #   class = "plot-download-button",
+        #       dropdownButton(
+        #         inputId = ns("download"),
+        #         status = "info",
+        #         up = TRUE,
+        #         label = "",
+        #         size = "sm",
+        #         icon = icon("download"),
+        #         # Dropdown content
+        #         #div(
+        #           selectInput(
+        #             inputId = ns("file_type"),
+        #             label = "Select File Type",
+        #             choices = c(".png" = "png", ".svg" = "svg"),
+        #             selected = "png"
+        #           ),
+        #           downloadButton(
+        #             outputId = ns("confirm_download"),
+        #             label = "Download",
+        #             class = "confirm-download",
+        #             icon = NULL
+        #           )
+        #         )
+        #      # )
+        #     #)
+        #   #} else NULL
+        # )
       )
     )
   )
@@ -349,44 +410,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
       }
     })
  
-    #download PCA plot ####
-    output$downloadPCA <- downloadHandler(
-      filename = paste("PCA Plot", '.svg', sep = ''),
-      content = function(file) {
-        pca <- ggplot(vsd.pca(),
-                      aes(
-                        x = PC1,
-                        y = PC2,
-                        color = pca_color(),
-                        shape = pca_shape(),
-                        fill = pca_color()
-                      )) +
-          geom_point(size = 5) +
-          scale_shape() +
-          scale_fill_brewer(palette = colorpaletteQC()) + #scale_fill_manual reactive function
-          scale_color_brewer(palette = colorpaletteQC()) + #scale_color manual reactive function
-          theme_cowplot(font_size = 14) +
-          theme(axis.title = element_text(face = "bold"),
-                title = element_text(face = "bold")) +
-          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          xlab(paste('PC1 =', pc1(), '% variance')) + #reactive x lab for % variance
-          ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
-          ggtitle("PCA on VSD") +
-          labs(color = color_legend(), shape = shape_legend()) + #rename legends
-          guides(fill = FALSE) #hide fill legend
-        ggsave(
-          pca,
-          file = file,
-          device = "svg",
-          width = 8,
-          height = 6,
-          units = "in",
-          dpi = 100
-        )
-      }
-    )
-    
+   
  #MultiQC table function ####   
 
     multiqc_res <- reactive({
@@ -436,25 +460,6 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
         return(NULL)
       }
     })
-    
-       
-    #download multiqc table
-    output$downloadMultiQC <- downloadHandler(
-      filename = paste("MultiQC_table", '.csv', sep = ''),
-      content = function(file) {
-        shiny::req(
-          !dataset_choice$user_dataset() %in% c(
-            "BEAT_quantile",
-            "BEAT_FAB",
-            "BEAT_Denovo.Relapse",
-            "TCGA_FAB",
-            "TCGA_NPM1",
-            "TCGA_RAS"
-          )
-        )
-        write.csv(multiqc_res(), file = file)
-      }
-    )
         
     observe({
       toggleState(
@@ -520,33 +525,110 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
       }
     })
     
-    #download scree plot ####
-    output$downloadScree <- downloadHandler(
-      filename = paste("Scree Plot", '.svg', sep = ''),
+    observeEvent(input$plot_type, {
+      if(input$plot_type == "MultiQC"){
+        updateSelectInput(
+          inputId = "file_type",
+          label = "Select File Type",
+          choices = c(".csv" = "csv"),
+          selected = "csv"
+        )
+      } else{
+        updateSelectInput(
+          inputId = "file_type",
+          label = "Select File Type",
+          choices = c(".png" = "png", ".svg" = "svg"),
+          selected = "png"
+        )
+      }
+    })
+    
+    #download plots ####
+    output$confirm_download <- downloadHandler(
+      
+      filename = function(){
+        if (input$file_type == "png"){
+          glue(input$plot_type, ".png")
+        } else if (input$file_type == "svg"){
+          glue(input$plot_type, ".svg")
+        } else if (input$file_type == "csv"){
+          glue(input$plot_type, ".csv")
+        }
+      },
       content = function(file) {
-        scree <- ggplot(scree_variance_df(), aes(x = pc, y = variance, group = 2)) +
-          geom_point(size = 2) +
-          geom_line() +
-          theme_cowplot(font_size = 14) +
-          theme(axis.title = element_text(face = "bold"),
-                title = element_text(face = "bold")) +
-          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          labs(x = "PC", y = "% Variance") +
-          labs(title =
-                 "PCA variability plot")
+        if(input$plot_type == "PCA"){
+          
+          plot <- ggplot(vsd.pca(),
+                         aes(
+                           x = PC1,
+                           y = PC2,
+                           color = pca_color(),
+                           shape = pca_shape(),
+                           fill = pca_color()
+                         )) +
+            geom_point(size = 5) +
+            scale_shape() +
+            scale_fill_brewer(palette = colorpaletteQC()) + #scale_fill_manual reactive function
+            scale_color_brewer(palette = colorpaletteQC()) + #scale_color manual reactive function
+            theme_cowplot(font_size = 14) +
+            theme(axis.title = element_text(face = "bold"),
+                  title = element_text(face = "bold")) +
+            theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+            theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+            xlab(paste('PC1 =', pc1(), '% variance')) + #reactive x lab for % variance
+            ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
+            ggtitle("PCA on VSD") +
+            labs(color = color_legend(), shape = shape_legend()) + #rename legends
+            guides(fill = FALSE)#hide fill legend
+          ggsave(
+            plot,
+            file = file,
+            device = input$file_type,
+            width = 8,
+            height = 6,
+            units = "in",
+            dpi = 100,
+            bg ="#FFFFFF"
+          )
+        } else if (input$plot_type == "Scree"){
+          
+          plot <- ggplot(scree_variance_df(), aes(x = pc, y = variance, group = 2)) +
+            geom_point(size = 2) +
+            geom_line() +
+            theme_cowplot(font_size = 14) +
+            theme(axis.title = element_text(face = "bold"),
+                  title = element_text(face = "bold")) +
+            theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+            theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+            labs(x = "PC", y = "% Variance") +
+            labs(title =
+                   "PCA variability plot")
         ggsave(
-          scree,
+          plot,
           file = file,
-          device = "svg",
+          device = input$file_type,
           width = 8,
           height = 6,
           units = "in",
-          dpi = 100
+          dpi = 100,
+          bg ="#FFFFFF"
         )
+        } else {
+              shiny::req(
+                !dataset_choice$user_dataset() %in% c(
+                  "BEAT_quantile",
+                  "BEAT_FAB",
+                  "BEAT_Denovo.Relapse",
+                  "TCGA_FAB",
+                  "TCGA_NPM1",
+                  "TCGA_RAS"
+                )
+              )
+              write.csv(multiqc_res(), file = file)
+            }
       }
     )
-    
+ 
     observe({
       req(reset_trigger())
       updateMaterialSwitch(session, "PCAplots", value = FALSE)
