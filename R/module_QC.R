@@ -44,17 +44,6 @@ QC_UI <- function(id) {
             TRUE
         ),
         paletteUI(ns("palette")),
-        #dropdown menu containing download buttons 
-        # dropdownButton(
-        #   inputId = ns("download"),
-        #   status = "info",
-        #   up = TRUE,
-        #   label = "",
-        #   size = "sm",
-        #   icon = icon("download"),
-          # Dropdown content
-          #div(
-       # )
         dropdownButton(
           inputId = ns("download_menu"),
           label = "Download",
@@ -79,20 +68,6 @@ QC_UI <- function(id) {
             class = "confirm-download",
             icon = NULL
           )
-          # downloadButton(
-          #   ns("downloadPCA"),
-          #   label =
-          #     "PCA"), 
-          # 
-          # downloadButton(
-          #   ns("downloadScree"),
-          #   label =
-          #     "Scree"),
-          # 
-          # downloadButton(
-          #   ns("downloadMultiQC"),
-          #   label =
-          #     "MultiQC")
         )
     ),
        
@@ -119,39 +94,6 @@ QC_UI <- function(id) {
           uiOutput(ns("QCdt2"))
           
         )
-        # conditionalPanel(
-        #   ns = ns,
-        #   condition = "input['downloadPCA'] == true",
-        #   ## UI for download button ####
-        #   #if (input$downloadPCA == TRUE){
-        #     # div(
-        #     #   class = "plot-download-button",
-        #       dropdownButton(
-        #         inputId = ns("download"),
-        #         status = "info",
-        #         up = TRUE,
-        #         label = "",
-        #         size = "sm",
-        #         icon = icon("download"),
-        #         # Dropdown content
-        #         #div(
-        #           selectInput(
-        #             inputId = ns("file_type"),
-        #             label = "Select File Type",
-        #             choices = c(".png" = "png", ".svg" = "svg"),
-        #             selected = "png"
-        #           ),
-        #           downloadButton(
-        #             outputId = ns("confirm_download"),
-        #             label = "Download",
-        #             class = "confirm-download",
-        #             icon = NULL
-        #           )
-        #         )
-        #      # )
-        #     #)
-        #   #} else NULL
-        # )
       )
     )
   )
@@ -554,7 +496,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
         } else if (input$file_type == "csv"){
           glue(input$plot_type, ".csv")
         }
-      },
+      }, 
       content = function(file) {
         if(input$plot_type == "PCA"){
           
