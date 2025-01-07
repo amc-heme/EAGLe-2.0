@@ -608,7 +608,6 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       })
   
   
-    
     #GSEA heatmap ####
     
     #check for NULL output
@@ -738,7 +737,6 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         col_side_colors = cond,
         showticklabels = c(FALSE, FALSE)
       )
-
       ht
     })
  
@@ -977,7 +975,6 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       updateMaterialSwitch(session, "heatmap", value = FALSE)
       
     })
-    
   })
 }
 

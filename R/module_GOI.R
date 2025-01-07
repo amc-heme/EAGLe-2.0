@@ -47,10 +47,17 @@ goi_UI <- function(id) {
           icon = icon("sliders"),
           status = "primary",
           circle = FALSE,
+          selectInput(
+            inputId = ns("file_type"),
+            label = "Select File Type",
+            choices = c(".png" = "png", ".svg" = "svg"),
+            selected = "png"
+          ),
           downloadButton(
-            ns("downloadGenePlot"),
-            label = 
-              NULL
+            outputId = ns("confirm_download"),
+            label = "Download",
+            class = "confirm-download",
+            icon = NULL
           )
         )
       ), 
@@ -173,10 +180,19 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
             ggtitle("Gene Expression")
         }) #end render plot
     
-    output$downloadGenePlot <- downloadHandler(
-      filename = paste('GeneCentricPlot','.svg', sep=''),
+    #download plot ####
+    output$confirm_download <- downloadHandler(
+      
+      filename = function(){
+        if (input$file_type == "png"){
+          glue("GOI.png")
+        } else if (input$file_type == "svg"){
+          glue("GOI.svg")
+        } 
+      }, 
       content = function(file) {
-        goi.plot <- ggplot(vst.gene(),
+
+        plot <- ggplot(vst.gene(),
                aes(
                  x = condition,
                  y = ext_gene_ensembl,
@@ -198,8 +214,16 @@ goi_Server <- function(id, dataset_choice, dataset_dds, vst) {
           ylab(input$VSTCDgenechoice) +
           xlab("") +
           ggtitle("Gene Expression")
-        ggsave(goi.plot, file = file, device = "svg", width = 8,
-               height = 8, dpi = 100, bg = "white")
+        ggsave(
+          plot,
+          file = file,
+          device = input$file_type,
+          width = 8,
+          height = 6,
+          units = "in",
+          dpi = 100,
+          bg ="#FFFFFF"
+        )
       }
     )
     
