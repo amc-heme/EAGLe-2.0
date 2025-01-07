@@ -96,33 +96,6 @@ DE_UI <- function(id) {
             icon = NULL
           )
         )
-        # dropdownButton(
-        #   inputId = ns("download_menu"),
-        #   label = "Download",
-        #   icon = icon("sliders"),
-        #   status = "primary",
-        #   circle = FALSE,
-        #   downloadButton(
-        #     ns("downloadDESeq"),
-        #     label =
-        #       "DEG Table"
-        #   ),
-        #   downloadButton(
-        #     ns("downloadDEVol"),
-        #     label = 
-        #       "Volcano"
-        #   ),
-        #   downloadButton(
-        #     ns("downloadDEMA"),
-        #     label = 
-        #       "MA"
-        #   ),
-        #   downloadButton(
-        #     ns("downloadDEHM"),
-        #     label =
-        #       "Heatmap"
-        #   )
-        # )
       )
     ),
         mainPanel(
@@ -645,47 +618,47 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
           dpi = 100,
           bg ="#FFFFFF"
         )
-      } else if(input$plot_type == "Heatmap"){
-        
-        #     #generate dds results table 
-            res.hm <-
-              generateRes(dataset_choice$user_dataset(), dds_result())
-            dds.mat <- res.hm %>%
-              dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>%
-              dplyr::arrange(desc(abs(`log2FoldChange`))) %>%
-              slice(1:50)
-            #filter vst counts matrix by sig expressed genes
-            vst.mat <- vst() %>%
-              dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
-              distinct(ext_gene_ensembl, .keep_all = TRUE) %>%
-              column_to_rownames(., var = "ensembl_gene_id") %>%
-              dplyr::select(., -ext_gene_ensembl) %>%
-              as.matrix()
-            rownames(vst.mat) = dds.mat$Gene
-
-            vst.mat <- t(scale(t(vst.mat)))
-
-            #create a colorRamp function based on user input in color palette choices
-            colors.hm <- colorRamp2(c(-2, 0, 2), c(colorDE(), "white", color2DE()))
-            plot = ComplexHeatmap::Heatmap(
-              vst.mat,
-              name = "z scaled expression",
-              col = colors.hm,
-              row_names_gp = gpar(fontsize = 6),
-              column_names_gp = gpar(fontsize = 6),
-              column_title = NULL,
-              row_title = "Top DEGs"
-            )
-        ggsave(
-          plot,
-          file = file,
-          device = input$file_type,
-          width = 8,
-          height = 6,
-          units = "in",
-          dpi = 100,
-          bg ="#FFFFFF"
-        )
+      # } else if(input$plot_type == "Heatmap"){
+      #   
+      #   #     #generate dds results table 
+      #       res.hm <-
+      #         generateRes(dataset_choice$user_dataset(), dds_result())
+      #       dds.mat <- res.hm %>%
+      #         dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>%
+      #         dplyr::arrange(desc(abs(`log2FoldChange`))) %>%
+      #         slice(1:50)
+      #       #filter vst counts matrix by sig expressed genes
+      #       vst.mat <- vst() %>%
+      #         dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
+      #         distinct(ext_gene_ensembl, .keep_all = TRUE) %>%
+      #         column_to_rownames(., var = "ensembl_gene_id") %>%
+      #         dplyr::select(., -ext_gene_ensembl) %>%
+      #         as.matrix()
+      #       rownames(vst.mat) = dds.mat$Gene
+      # 
+      #       vst.mat <- t(scale(t(vst.mat)))
+      # 
+      #       #create a colorRamp function based on user input in color palette choices
+      #       colors.hm <- colorRamp2(c(-2, 0, 2), c(colorDE(), "white", color2DE()))
+      #       plot = ComplexHeatmap::Heatmap(
+      #         vst.mat,
+      #         name = "z scaled expression",
+      #         col = colors.hm,
+      #         row_names_gp = gpar(fontsize = 6),
+      #         column_names_gp = gpar(fontsize = 6),
+      #         column_title = NULL,
+      #         row_title = "Top DEGs"
+      #       )
+      # #save heatmap based on file type
+      #       if(input$file_type == "png"){
+      #         png(file, width = 800, height = 600, res = 100)
+      #         draw(plot)
+      #         dev.off()
+      #       }else(input$file_type == "svg") {
+      #         svg(file, width = 8, height = 6)
+      #         draw(plot)
+      #         dev.off()
+      #       }
       } else {
         dds.res <- generateRes(dataset_choice$user_dataset(), dds_result())
         write.csv(dds.res, file = file)

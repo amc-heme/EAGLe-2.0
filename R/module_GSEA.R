@@ -194,43 +194,31 @@ GSEA_UI <- function(id) {
             options = list(maxItems = 1)
           )
         ),
-      #dropdown menu containing download buttons ####
       dropdownButton(
         inputId = ns("download_menu"),
         label = "Download",
         icon = icon("sliders"),
         status = "primary",
         circle = FALSE,
-        downloadButton(
-          ns("downloadfgsea"),
-          label =
-            "Pathway List"
+        selectInput(
+          inputId = ns("plot_type"),
+          label = "Select Plot",
+          choices = c("GSEA Table","Waterfall","Moustache", "Enrichment", "Volcano", "Heatmap"),
+          selected = "Waterfall"
         ),
-        downloadButton(
-          ns("downloadranks"),
-          label =
-            "Waterfall"
+        selectInput(
+          inputId = ns("file_type"),
+          label = "Select File Type",
+          choices = c(".png" = "png", ".svg" = "svg"),
+          selected = "png"
         ),
-        downloadButton(
-          ns("downloadmoustache"),
-          label = 
-            "Moustache"
-        ),
-        downloadButton(
-          ns("downloadeplot"),
-          label =
-            "Enrichment"
-        ),
-        downloadButton(
-          ns("downloadvolcano"),
-          label =
-            "Volcano"
-        ),
-        downloadButton(
-          ns("downloadheatmap"),
-          label = 
-            "Heatmap"
-        )
+      #download button ####
+      downloadButton(
+        outputId = ns("confirm_download"),
+        label = "Download",
+        class = "confirm-download",
+        icon = NULL
+      )
       )
       ),
 
@@ -415,16 +403,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
           arrange(desc(NES))
         fgseaResTidy
       })
-    
-    #download pathway list ####
-    output$downloadfgsea <- downloadHandler(
-      filename = paste("GSEATable", '.csv', sep = ''),
-      content = function(file) {
-        fwrite(gseafile(),file, sep=",", sep2=c("", " ", ""))
-      }
-    )
-    
-      
+  
     #filter Res table for chosen pathway to show in a waterfall plot
     gseafile_waterfall <-
       reactive({
@@ -477,30 +456,6 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       }
     )
     
-    #download button output- waterfall plot ####
-    output$downloadranks <- downloadHandler(
-      filename = function() { paste("Waterfall Plot", '.svg', sep='') },
-      content = function(file) {
-        
-        colors <- c("grey", colorWF())
-        
-        w <- ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
-          geom_col(aes(fill = padj < 0.05)) +
-          scale_fill_manual(values = colors) +
-          coord_flip() +
-          labs(
-            x = "Pathway",
-            y = "Normalized Enrichment Score",
-            title = "Pathway NES from GSEA"
-          ) +
-          theme_cowplot(font_size = 14) +
-          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF"))  
-        
-        ggsave(w, file = file, device = "svg", width = 8, height = 6, units = "in",dpi = 100)
-      }
-    )
     #reactive wrapper for js functions to hide or show plot dimensions based on toggle switch
     observe({
       toggle(id = "rankedheightslider", condition = input$hidedimsWF)
@@ -555,29 +510,6 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         }
       }
     )
-    #download button output - moustache plot ####
-    output$downloadmoustache <- downloadHandler(
-      filename = paste("Moustache Plot", '.svg', sep=''),
-      content = function(file) {
-        
-        colors <- c('grey', colorM())
-        mous <-
-          ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) +
-          geom_point() +
-          theme_cowplot(font_size = 14) +
-          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          xlab('NES') +
-          scale_color_manual(values = colors) +
-          ylab('adjusted p-value') +
-          ggtitle("Pathways from GSEA") +
-          geom_text_repel(colour = "black", aes(label= ifelse(padj <0.05, as.character(pathway), ""), hjust=0,vjust=0)) +
-          coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1)) 
-        
-      ggsave(mous, file = file, device = "svg", width = 8, height = 6, units = "in",dpi = 100)
-      }
-    )
     
     #GSEA Enrichment Plots ####
     #reactive expression for specific pathway choice
@@ -610,31 +542,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
                        ranks()) + labs(title= input$pathwaylisteplot)
       }
     })
-    #download button output- enrichment plot ####
-    output$downloadeplot <- downloadHandler(
-      filename = paste("Enrichment Plot", '.svg', sep=''),
-      content = function(file) {
-        pathwaygsea <- gsea_file_values[[input$filechoice]]
-        fgseaResTidy <- fgseaRes() %>%
-          as_tibble() %>%
-          dplyr::select(., -pval,-log2err, -ES) %>% 
-          arrange(desc(NES))
-        if(input$topupordownbutton == "topup") {
-          top.UP.path <- as.character(fgseaResTidy[1,1])
-          e <- plotEnrichment(pathwaygsea[[top.UP.path]],
-                         ranks()) + labs(title=top.UP.path)
-        } else if(input$topupordownbutton == "topdown") {
-          top.DOWN.path <- as.character(fgseaResTidy[nrow(fgseaResTidy), 1])
-          e <- plotEnrichment(pathwaygsea[[top.DOWN.path]],
-                         ranks()) + labs(title=top.DOWN.path)
-        } else if(input$topupordownbutton == "eplotpath") {
-          e <- plotEnrichment(pathwaygsea[[input$pathwaylisteplot]],
-                         ranks()) + labs(title= input$pathwaylisteplot)
-        }
-        ggsave(e, file = file, device = "svg", width = 8, height = 6, units = "in",dpi = 100)
-      }
-    )
-    
+  
     
     # GSEA Volcano plot ####
     
@@ -699,51 +607,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         girafe(code = print(v))
       })
   
-    #download button output- volcano plot ####
-    output$downloadvolcano <- downloadHandler(
-      filename = paste("Volcano Plot", '.svg', sep=''),
-      content = function(file) {
-        
-        gseavol_title <-
-          paste(input$pathwaylist)
   
-        colors <-
-          c("grey", v_col())
-        
-        #if (input$volcanoplot == TRUE) {
-        v <- ggplot(
-          data = (pathway.genes() %>% arrange(., (genes_in_pathway))),
-          aes(
-            x = log2FoldChange,
-            y = -log10(padj),
-            col = genes_in_pathway[]
-          )
-        ) +
-          theme_cowplot(font_size = 14) +
-          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          geom_point() +
-          scale_color_manual(values = colors) +
-        geom_text_repel(
-          max.overlaps = 1500,
-          colour = "black",
-          aes( #only label is gene is in pathway and sig expression
-            label = ifelse(
-              genes_in_pathway == 'yes' & log2FoldChange > 1.5,
-              as.character(Gene),
-              ""
-            )
-          ),
-          hjust = 0,
-          vjust = 0
-        ) +
-        ggtitle(gseavol_title) + #reactive title
-          xlab("log2foldchange")
-        ggsave(v, file = file, device = "svg", width = 8, height = 6, units = "in",dpi = 100)
-      })
-
-    
     
     #GSEA heatmap ####
     
@@ -889,7 +753,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       }
     })
 
-    # download DE Heatmap ####
+    # download Heatmap ####
     output$downloadheatmap <- downloadHandler(
       filename = paste("GSEA_Heatmap", '.svg', sep=''),
       content = function(file) {
@@ -939,6 +803,167 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         draw(ht)
         dev.off()
       }
+    )
+    #update file type for .csv file
+    observeEvent(input$plot_type, {
+      if(input$plot_type == "GSEA Table"){
+        updateSelectInput(
+          inputId = "file_type",
+          label = "Select File Type",
+          choices = c(".csv" = "csv"),
+          selected = "csv"
+        )
+      } else{
+        updateSelectInput(
+          inputId = "file_type",
+          label = "Select File Type",
+          choices = c(".png" = "png", ".svg" = "svg"),
+          selected = "png"
+        )
+      }
+    })
+    #download plots ####
+    output$confirm_download <- downloadHandler(
+    filename = function(){
+      if (input$file_type == "png"){
+        glue(input$plot_type, ".png")
+      } else if (input$file_type == "svg"){
+        glue(input$plot_type, ".svg")
+      } else if (input$file_type == "csv"){
+        glue(input$plot_type, ".csv")
+      }
+    },
+    content = function(file) {
+      if(input$plot_type == "Waterfall"){
+        colors <- c("grey", colorWF())
+        
+        plot <- ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
+          geom_col(aes(fill = padj < 0.05)) +
+          scale_fill_manual(values = colors) +
+          coord_flip() +
+          labs(
+            x = "Pathway",
+            y = "Normalized Enrichment Score",
+            title = "Pathway NES from GSEA"
+          ) +
+          theme_cowplot(font_size = 14) +
+          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF"))  
+        ggsave(
+          plot,
+          file = file,
+          device = input$file_type,
+          width = 8,
+          height = 6,
+          units = "in",
+          dpi = 100,
+          bg ="#FFFFFF"
+        )
+      } else if(input$plot_type == "Moustache") {
+        colors <- c('grey', colorM())
+        plot <-
+          ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) +
+          geom_point() +
+          theme_cowplot(font_size = 14) +
+          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          xlab('NES') +
+          scale_color_manual(values = colors) +
+          ylab('adjusted p-value') +
+          ggtitle("Pathways from GSEA") +
+          geom_text_repel(colour = "black", aes(label= ifelse(padj <0.05, as.character(pathway), ""), hjust=0,vjust=0)) +
+          coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1)) 
+        ggsave(
+          plot,
+          file = file,
+          device = input$file_type,
+          width = 8,
+          height = 6,
+          units = "in",
+          dpi = 100,
+          bg ="#FFFFFF"
+        )
+      }else if(input$plot_type == "Enrichment") {
+        pathwaygsea <- gsea_file_values[[input$filechoice]]
+        fgseaResTidy <- fgseaRes() %>%
+          as_tibble() %>%
+          dplyr::select(., -pval,-log2err, -ES) %>% 
+          arrange(desc(NES))
+        if(input$topupordownbutton == "topup") {
+          top.UP.path <- as.character(fgseaResTidy[1,1])
+          plot <- plotEnrichment(pathwaygsea[[top.UP.path]],
+                              ranks()) + labs(title=top.UP.path)
+        } else if(input$topupordownbutton == "topdown") {
+          top.DOWN.path <- as.character(fgseaResTidy[nrow(fgseaResTidy), 1])
+          plot <- plotEnrichment(pathwaygsea[[top.DOWN.path]],
+                              ranks()) + labs(title=top.DOWN.path)
+        } else if(input$topupordownbutton == "eplotpath") {
+          plot <- plotEnrichment(pathwaygsea[[input$pathwaylisteplot]],
+                              ranks()) + labs(title= input$pathwaylisteplot)
+        }
+          ggsave(
+            plot,
+            file = file,
+            device = input$file_type,
+            width = 8,
+            height = 6,
+            units = "in",
+            dpi = 100,
+            bg ="#FFFFFF"
+          )
+        } else if(input$plot_type == "Volcano"){
+          gseavol_title <-
+            paste(input$pathwaylist)
+          
+          colors <-
+            c("grey", v_col())
+          
+          #if (input$volcanoplot == TRUE) {
+          plot <- ggplot(
+            data = (pathway.genes() %>% arrange(., (genes_in_pathway))),
+            aes(
+              x = log2FoldChange,
+              y = -log10(padj),
+              col = genes_in_pathway[]
+            )
+          ) +
+            theme_cowplot(font_size = 14) +
+            theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+            theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+            theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+            geom_point() +
+            scale_color_manual(values = colors) +
+            geom_text_repel(
+              max.overlaps = 1500,
+              colour = "black",
+              aes( #only label is gene is in pathway and sig expression
+                label = ifelse(
+                  genes_in_pathway == 'yes' & log2FoldChange > 1.5,
+                  as.character(Gene),
+                  ""
+                )
+              ),
+              hjust = 0,
+              vjust = 0
+            ) +
+            ggtitle(gseavol_title) + #reactive title
+            xlab("log2foldchange")
+          ggsave(
+            plot,
+            file = file,
+            device = input$file_type,
+            width = 8,
+            height = 6,
+            units = "in",
+            dpi = 100,
+            bg ="#FFFFFF"
+          )
+          } else {
+            fwrite(gseafile(),file, sep=",", sep2=c("", " ", ""))
+          }
+       }
     )
     
     observe({
