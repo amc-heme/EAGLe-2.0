@@ -49,10 +49,17 @@ HPA_UI <- function(id) {
           icon = icon("sliders"),
           status = "primary",
           circle = FALSE,
+          selectInput(
+            inputId = ns("file_type"),
+            label = "Select File Type",
+            choices = c(".png" = "png", ".svg" = "svg"),
+            selected = "png"
+          ),
           downloadButton(
-            ns("downloadHPAPlot"),
-            label = 
-              NULL
+            outputId = ns("confirm_download"),
+            label = "Download",
+            class = "confirm-download",
+            icon = NULL
           )
         )
       ), 
@@ -160,10 +167,18 @@ HPA_Server <- function(id, vst.HPA, dds.HPA) {
             ggtitle("Normal Tissue Expression")
         }) #end render plot
     
-    output$downloadHPAPlot <- downloadHandler(
-      filename = paste('HPAPlot','.svg', sep=''),
+    #download plot ####
+    output$confirm_download <- downloadHandler(
+      
+      filename = function(){
+        if (input$file_type == "png"){
+          glue("NormalTissue.png")
+        } else if (input$file_type == "svg"){
+          glue("NormalTissue.svg")
+        } 
+      }, 
       content = function(file) {
-        hpa.plot <- ggplot(vst.gene(),
+        plot <- ggplot(vst.gene(),
                aes(
                  x = condition,
                  y = ext_gene_ensembl,
@@ -185,8 +200,16 @@ HPA_Server <- function(id, vst.HPA, dds.HPA) {
           ylab(input$VSTgenechoice) +
           xlab("") +
           ggtitle("Normal Tissue Expression")
-        ggsave(hpa.plot, file = file, device = "svg", width = 10,
-               height = 8, dpi = 100, bg = "white")
+        ggsave(
+          plot,
+          file = file,
+          device = input$file_type,
+          width = 8,
+          height = 6,
+          units = "in",
+          dpi = 100,
+          bg ="#FFFFFF"
+        )
       }
     )
     
