@@ -644,12 +644,12 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
               vst.mat,
               name = "z scaled expression",
               col = colors.hm,
-              row_names_gp = gpar(fontsize = 6),
-              column_names_gp = gpar(fontsize = 6),
+              row_names_gp = gpar(fontsize = 12),
+              column_names_gp = gpar(fontsize = 12),
               column_title = NULL,
               row_title = "Top DEGs"
             )
-              png(file)
+              png(file, width = 780, height = 780, units = "px", pointsize = 60)
               draw(plot)
               dev.off()
       } else if (input$plot_type == "Heatmap" & input$file_type == "svg"){
@@ -677,12 +677,12 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
           vst.mat,
           name = "z scaled expression",
           col = colors.hm,
-          row_names_gp = gpar(fontsize = 6),
-          column_names_gp = gpar(fontsize = 6),
+          row_names_gp = gpar(fontsize = 12),
+          column_names_gp = gpar(fontsize = 12),
           column_title = NULL,
           row_title = "Top DEGs"
         )
-        svg(file)
+        svg(file, width = 780, height = 780, units = "px", pointsize = 60)
         draw(plot)
         dev.off()
         } else {

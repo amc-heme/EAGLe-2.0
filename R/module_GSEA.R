@@ -945,12 +945,12 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
             vstgsea.mat,
             name = "z scaled expression",
             col = colors.hmg,
-            row_names_gp = gpar(fontsize = 6),
-            column_names_gp = gpar(fontsize = 6),
+            row_names_gp = gpar(fontsize = 12),
+            column_names_gp = gpar(fontsize = 12),
             column_title = NULL,
             row_title = "DEGs in Pathway"
           ) 
-          png(file)
+          png(file, width = 780, height = 780, units = "px", pointsize = 60)
           # draw heatmap object
           draw(ht)
           dev.off()
@@ -991,12 +991,12 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
             vstgsea.mat,
             name = "z scaled expression",
             col = colors.hmg,
-            row_names_gp = gpar(fontsize = 6),
-            column_names_gp = gpar(fontsize = 6),
+            row_names_gp = gpar(fontsize = 12),
+            column_names_gp = gpar(fontsize = 12),
             column_title = NULL,
             row_title = "DEGs in Pathway"
           ) 
-          svg(file)
+          svg(file, width = 780, height = 780, units = "px", pointsize = 60)
           # draw heatmap object
           draw(ht)
           dev.off()
