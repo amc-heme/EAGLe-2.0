@@ -721,6 +721,10 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
 
       #transform and scale and transform back
       vstgsea.mat <- t(scale(t(vstgsea.mat)))
+      
+      top_anno <- data.frame(
+        Condition = cond
+      )
       #color function buliding a colorRamp palette based on user input from palette choices
       colors.hmg <- c(colorGHeat(), "white", colorGHeat2())
  
@@ -734,7 +738,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         colors = colors.hmg,
         dendrogram = "column",
         show_dendrogram = TRUE,
-        col_side_colors = cond,
+        col_side_colors = top_anno,
         showticklabels = c(FALSE, FALSE)
       )
       ht

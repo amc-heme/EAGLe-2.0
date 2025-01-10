@@ -51,5 +51,6 @@ library(bslib)
 library(bsicons)
 library(crosstalk)
 library(glue)
+library(reticulate)
 
 
