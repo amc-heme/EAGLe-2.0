@@ -506,9 +506,13 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     
     vst_reordered <- vst.mat[row1_order, col_order]
     
+    
     top_anno <- data.frame(
       Condition = cond
     )
+    
+    colnames(top_anno) <- cond_var
+    
     top_anno <- top_anno[col_order, , drop = FALSE]
     
     ht <- heatmaply(
@@ -758,6 +762,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
         col_anno <- setNames(c("blue", "red")[seq_along(levels(cond))], levels(cond))
         
         #annotation data frame from sample condition
+          
         top_anno <- data.frame(
           Condition = cond
         )

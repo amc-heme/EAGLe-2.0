@@ -753,6 +753,8 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         Condition = cond
       )
       
+      colnames(top_anno) <- cond_var
+      
       top_anno <- top_anno[col_order, , drop = FALSE]
  
       ht <- heatmaply(
