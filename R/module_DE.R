@@ -484,27 +484,46 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     rownames(vst.mat) = dds.mat$Gene
     
     vst.mat <- t(scale(t(vst.mat)))
-
+    #the heatmap needs to be produced by complex heatmap to 
+    #extract the row and column order so that the donloaded heatmap
+    #matches the interactive plotly heatmap shown in the app
+    
+    #create a colorRamp function based on user input in color palette choices
+    colors.hm <- c(colorDE(), "#FFFFFF", color2DE())
+    
+    ht1 = ComplexHeatmap::Heatmap(
+      vst.mat,
+      name = "z scaled expression",
+      col = colors.hm,
+      row_names_gp = gpar(fontsize = 12),
+      column_names_gp = gpar(fontsize = 12),
+      column_title = NULL,
+      row_title = "Top DEGs"
+    )
+    ht1_res <- draw(ht1)
+    row1_order <- row_order(ht1_res) #extract row order for plotly heatmap
+    col_order <- column_order(ht1_res) #extract column order for plotly heatmap
+    
+    vst_reordered <- vst.mat[row1_order, col_order]
+    
     top_anno <- data.frame(
       Condition = cond
     )
-    #create a colorRamp function based on user input in color palette choices
-    colors.hm <- c(colorDE(), "#FFFFFF", color2DE())
-
+    top_anno <- top_anno[col_order, , drop = FALSE]
+    
     ht <- heatmaply(
-      vst.mat,
+      vst_reordered,
       row_text_angle = 45,
       height = 600,
       width = 600,
       colors = colors.hm,
-      dendrogram = "column",
-      show_dendrogram = TRUE,
+      dendrogram = "none",
+     # show_dendrogram = TRUE,
       col_side_colors = top_anno,#adds labels to clusters
       showticklabels = c(FALSE, FALSE)# removes column and row labels
     )
    
     ht
- 
   })
 
   
@@ -621,101 +640,103 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
           bg ="#FFFFFF"
         )
       } else if(input$plot_type == "Heatmap" & input$file_type == "png"){
-
-        #     #generate dds results table
-            # res.hm <-
-            #   generateRes(dataset_choice$user_dataset(), dds_result())
-            # dds.mat <- res.hm %>%
-            #   dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>%
-            #   dplyr::arrange(desc(abs(`log2FoldChange`))) %>%
-            #   slice(1:50)
-            # #filter vst counts matrix by sig expressed genes
-            # vst.mat <- vst() %>%
-            #   dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
-            #   distinct(ext_gene_ensembl, .keep_all = TRUE) %>%
-            #   column_to_rownames(., var = "ensembl_gene_id") %>%
-            #   dplyr::select(., -ext_gene_ensembl) %>%
-            #   as.matrix()
-            # rownames(vst.mat) = dds.mat$Gene
-            # 
-            # vst.mat <- t(scale(t(vst.mat)))
-            # 
-            # #create a colorRamp function based on user input in color palette choices
-            # colors.hm <- colorRamp2(c(-2, 0, 2), c(colorDE(), "white", color2DE()))
-            # plot = ComplexHeatmap::Heatmap(
-            #   vst.mat,
-            #   name = "z scaled expression",
-            #   col = colors.hm,
-            #   row_names_gp = gpar(fontsize = 12),
-            #   column_names_gp = gpar(fontsize = 12),
-            #   column_title = NULL,
-            #   row_title = "Top DEGs"
-            # )
-            #   png(file, width = 780, height = 780, units = "px", pointsize = 60)
-            #   draw(plot)
-            #   dev.off()
         #determine which column needed for cluster annotations based on model choice 
         if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
           dds.file <- dataset_dds()
           cond_var <- dataset_choice$user_model()
           meta <- colData(dds.file)
           cond <- meta[, cond_var]
+          cond <- factor(cond, levels = levels(cond))
         } else {
           dds.file <- dataset_dds()
           meta <- colData(dds.file)
           cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
           cond <- meta[, cond_var]
+          cond <- factor(cond, levels = levels(cond))
+          print("cond")
+          print(cond)
         }
-        #generate dds results table 
-        res.hm <-
-          generateRes(dataset_choice$user_dataset(), dds_result())
+         #generate dds results table
+            res.hm <-
+              generateRes(dataset_choice$user_dataset(), dds_result())
+            dds.mat <- res.hm %>%
+              dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>%
+              dplyr::arrange(desc(abs(`log2FoldChange`))) %>%
+              slice(1:50)
+            
+            #filter vst counts matrix by sig expressed genes
+            vst.mat <- vst() %>%
+              dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
+              distinct(ext_gene_ensembl, .keep_all = TRUE) %>%
+              column_to_rownames(., var = "ensembl_gene_id") %>%
+              dplyr::select(., -ext_gene_ensembl) %>%
+              as.matrix()
+            rownames(vst.mat) = dds.mat$Gene
+            
+            #transform matrix
+            vst.mat <- t(scale(t(vst.mat)))
+            
+            #create a colorRamp function based on user input in color palette choices
+            colors.hm <- colorRamp2(c(-2, 0, 2), c(colorDE(), "white", color2DE()))
+            
+            #create a color vector for column annotations
+            col_anno <- setNames(c("blue", "red")[seq_along(levels(cond))], levels(cond))
+            
+            #annotation data frame from sample condition
+            top_anno <- data.frame(
+              Condition = cond
+            )
+            
+            #dynamicallly update condition variable based on dataset
+            annotation_label <- cond_var
+          
+            top_annotation <- ComplexHeatmap::HeatmapAnnotation(
+              df = top_anno,
+              col = list(Condition = col_anno),
+              annotation_legend_param = list(
+                title = annotation_label, 
+                title_gp = gpar(fontsize = 12),
+                labels_gp = gpar(fontsize = 12)
+                ),
+              annotation_height = unit(5, "mm"),
+              annotation_width = unit(5, "mm"),
+              show_annotation_name = FALSE
+              )
         
-        #filter DE object for only significantly differentially expressed genes and
-        #take the top 50 most highly expressed genes for visualization
-        dds.mat <- res.hm %>%
-          dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>% 
-          dplyr::arrange(desc(abs(`log2FoldChange`))) %>% 
-          slice(1:50)
-        
-        if(nrow(dds.mat) == 0) {
-          return(NULL)
-        }
-        #filter vst counts matrix by sig expressed genes
-        vst.mat <- vst() %>%
-          dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
-          distinct(ext_gene_ensembl, .keep_all = TRUE) %>% 
-          column_to_rownames(., var = "ensembl_gene_id") %>%
-          dplyr::select(., -ext_gene_ensembl) %>%
-          as.matrix()
-        
-        rownames(vst.mat) = dds.mat$Gene
-        
-        vst.mat <- t(scale(t(vst.mat)))
-        
-        
-        #create a colorRamp function based on user input in color palette choices
-        colors.hm <- c(colorDE(), "#FFFFFF", color2DE())
-        
-        ht <- heatmaply(
-          vst.mat,
-          row_text_angle = 45,
-          height = 600,
-          width = 600,
-          colors = colors.hm,
-          dendrogram = "column",
-          show_dendrogram = TRUE,
-          col_side_colors = cond,#adds labels to clusters
-          draw_cellnote = TRUE,
-          showticklabels = c(FALSE, FALSE)# removes column and row labels
-        )
-        ht
-        #reticulate::py_run_string("import sys")
-        tmp <- tempfile(fileext = ".png")
-        save_image(ht, tmp)
-        file.show(tmp)
-        
+            plot = ComplexHeatmap::Heatmap(
+              vst.mat,
+              name = "z scaled expression",
+              col = colors.hm,
+              row_names_gp = gpar(fontsize = 12),
+              column_names_gp = gpar(fontsize = 12),
+              column_title = NULL,
+              row_title = "Top DEGs",
+              top_annotation = top_annotation,
+              heatmap_legend_param = list(
+                title_gp = gpar(fontsize = 12),
+                labels_gp = gpar(fontsize = 12)
+              )
+            )
+              png(file, width = 780, height = 780, units = "px", pointsize = 60)
+              draw(plot)
+              dev.off()
+       
       } else if (input$plot_type == "Heatmap" & input$file_type == "svg"){
-        #     #generate dds results table
+        #determine which column needed for cluster annotations based on model choice 
+        if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
+          dds.file <- dataset_dds()
+          cond_var <- dataset_choice$user_model()
+          meta <- colData(dds.file)
+          cond <- meta[, cond_var]
+          cond <- factor(cond, levels = levels(cond))
+        } else {
+          dds.file <- dataset_dds()
+          meta <- colData(dds.file)
+          cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
+          cond <- meta[, cond_var]
+          cond <- factor(cond, levels = levels(cond))
+        }
+        #generate dds results table
         res.hm <-
           generateRes(dataset_choice$user_dataset(), dds_result())
         dds.mat <- res.hm %>%
@@ -732,9 +753,33 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
         rownames(vst.mat) = dds.mat$Gene
         
         vst.mat <- t(scale(t(vst.mat)))
-        
         #create a colorRamp function based on user input in color palette choices
         colors.hm <- colorRamp2(c(-2, 0, 2), c(colorDE(), "white", color2DE()))
+        
+        #create a color vector for column annotations
+        col_anno <- setNames(c("blue", "red")[seq_along(levels(cond))], levels(cond))
+        
+        #annotation data frame from sample condition
+        top_anno <- data.frame(
+          Condition = cond
+        )
+        
+        #dynamicallly update condition variable based on dataset
+        annotation_label <- cond_var
+        
+        top_annotation <- ComplexHeatmap::HeatmapAnnotation(
+          df = top_anno,
+          col = list(Condition = col_anno),
+          annotation_legend_param = list(
+            title = annotation_label, 
+            title_gp = gpar(fontsize = 12),
+            labels_gp = gpar(fontsize = 12)
+          ),
+          annotation_height = unit(5, "mm"),
+          annotation_width = unit(5, "mm"),
+          show_annotation_name = FALSE
+        )
+        
         plot = ComplexHeatmap::Heatmap(
           vst.mat,
           name = "z scaled expression",
@@ -742,7 +787,12 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
           row_names_gp = gpar(fontsize = 12),
           column_names_gp = gpar(fontsize = 12),
           column_title = NULL,
-          row_title = "Top DEGs"
+          row_title = "Top DEGs",
+          top_annotation = top_annotation,
+          heatmap_legend_param = list(
+            title_gp = gpar(fontsize = 12),
+            labels_gp = gpar(fontsize = 12)
+          )
         )
         svg(file, width = 780, height = 780, units = "px", pointsize = 60)
         draw(plot)

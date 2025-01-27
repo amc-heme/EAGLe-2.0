@@ -52,5 +52,6 @@ library(bsicons)
 library(crosstalk)
 library(glue)
 library(reticulate)
+library(webshot)
 
 
