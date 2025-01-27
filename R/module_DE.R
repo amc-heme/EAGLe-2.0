@@ -792,7 +792,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
             labels_gp = gpar(fontsize = 12)
           )
         )
-        svg(file, width = 780, height = 780, units = "px", pointsize = 60)
+        svglite::svglite(file, width = 8, height = 7, pointsize = 30)
         draw(plot)
         dev.off()
         } else {

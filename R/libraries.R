@@ -51,7 +51,6 @@ library(bslib)
 library(bsicons)
 library(crosstalk)
 library(glue)
-library(reticulate)
-library(webshot)
+library(svglite)
 
 

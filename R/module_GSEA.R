@@ -1114,7 +1114,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
               labels_gp = gpar(fontsize = 12)
             )
           ) 
-          svg(file, width = 780, height = 780, units = "px", pointsize = 60)
+          svglite::svglite(file, width = 8, height = 7, pointsize = 30)
           # draw heatmap object
           draw(ht)
           dev.off()
