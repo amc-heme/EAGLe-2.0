@@ -688,11 +688,19 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       req(input$pathwaylistht)
       
       #determine which column needed for cluster annotations based on model choice 
+      if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
+        dds.file <- dataset_dds()
+        cond_var <- dataset_choice$user_model()
+        meta <- colData(dds.file)
+        cond <- meta[, cond_var]
+        cond <- factor(cond, levels = levels(cond))
+      } else {
         dds.file <- dataset_dds()
         meta <- colData(dds.file)
         cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
         cond <- meta[, cond_var]
-      
+        cond <- factor(cond, levels = levels(cond))
+      }
       
       res.hmg <- DE_res$dds_res() 
 
@@ -722,22 +730,38 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       #transform and scale and transform back
       vstgsea.mat <- t(scale(t(vstgsea.mat)))
       
+      #color function buliding a colorRamp palette based on user input from palette choices
+      colors.hmg <- c(colorGHeat(), "white", colorGHeat2())
+      
+      ht1 = ComplexHeatmap::Heatmap(
+        vstgsea.mat,
+        name = "z scaled expression",
+        col = colors.hmg,
+        row_names_gp = gpar(fontsize = 12),
+        column_names_gp = gpar(fontsize = 12),
+        column_title = NULL,
+        row_title = "DEGs in Pathway"
+      ) 
+      
+      ht1_res <- draw(ht1)
+      row1_order <- row_order(ht1_res) #extract row order for plotly heatmap
+      col_order <- column_order(ht1_res) #extract column order for plotly heatmap
+      
+      vst_reordered <- vstgsea.mat[row1_order, col_order]
+      
       top_anno <- data.frame(
         Condition = cond
       )
-      #color function buliding a colorRamp palette based on user input from palette choices
-      colors.hmg <- c(colorGHeat(), "white", colorGHeat2())
+      
+      top_anno <- top_anno[col_order, , drop = FALSE]
  
       ht <- heatmaply(
-        vstgsea.mat,
-        #k_col = k_number,
+        vst_reordered,
         row_text_angle = 45,
         height = 600,
         width = 600,
-        # colorbar = list(len=1, limits = c(-2, 2)),
         colors = colors.hmg,
-        dendrogram = "column",
-        show_dendrogram = TRUE,
+        dendrogram = "none",
         col_side_colors = top_anno,
         showticklabels = c(FALSE, FALSE)
       )
@@ -913,6 +937,20 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
             bg ="#FFFFFF"
           )
         } else if(input$plot_type == "Heatmap" & input$file_type == "png"){
+          #determine which column needed for cluster annotations based on model choice 
+          if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
+            dds.file <- dataset_dds()
+            cond_var <- dataset_choice$user_model()
+            meta <- colData(dds.file)
+            cond <- meta[, cond_var]
+            cond <- factor(cond, levels = levels(cond))
+          } else {
+            dds.file <- dataset_dds()
+            meta <- colData(dds.file)
+            cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
+            cond <- meta[, cond_var]
+            cond <- factor(cond, levels = levels(cond))
+          }
           #generate dds results table 
           res.hmg <- DE_res$dds_res() 
           
@@ -943,8 +981,34 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
             as.matrix()
           
           vstgsea.mat <- t(scale(t(vstgsea.mat)))
+          
           #create a colorRamp function based on user input in color palette choices
           colors.hmg <- colorRamp2(c(-2, 0, 2), c(colorGHeat(), "white", colorGHeat2()))
+          
+          #create a color vector for column annotations
+          col_anno <- setNames(c("blue", "red")[seq_along(levels(cond))], levels(cond))
+          
+          #annotation data frame from sample condition
+          top_anno <- data.frame(
+            Condition = cond
+          )
+          
+          #dynamicallly update condition variable based on dataset
+          annotation_label <- cond_var
+          
+          top_annotation <- ComplexHeatmap::HeatmapAnnotation(
+            df = top_anno,
+            col = list(Condition = col_anno),
+            annotation_legend_param = list(
+              title = annotation_label, 
+              title_gp = gpar(fontsize = 12),
+              labels_gp = gpar(fontsize = 12)
+            ),
+            annotation_height = unit(5, "mm"),
+            annotation_width = unit(5, "mm"),
+            show_annotation_name = FALSE
+          )
+          
           ht = ComplexHeatmap::Heatmap(
             vstgsea.mat,
             name = "z scaled expression",
@@ -952,13 +1016,32 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
             row_names_gp = gpar(fontsize = 12),
             column_names_gp = gpar(fontsize = 12),
             column_title = NULL,
-            row_title = "DEGs in Pathway"
+            row_title = "DEGs in Pathway",
+            top_annotation = top_annotation,
+            heatmap_legend_param = list(
+              title_gp = gpar(fontsize = 12),
+              labels_gp = gpar(fontsize = 12)
+            )
           ) 
           png(file, width = 780, height = 780, units = "px", pointsize = 60)
           # draw heatmap object
           draw(ht)
           dev.off()
         } else if(input$plot_type == "Heatmap" & input$file_type == "svg"){
+          #determine which column needed for cluster annotations based on model choice 
+          if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
+            dds.file <- dataset_dds()
+            cond_var <- dataset_choice$user_model()
+            meta <- colData(dds.file)
+            cond <- meta[, cond_var]
+            cond <- factor(cond, levels = levels(cond))
+          } else {
+            dds.file <- dataset_dds()
+            meta <- colData(dds.file)
+            cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
+            cond <- meta[, cond_var]
+            cond <- factor(cond, levels = levels(cond))
+          }
           #generate dds results table 
           res.hmg <- DE_res$dds_res() 
           
@@ -989,8 +1072,34 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
             as.matrix()
           
           vstgsea.mat <- t(scale(t(vstgsea.mat)))
+          
           #create a colorRamp function based on user input in color palette choices
           colors.hmg <- colorRamp2(c(-2, 0, 2), c(colorGHeat(), "white", colorGHeat2()))
+          
+          #create a color vector for column annotations
+          col_anno <- setNames(c("blue", "red")[seq_along(levels(cond))], levels(cond))
+          
+          #annotation data frame from sample condition
+          top_anno <- data.frame(
+            Condition = cond
+          )
+          
+          #dynamicallly update condition variable based on dataset
+          annotation_label <- cond_var
+          
+          top_annotation <- ComplexHeatmap::HeatmapAnnotation(
+            df = top_anno,
+            col = list(Condition = col_anno),
+            annotation_legend_param = list(
+              title = annotation_label, 
+              title_gp = gpar(fontsize = 12),
+              labels_gp = gpar(fontsize = 12)
+            ),
+            annotation_height = unit(5, "mm"),
+            annotation_width = unit(5, "mm"),
+            show_annotation_name = FALSE
+          )
+          
           ht = ComplexHeatmap::Heatmap(
             vstgsea.mat,
             name = "z scaled expression",
@@ -998,7 +1107,12 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
             row_names_gp = gpar(fontsize = 12),
             column_names_gp = gpar(fontsize = 12),
             column_title = NULL,
-            row_title = "DEGs in Pathway"
+            row_title = "DEGs in Pathway",
+            top_annotation = top_annotation,
+            heatmap_legend_param = list(
+              title_gp = gpar(fontsize = 12),
+              labels_gp = gpar(fontsize = 12)
+            )
           ) 
           svg(file, width = 780, height = 780, units = "px", pointsize = 60)
           # draw heatmap object

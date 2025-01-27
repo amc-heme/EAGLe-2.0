@@ -653,8 +653,6 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
           cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
           cond <- meta[, cond_var]
           cond <- factor(cond, levels = levels(cond))
-          print("cond")
-          print(cond)
         }
          #generate dds results table
             res.hm <-
