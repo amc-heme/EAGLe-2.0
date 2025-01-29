@@ -77,25 +77,23 @@ DE_UI <- function(id) {
           icon = icon("sliders"),
           status = "primary",
           circle = FALSE,
-          downloadButton(
-            ns("downloadDESeq"),
-            label =
-              "DEG Table"
+          selectInput(
+            inputId = ns("plot_type"),
+            label = "Select Plot",
+            choices = c("DEG Table", "Volcano", "MA", "Heatmap"),
+            selected = "PCA"
+          ),
+          selectInput(
+            inputId = ns("file_type"),
+            label = "Select File Type",
+            choices = c(".png" = "png", ".svg" = "svg"),
+            selected = "png"
           ),
           downloadButton(
-            ns("downloadDEVol"),
-            label = 
-              "Volcano"
-          ),
-          downloadButton(
-            ns("downloadDEMA"),
-            label = 
-              "MA"
-          ),
-          downloadButton(
-            ns("downloadDEHM"),
-            label =
-              "Heatmap"
+            outputId = ns("confirm_download"),
+            label = "Download",
+            class = "confirm-download",
+            icon = NULL
           )
         )
       )
@@ -338,14 +336,6 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
                         options = list(scrollX = TRUE))
        }
     })
-      
-    # Download DE table ####
-      output$downloadDESeq <- downloadHandler(
-        filename = paste("DEGTable", '.csv', sep=''),
-        content = function(file) {
-          write.csv(dds.res,file)
-        }
-      )
   }
 })
 
@@ -396,25 +386,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     })
     }
   })
-# Download Volcano plot ####
-  output$downloadDEVol <- downloadHandler(
-    filename = paste("DE Volcano", '.png', sep=''),
-    content = function(file) {
-      colors <- c(colorDE(), "grey", color2DE())
-      res.vol <- generateRes(dataset_choice$user_dataset(), dds_result())
-      p <- ggplot(data=res.vol, aes(x=log2FoldChange, y=-log10(padj), col = DiffExp)) + 
-        geom_point() +
-        theme_cowplot(font_size = 14) +
-        scale_colour_manual(values = colors) +
-        theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-        theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-        theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-        ggtitle("DE Volcano Plot") +
-        coord_cartesian(xlim = c(-10, 7))
-      ggsave(p, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
-    }
-  )
-  
+
  ##MA Plot ####
   
   observe({
@@ -467,37 +439,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     })
    }
   })
-   # Download MA plot ####
-  output$downloadDEMA <- downloadHandler(
-    filename = paste("DE MA", '.png', sep=''),
-    content = function(file) {
-      colors <- c(colorDE(), "grey", color2DE())
-      res.ma <- generateRes(dataset_choice$user_dataset(), dds_result())
-      m <- ggplot(res.ma, 
-                   aes(
-                     x = log2(baseMean),
-                     y = `log2FoldChange`,
-                     col = DiffExp
-                   )) +
-        geom_point() +
-        geom_hline(aes(yintercept = 0)) +
-        scale_color_manual(values = colors) +
-        theme_cowplot(font_size = 14) +
-        theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-        theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-        theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-        ylim(c(
-          min(res.ma$`log2FoldChange`),
-          max(res.ma$`log2FoldChange`)
-        )) +
-        ggtitle("DE MA Plot") +
-        xlab("log2 Mean Expression") +
-        ylab("Log2 Fold Change")
-      
-      ggsave(m, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
-    }
-  )
-    
+
     #Heatmap ####
 
   output$ht <- renderPlotly({
@@ -542,25 +484,50 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     rownames(vst.mat) = dds.mat$Gene
     
     vst.mat <- t(scale(t(vst.mat)))
-
-
+    #the heatmap needs to be produced by complex heatmap to 
+    #extract the row and column order so that the donloaded heatmap
+    #matches the interactive plotly heatmap shown in the app
+    
     #create a colorRamp function based on user input in color palette choices
     colors.hm <- c(colorDE(), "#FFFFFF", color2DE())
-
-    ht <- heatmaply(
+    
+    ht1 = ComplexHeatmap::Heatmap(
       vst.mat,
+      name = "z scaled expression",
+      col = colors.hm,
+      row_names_gp = gpar(fontsize = 12),
+      column_names_gp = gpar(fontsize = 12),
+      column_title = NULL,
+      row_title = "Top DEGs"
+    )
+    ht1_res <- draw(ht1)
+    row1_order <- row_order(ht1_res) #extract row order for plotly heatmap
+    col_order <- column_order(ht1_res) #extract column order for plotly heatmap
+    
+    vst_reordered <- vst.mat[row1_order, col_order]
+    
+    
+    top_anno <- data.frame(
+      Condition = cond
+    )
+    
+    colnames(top_anno) <- cond_var
+    
+    top_anno <- top_anno[col_order, , drop = FALSE]
+    
+    ht <- heatmaply(
+      vst_reordered,
       row_text_angle = 45,
       height = 600,
       width = 600,
       colors = colors.hm,
-      dendrogram = "column",
-      show_dendrogram = TRUE,
-      col_side_colors = cond,#adds labels to clusters
+      dendrogram = "none",
+     # show_dendrogram = TRUE,
+      col_side_colors = top_anno,#adds labels to clusters
       showticklabels = c(FALSE, FALSE)# removes column and row labels
     )
    
     ht
- 
   })
 
   
@@ -583,46 +550,262 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     }
   })
 
-# download DE Heatmap ####
-  output$downloadDEHM <- downloadHandler(
-    filename = paste("DE_Heatmap", '.png', sep=''),
-    content = function(file) {
-      #generate dds results table 
-      res.hm <-
-        generateRes(dataset_choice$user_dataset(), dds_result())
-      dds.mat <- res.hm %>%
-        dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>% 
-        dplyr::arrange(desc(abs(`log2FoldChange`))) %>% 
-        slice(1:50)
-      #filter vst counts matrix by sig expressed genes
-      vst.mat <- vst() %>%
-        dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
-        distinct(ext_gene_ensembl, .keep_all = TRUE) %>% 
-        column_to_rownames(., var = "ensembl_gene_id") %>%
-        dplyr::select(., -ext_gene_ensembl) %>%
-        as.matrix()
-      rownames(vst.mat) = dds.mat$Gene
-      
-      vst.mat <- t(scale(t(vst.mat)))
-     
-      #create a colorRamp function based on user input in color palette choices
-      colors.hm <- colorRamp2(c(-2, 0, 2), c(colorDE(), "white", color2DE()))
-      ht = ComplexHeatmap::Heatmap(
-        vst.mat,
-        name = "z scaled expression",
-        col = colors.hm,
-        row_names_gp = gpar(fontsize = 6),
-        column_names_gp = gpar(fontsize = 6),
-        column_title = NULL,
-        row_title = "Top DEGs"
-      ) 
-      png(file)
-      # draw heatmap object
-      draw(ht)
-      dev.off()
-    }
-    )
 
+  
+  observeEvent(input$plot_type, {
+    if(input$plot_type == "DEG Table"){
+      updateSelectInput(
+        inputId = "file_type",
+        label = "Select File Type",
+        choices = c(".csv" = "csv"),
+        selected = "csv"
+      )
+    } else{
+      updateSelectInput(
+        inputId = "file_type",
+        label = "Select File Type",
+        choices = c(".png" = "png", ".svg" = "svg"),
+        selected = "png"
+      )
+    }
+  })
+ # download plots ####
+  output$confirm_download <- downloadHandler(
+    
+    filename = function(){
+      if (input$file_type == "png"){
+        glue(input$plot_type, ".png")
+      } else if (input$file_type == "svg"){
+        glue(input$plot_type, ".svg")
+      } else if (input$file_type == "csv"){
+        glue(input$plot_type, ".csv")
+      }
+    }, 
+    content = function(file) {
+      if(input$plot_type == "Volcano"){
+        
+        colors <- c(colorDE(), "grey", color2DE())
+        res.vol <- generateRes(dataset_choice$user_dataset(), dds_result())
+        plot <- ggplot(data = res.vol, aes(
+          x = log2FoldChange,
+          y = -log10(padj),
+          col = DiffExp
+        )) +
+          geom_point() +
+          theme_cowplot(font_size = 14) +
+          scale_colour_manual(values = colors) +
+          theme(axis.title = element_text(face = "bold"),
+                title = element_text(face = "bold")) +
+          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          ggtitle("DE Volcano Plot") +
+          coord_cartesian(xlim = c(-10, 7))
+        ggsave(
+          plot,
+          file = file,
+          device = input$file_type,
+          width = 8,
+          height = 6,
+          units = "in",
+          dpi = 100,
+          bg ="#FFFFFF"
+        )
+      } else if (input$plot_type == "MA"){
+            colors <- c(colorDE(), "grey", color2DE())
+            res.ma <- generateRes(dataset_choice$user_dataset(), dds_result())
+            plot <- ggplot(res.ma,
+                         aes(
+                           x = log2(baseMean),
+                           y = `log2FoldChange`,
+                           col = DiffExp
+                         )) +
+              geom_point() +
+              geom_hline(aes(yintercept = 0)) +
+              scale_color_manual(values = colors) +
+              theme_cowplot(font_size = 14) +
+              theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+              theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+              theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+              ylim(c(
+                min(res.ma$`log2FoldChange`),
+                max(res.ma$`log2FoldChange`)
+              )) +
+              ggtitle("DE MA Plot") +
+              xlab("log2 Mean Expression") +
+              ylab("Log2 Fold Change")
+        ggsave(
+          plot,
+          file = file,
+          device = input$file_type,
+          width = 8,
+          height = 6,
+          units = "in",
+          dpi = 100,
+          bg ="#FFFFFF"
+        )
+      } else if(input$plot_type == "Heatmap" & input$file_type == "png"){
+        #determine which column needed for cluster annotations based on model choice 
+        if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
+          dds.file <- dataset_dds()
+          cond_var <- dataset_choice$user_model()
+          meta <- colData(dds.file)
+          cond <- meta[, cond_var]
+          cond <- factor(cond, levels = levels(cond))
+        } else {
+          dds.file <- dataset_dds()
+          meta <- colData(dds.file)
+          cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
+          cond <- meta[, cond_var]
+          cond <- factor(cond, levels = levels(cond))
+        }
+         #generate dds results table
+            res.hm <-
+              generateRes(dataset_choice$user_dataset(), dds_result())
+            dds.mat <- res.hm %>%
+              dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>%
+              dplyr::arrange(desc(abs(`log2FoldChange`))) %>%
+              slice(1:50)
+            
+            #filter vst counts matrix by sig expressed genes
+            vst.mat <- vst() %>%
+              dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
+              distinct(ext_gene_ensembl, .keep_all = TRUE) %>%
+              column_to_rownames(., var = "ensembl_gene_id") %>%
+              dplyr::select(., -ext_gene_ensembl) %>%
+              as.matrix()
+            rownames(vst.mat) = dds.mat$Gene
+            
+            #transform matrix
+            vst.mat <- t(scale(t(vst.mat)))
+            
+            #create a colorRamp function based on user input in color palette choices
+            colors.hm <- colorRamp2(c(-2, 0, 2), c(colorDE(), "white", color2DE()))
+            
+            #create a color vector for column annotations
+            col_anno <- setNames(c("blue", "red")[seq_along(levels(cond))], levels(cond))
+            
+            #annotation data frame from sample condition
+            top_anno <- data.frame(
+              Condition = cond
+            )
+            
+            #dynamicallly update condition variable based on dataset
+            annotation_label <- cond_var
+          
+            top_annotation <- ComplexHeatmap::HeatmapAnnotation(
+              df = top_anno,
+              col = list(Condition = col_anno),
+              annotation_legend_param = list(
+                title = annotation_label, 
+                title_gp = gpar(fontsize = 12),
+                labels_gp = gpar(fontsize = 12)
+                ),
+              annotation_height = unit(5, "mm"),
+              annotation_width = unit(5, "mm"),
+              show_annotation_name = FALSE
+              )
+        
+            plot = ComplexHeatmap::Heatmap(
+              vst.mat,
+              name = "z scaled expression",
+              col = colors.hm,
+              row_names_gp = gpar(fontsize = 12),
+              column_names_gp = gpar(fontsize = 12),
+              column_title = NULL,
+              row_title = "Top DEGs",
+              top_annotation = top_annotation,
+              heatmap_legend_param = list(
+                title_gp = gpar(fontsize = 12),
+                labels_gp = gpar(fontsize = 12)
+              )
+            )
+              png(file, width = 780, height = 780, units = "px", pointsize = 60)
+              draw(plot)
+              dev.off()
+       
+      } else if (input$plot_type == "Heatmap" & input$file_type == "svg"){
+        #determine which column needed for cluster annotations based on model choice 
+        if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
+          dds.file <- dataset_dds()
+          cond_var <- dataset_choice$user_model()
+          meta <- colData(dds.file)
+          cond <- meta[, cond_var]
+          cond <- factor(cond, levels = levels(cond))
+        } else {
+          dds.file <- dataset_dds()
+          meta <- colData(dds.file)
+          cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
+          cond <- meta[, cond_var]
+          cond <- factor(cond, levels = levels(cond))
+        }
+        #generate dds results table
+        res.hm <-
+          generateRes(dataset_choice$user_dataset(), dds_result())
+        dds.mat <- res.hm %>%
+          dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>%
+          dplyr::arrange(desc(abs(`log2FoldChange`))) %>%
+          slice(1:50)
+        #filter vst counts matrix by sig expressed genes
+        vst.mat <- vst() %>%
+          dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
+          distinct(ext_gene_ensembl, .keep_all = TRUE) %>%
+          column_to_rownames(., var = "ensembl_gene_id") %>%
+          dplyr::select(., -ext_gene_ensembl) %>%
+          as.matrix()
+        rownames(vst.mat) = dds.mat$Gene
+        
+        vst.mat <- t(scale(t(vst.mat)))
+        #create a colorRamp function based on user input in color palette choices
+        colors.hm <- colorRamp2(c(-2, 0, 2), c(colorDE(), "white", color2DE()))
+        
+        #create a color vector for column annotations
+        col_anno <- setNames(c("blue", "red")[seq_along(levels(cond))], levels(cond))
+        
+        #annotation data frame from sample condition
+          
+        top_anno <- data.frame(
+          Condition = cond
+        )
+        
+        #dynamicallly update condition variable based on dataset
+        annotation_label <- cond_var
+        
+        top_annotation <- ComplexHeatmap::HeatmapAnnotation(
+          df = top_anno,
+          col = list(Condition = col_anno),
+          annotation_legend_param = list(
+            title = annotation_label, 
+            title_gp = gpar(fontsize = 12),
+            labels_gp = gpar(fontsize = 12)
+          ),
+          annotation_height = unit(5, "mm"),
+          annotation_width = unit(5, "mm"),
+          show_annotation_name = FALSE
+        )
+        
+        plot = ComplexHeatmap::Heatmap(
+          vst.mat,
+          name = "z scaled expression",
+          col = colors.hm,
+          row_names_gp = gpar(fontsize = 12),
+          column_names_gp = gpar(fontsize = 12),
+          column_title = NULL,
+          row_title = "Top DEGs",
+          top_annotation = top_annotation,
+          heatmap_legend_param = list(
+            title_gp = gpar(fontsize = 12),
+            labels_gp = gpar(fontsize = 12)
+          )
+        )
+        svglite::svglite(file, width = 8, height = 7, pointsize = 30)
+        draw(plot)
+        dev.off()
+        } else {
+        dds.res <- generateRes(dataset_choice$user_dataset(), dds_result())
+        write.csv(dds.res, file = file)
+      }
+    }
+  )
 
   DDS4GSEA <- reactiveVal(NULL)
   
@@ -658,7 +841,3 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   })
   }
 
-# need a way to send the results of the de test to GSEA for the volcano plot as well. 
-# dds_results function requires the runDEtest function to work. The DE table sent to
-# GSEA is in tidy format and will not work for creating a res table
-#figure out how to stop dds_result from running in generateGSEAres before button is pushed

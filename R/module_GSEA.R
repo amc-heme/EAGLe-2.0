@@ -194,43 +194,31 @@ GSEA_UI <- function(id) {
             options = list(maxItems = 1)
           )
         ),
-      #dropdown menu containing download buttons ####
       dropdownButton(
         inputId = ns("download_menu"),
         label = "Download",
         icon = icon("sliders"),
         status = "primary",
         circle = FALSE,
-        downloadButton(
-          ns("downloadfgsea"),
-          label =
-            "Pathway List"
+        selectInput(
+          inputId = ns("plot_type"),
+          label = "Select Plot",
+          choices = c("GSEA Table","Waterfall","Moustache", "Enrichment", "Volcano", "Heatmap"),
+          selected = "Waterfall"
         ),
-        downloadButton(
-          ns("downloadranks"),
-          label =
-            "Waterfall"
+        selectInput(
+          inputId = ns("file_type"),
+          label = "Select File Type",
+          choices = c(".png" = "png", ".svg" = "svg"),
+          selected = "png"
         ),
-        downloadButton(
-          ns("downloadmoustache"),
-          label = 
-            "Moustache"
-        ),
-        downloadButton(
-          ns("downloadeplot"),
-          label =
-            "Enrichment"
-        ),
-        downloadButton(
-          ns("downloadvolcano"),
-          label =
-            "Volcano"
-        ),
-        downloadButton(
-          ns("downloadheatmap"),
-          label = 
-            "Heatmap"
-        )
+      #download button ####
+      downloadButton(
+        outputId = ns("confirm_download"),
+        label = "Download",
+        class = "confirm-download",
+        icon = NULL
+      )
       )
       ),
 
@@ -415,16 +403,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
           arrange(desc(NES))
         fgseaResTidy
       })
-    
-    #download pathway list ####
-    output$downloadfgsea <- downloadHandler(
-      filename = paste("GSEATable", '.csv', sep = ''),
-      content = function(file) {
-        fwrite(gseafile(),file, sep=",", sep2=c("", " ", ""))
-      }
-    )
-    
-      
+  
     #filter Res table for chosen pathway to show in a waterfall plot
     gseafile_waterfall <-
       reactive({
@@ -477,30 +456,6 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       }
     )
     
-    #download button output- waterfall plot ####
-    output$downloadranks <- downloadHandler(
-      filename = function() { paste("Waterfall Plot", '.png', sep='') },
-      content = function(file) {
-        
-        colors <- c("grey", colorWF())
-        
-        w <- ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
-          geom_col(aes(fill = padj < 0.05)) +
-          scale_fill_manual(values = colors) +
-          coord_flip() +
-          labs(
-            x = "Pathway",
-            y = "Normalized Enrichment Score",
-            title = "Pathway NES from GSEA"
-          ) +
-          theme_cowplot(font_size = 14) +
-          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF"))  
-        
-        ggsave(w, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
-      }
-    )
     #reactive wrapper for js functions to hide or show plot dimensions based on toggle switch
     observe({
       toggle(id = "rankedheightslider", condition = input$hidedimsWF)
@@ -555,29 +510,6 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         }
       }
     )
-    #download button output - moustache plot ####
-    output$downloadmoustache <- downloadHandler(
-      filename = paste("Moustache Plot", '.png', sep=''),
-      content = function(file) {
-        
-        colors <- c('grey', colorM())
-        mous <-
-          ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) +
-          geom_point() +
-          theme_cowplot(font_size = 14) +
-          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          xlab('NES') +
-          scale_color_manual(values = colors) +
-          ylab('adjusted p-value') +
-          ggtitle("Pathways from GSEA") +
-          geom_text_repel(colour = "black", aes(label= ifelse(padj <0.05, as.character(pathway), ""), hjust=0,vjust=0)) +
-          coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1)) 
-        
-      ggsave(mous, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
-      }
-    )
     
     #GSEA Enrichment Plots ####
     #reactive expression for specific pathway choice
@@ -610,30 +542,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
                        ranks()) + labs(title= input$pathwaylisteplot)
       }
     })
-    #download button output- enrichment plot ####
-    output$downloadeplot <- downloadHandler(
-      filename = paste("Enrichment Plot", '.png', sep=''),
-      content = function(file) {
-        fgseaResTidy <- fgseaRes() %>%
-          as_tibble() %>%
-          dplyr::select(., -pval,-log2err, -ES) %>% 
-          arrange(desc(NES))
-        if(input$topupordownbutton == "topup") {
-          top.UP.path <- as.character(fgseaResTidy[1,1])
-          e <- plotEnrichment(pathwaygsea[[top.UP.path]],
-                         ranks()) + labs(title=top.UP.path)
-        } else if(input$topupordownbutton == "topdown") {
-          top.DOWN.path <- as.character(fgseaResTidy[nrow(fgseaResTidy), 1])
-          e <- plotEnrichment(pathwaygsea[[top.DOWN.path]],
-                         ranks()) + labs(title=top.DOWN.path)
-        } else if(input$topupordownbutton == "eplotpath") {
-          e <- plotEnrichment(pathwaygsea[[input$pathwaylisteplot]],
-                         ranks()) + labs(title= input$pathwaylisteplot)
-        }
-        ggsave(e, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
-      }
-    )
-    
+  
     
     # GSEA Volcano plot ####
     
@@ -698,52 +607,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         girafe(code = print(v))
       })
   
-    #download button output- volcano plot ####
-    output$downloadvolcano <- downloadHandler(
-      filename = paste("Volcano Plot", '.png', sep=''),
-      content = function(file) {
-        
-        gseavol_title <-
-          paste(input$pathwaylist)
   
-        colors <-
-          c("grey", v_col())
-        
-        #if (input$volcanoplot == TRUE) {
-        v <- ggplot(
-          data = (pathway.genes() %>% arrange(., (genes_in_pathway))),
-          aes(
-            x = log2FoldChange,
-            y = -log10(padj),
-            col = genes_in_pathway[]
-          )
-        ) +
-          theme_cowplot(font_size = 14) +
-          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
-          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
-          geom_point() +
-          scale_color_manual(values = colors) +
-        geom_text_repel(
-          max.overlaps = 1500,
-          colour = "black",
-          aes( #only label is gene is in pathway and sig expression
-            label = ifelse(
-              genes_in_pathway == 'yes' & log2FoldChange > 1.5,
-              as.character(Gene),
-              ""
-            )
-          ),
-          hjust = 0,
-          vjust = 0
-        ) +
-        ggtitle(gseavol_title) + #reactive title
-          xlab("log2foldchange")
-        ggsave(v, file = file, device = "png", width = 8, height = 6, units = "in",dpi = 100)
-      })
-
-    
-    
     #GSEA heatmap ####
     
     #check for NULL output
@@ -801,7 +665,9 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         as_tibble() %>%
         dplyr::select(., -pval,-log2err, -ES) %>% 
         arrange(desc(NES))
+      
       top.up <- as.character(fgseaResTidy3[1,1])
+      
       updateSelectizeInput(session,
                            "pathwaylistht",
                            choices = names(pathwaygsea3),
@@ -824,11 +690,19 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       req(input$pathwaylistht)
       
       #determine which column needed for cluster annotations based on model choice 
+      if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
+        dds.file <- dataset_dds()
+        cond_var <- dataset_choice$user_model()
+        meta <- colData(dds.file)
+        cond <- meta[, cond_var]
+        cond <- factor(cond, levels = levels(cond))
+      } else {
         dds.file <- dataset_dds()
         meta <- colData(dds.file)
         cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
         cond <- meta[, cond_var]
-      
+        cond <- factor(cond, levels = levels(cond))
+      }
       
       res.hmg <- DE_res$dds_res() 
 
@@ -857,23 +731,61 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
 
       #transform and scale and transform back
       vstgsea.mat <- t(scale(t(vstgsea.mat)))
+      
       #color function buliding a colorRamp palette based on user input from palette choices
       colors.hmg <- c(colorGHeat(), "white", colorGHeat2())
- 
-      ht <- heatmaply(
+      
+      #need to create a ComplexHeatmap to get column and row orders to match in 
+      #plotly heatmap for image downloads
+      ht1 = ComplexHeatmap::Heatmap(
         vstgsea.mat,
-        #k_col = k_number,
-        row_text_angle = 45,
-        height = 600,
-        width = 600,
-        # colorbar = list(len=1, limits = c(-2, 2)),
-        colors = colors.hmg,
-        dendrogram = "column",
-        show_dendrogram = TRUE,
-        col_side_colors = cond,
-        showticklabels = c(FALSE, FALSE)
+        name = "z scaled expression",
+        col = colors.hmg,
+        row_names_gp = gpar(fontsize = 12),
+        column_names_gp = gpar(fontsize = 12),
+        column_title = NULL,
+        row_title = "DEGs in Pathway"
+      ) 
+      
+      ht1_res <- draw(ht1)
+      row1_order <- row_order(ht1_res) #extract row order for plotly heatmap
+      col_order <- column_order(ht1_res) #extract column order for plotly heatmap
+      
+      #data frame for top annotation
+      top_anno <- data.frame(
+        Condition = cond
       )
-
+      
+      #rename colnames to match the condition variable of each dataset
+      colnames(top_anno) <- cond_var
+      #retain column order from ComplexHeatmap
+      top_anno <- top_anno[col_order, , drop = FALSE]
+      
+      #if there is only one gene in the pathway, need to remove col_side_colors
+      #to load the heatmap because heatmaply tries to match nrow to the number 
+      # of samples and throws an error
+     if(ncol(vstgsea.mat) == 1){
+       ht <- heatmaply(
+         vstgsea.mat,
+         row_text_angle = 45,
+         height = 600,
+         width = 600,
+         colors = colors.hmg,
+         dendrogram = "none",
+         showticklabels = c(FALSE, FALSE)
+       )
+     } else{
+       ht <- heatmaply(
+         vstgsea.mat,
+         row_text_angle = 45,
+         height = 600,
+         width = 600,
+         colors = colors.hmg,
+         dendrogram = "none",
+         col_side_colors = top_anno,
+         showticklabels = c(FALSE, FALSE)
+       )
+     }
       ht
     })
  
@@ -888,56 +800,349 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       }
     })
 
-    # download DE Heatmap ####
-    output$downloadheatmap <- downloadHandler(
-      filename = paste("GSEA_Heatmap", '.png', sep=''),
-      content = function(file) {
-        #generate dds results table 
-        res.hmg <- DE_res$dds_res() 
- 
-        dds.sig <- res.hmg %>%
-          dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
-
-        if(nrow(dds.sig) == 0) {
-          return(NULL)
-        }
-        
-        pathwaygsea4 <- gsea_file_values[[input$filechoice]]
-        
-        
-        p2 <- unlist((pathwaygsea4[names(pathwaygsea4) %in% input$pathwaylistht]))
-  
-        
-        #filter vst counts matrix for genes in pathway
-        vst.myc <- vst() %>%
-          mutate(., pathwayheat = ifelse(ext_gene_ensembl %in% p2, 'yes', 'no')) %>%
-          dplyr::filter(pathwayheat == "yes") %>% 
-          dplyr::rename("Gene" = "ext_gene_ensembl")
     
-        vstgsea.mat <- vst.myc %>%
-          dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
-          distinct(Gene, .keep_all = TRUE) %>% 
-          column_to_rownames(var = "Gene") %>%
-          dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
-          as.matrix()
-     
-        vstgsea.mat <- t(scale(t(vstgsea.mat)))
-        #create a colorRamp function based on user input in color palette choices
-        colors.hmg <- colorRamp2(c(-2, 0, 2), c(colorGHeat(), "white", colorGHeat2()))
-        ht = ComplexHeatmap::Heatmap(
-          vstgsea.mat,
-          name = "z scaled expression",
-          col = colors.hmg,
-          row_names_gp = gpar(fontsize = 6),
-          column_names_gp = gpar(fontsize = 6),
-          column_title = NULL,
-          row_title = "DEGs in Pathway"
-        ) 
-        png(file)
-        # draw heatmap object
-        draw(ht)
-        dev.off()
+    #update file type for .csv file
+    observeEvent(input$plot_type, {
+      if(input$plot_type == "GSEA Table"){
+        updateSelectInput(
+          inputId = "file_type",
+          label = "Select File Type",
+          choices = c(".csv" = "csv"),
+          selected = "csv"
+        )
+      } else{
+        updateSelectInput(
+          inputId = "file_type",
+          label = "Select File Type",
+          choices = c(".png" = "png", ".svg" = "svg"),
+          selected = "png"
+        )
       }
+    })
+    #download plots ####
+    output$confirm_download <- downloadHandler(
+    filename = function(){
+      if (input$file_type == "png"){
+        glue(input$plot_type, ".png")
+      } else if (input$file_type == "svg"){
+        glue(input$plot_type, ".svg")
+      } else if (input$file_type == "csv"){
+        glue(input$plot_type, ".csv")
+      }
+    },
+    content = function(file) {
+      if(input$plot_type == "Waterfall"){
+        colors <- c("grey", colorWF())
+        
+        plot <- ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
+          geom_col(aes(fill = padj < 0.05)) +
+          scale_fill_manual(values = colors) +
+          coord_flip() +
+          labs(
+            x = "Pathway",
+            y = "Normalized Enrichment Score",
+            title = "Pathway NES from GSEA"
+          ) +
+          theme_cowplot(font_size = 14) +
+          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF"))  
+        ggsave(
+          plot,
+          file = file,
+          device = input$file_type,
+          width = 8,
+          height = 6,
+          units = "in",
+          dpi = 100,
+          bg ="#FFFFFF"
+        )
+      } else if(input$plot_type == "Moustache") {
+        colors <- c('grey', colorM())
+        plot <-
+          ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig)) +
+          geom_point() +
+          theme_cowplot(font_size = 14) +
+          theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+          theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+          xlab('NES') +
+          scale_color_manual(values = colors) +
+          ylab('adjusted p-value') +
+          ggtitle("Pathways from GSEA") +
+          geom_text_repel(colour = "black", aes(label= ifelse(padj <0.05, as.character(pathway), ""), hjust=0,vjust=0)) +
+          coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1)) 
+        ggsave(
+          plot,
+          file = file,
+          device = input$file_type,
+          width = 8,
+          height = 6,
+          units = "in",
+          dpi = 100,
+          bg ="#FFFFFF"
+        )
+      }else if(input$plot_type == "Enrichment") {
+        pathwaygsea <- gsea_file_values[[input$filechoice]]
+        fgseaResTidy <- fgseaRes() %>%
+          as_tibble() %>%
+          dplyr::select(., -pval,-log2err, -ES) %>% 
+          arrange(desc(NES))
+        if(input$topupordownbutton == "topup") {
+          top.UP.path <- as.character(fgseaResTidy[1,1])
+          plot <- plotEnrichment(pathwaygsea[[top.UP.path]],
+                              ranks()) + labs(title=top.UP.path)
+        } else if(input$topupordownbutton == "topdown") {
+          top.DOWN.path <- as.character(fgseaResTidy[nrow(fgseaResTidy), 1])
+          plot <- plotEnrichment(pathwaygsea[[top.DOWN.path]],
+                              ranks()) + labs(title=top.DOWN.path)
+        } else if(input$topupordownbutton == "eplotpath") {
+          plot <- plotEnrichment(pathwaygsea[[input$pathwaylisteplot]],
+                              ranks()) + labs(title= input$pathwaylisteplot)
+        }
+          ggsave(
+            plot,
+            file = file,
+            device = input$file_type,
+            width = 8,
+            height = 6,
+            units = "in",
+            dpi = 100,
+            bg ="#FFFFFF"
+          )
+        } else if(input$plot_type == "Volcano"){
+          gseavol_title <-
+            paste(input$pathwaylist)
+          
+          colors <-
+            c("grey", v_col())
+          
+          #if (input$volcanoplot == TRUE) {
+          plot <- ggplot(
+            data = (pathway.genes() %>% arrange(., (genes_in_pathway))),
+            aes(
+              x = log2FoldChange,
+              y = -log10(padj),
+              col = genes_in_pathway[]
+            )
+          ) +
+            theme_cowplot(font_size = 14) +
+            theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
+            theme(plot.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+            theme(panel.background = element_rect(fill = "#FFFFFF", colour = "#FFFFFF")) +
+            geom_point() +
+            scale_color_manual(values = colors) +
+            geom_text_repel(
+              max.overlaps = 1500,
+              colour = "black",
+              aes( #only label is gene is in pathway and sig expression
+                label = ifelse(
+                  genes_in_pathway == 'yes' & log2FoldChange > 1.5,
+                  as.character(Gene),
+                  ""
+                )
+              ),
+              hjust = 0,
+              vjust = 0
+            ) +
+            ggtitle(gseavol_title) + #reactive title
+            xlab("log2foldchange")
+          ggsave(
+            plot,
+            file = file,
+            device = input$file_type,
+            width = 8,
+            height = 6,
+            units = "in",
+            dpi = 100,
+            bg ="#FFFFFF"
+          )
+        } else if(input$plot_type == "Heatmap" & input$file_type == "png"){
+          #determine which column needed for cluster annotations based on model choice 
+          if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
+            dds.file <- dataset_dds()
+            cond_var <- dataset_choice$user_model()
+            meta <- colData(dds.file)
+            cond <- meta[, cond_var]
+            cond <- factor(cond, levels = levels(cond))
+          } else {
+            dds.file <- dataset_dds()
+            meta <- colData(dds.file)
+            cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
+            cond <- meta[, cond_var]
+            cond <- factor(cond, levels = levels(cond))
+          }
+          #generate dds results table 
+          res.hmg <- DE_res$dds_res() 
+          
+          dds.sig <- res.hmg %>%
+            dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
+          
+          if(nrow(dds.sig) == 0) {
+            return(NULL)
+          }
+          
+          pathwaygsea4 <- gsea_file_values[[input$filechoice]]
+          
+          
+          p2 <- unlist((pathwaygsea4[names(pathwaygsea4) %in% input$pathwaylistht]))
+          
+          
+          #filter vst counts matrix for genes in pathway
+          vst.myc <- vst() %>%
+            mutate(., pathwayheat = ifelse(ext_gene_ensembl %in% p2, 'yes', 'no')) %>%
+            dplyr::filter(pathwayheat == "yes") %>% 
+            dplyr::rename("Gene" = "ext_gene_ensembl")
+          
+          vstgsea.mat <- vst.myc %>%
+            dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
+            distinct(Gene, .keep_all = TRUE) %>% 
+            column_to_rownames(var = "Gene") %>%
+            dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
+            as.matrix()
+          
+          vstgsea.mat <- t(scale(t(vstgsea.mat)))
+          
+          #create a colorRamp function based on user input in color palette choices
+          colors.hmg <- colorRamp2(c(-2, 0, 2), c(colorGHeat(), "white", colorGHeat2()))
+          
+          #create a color vector for column annotations
+          col_anno <- setNames(c("blue", "red")[seq_along(levels(cond))], levels(cond))
+          
+          #annotation data frame from sample condition
+          top_anno <- data.frame(
+            Condition = cond
+          )
+          
+          #dynamicallly update condition variable based on dataset
+          annotation_label <- cond_var
+          
+          top_annotation <- ComplexHeatmap::HeatmapAnnotation(
+            df = top_anno,
+            col = list(Condition = col_anno),
+            annotation_legend_param = list(
+              title = annotation_label, 
+              title_gp = gpar(fontsize = 12),
+              labels_gp = gpar(fontsize = 12)
+            ),
+            annotation_height = unit(5, "mm"),
+            annotation_width = unit(5, "mm"),
+            show_annotation_name = FALSE
+          )
+          
+          ht = ComplexHeatmap::Heatmap(
+            vstgsea.mat,
+            name = "z scaled expression",
+            col = colors.hmg,
+            row_names_gp = gpar(fontsize = 12),
+            column_names_gp = gpar(fontsize = 12),
+            column_title = NULL,
+            row_title = "DEGs in Pathway",
+            top_annotation = top_annotation,
+            heatmap_legend_param = list(
+              title_gp = gpar(fontsize = 12),
+              labels_gp = gpar(fontsize = 12)
+            )
+          ) 
+          png(file, width = 780, height = 780, units = "px", pointsize = 60)
+          # draw heatmap object
+          draw(ht)
+          dev.off()
+        } else if(input$plot_type == "Heatmap" & input$file_type == "svg"){
+          #determine which column needed for cluster annotations based on model choice 
+          if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
+            dds.file <- dataset_dds()
+            cond_var <- dataset_choice$user_model()
+            meta <- colData(dds.file)
+            cond <- meta[, cond_var]
+            cond <- factor(cond, levels = levels(cond))
+          } else {
+            dds.file <- dataset_dds()
+            meta <- colData(dds.file)
+            cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
+            cond <- meta[, cond_var]
+            cond <- factor(cond, levels = levels(cond))
+          }
+          #generate dds results table 
+          res.hmg <- DE_res$dds_res() 
+          
+          dds.sig <- res.hmg %>%
+            dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
+          
+          if(nrow(dds.sig) == 0) {
+            return(NULL)
+          }
+          
+          pathwaygsea4 <- gsea_file_values[[input$filechoice]]
+          
+          
+          p2 <- unlist((pathwaygsea4[names(pathwaygsea4) %in% input$pathwaylistht]))
+          
+          
+          #filter vst counts matrix for genes in pathway
+          vst.myc <- vst() %>%
+            mutate(., pathwayheat = ifelse(ext_gene_ensembl %in% p2, 'yes', 'no')) %>%
+            dplyr::filter(pathwayheat == "yes") %>% 
+            dplyr::rename("Gene" = "ext_gene_ensembl")
+          
+          vstgsea.mat <- vst.myc %>%
+            dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
+            distinct(Gene, .keep_all = TRUE) %>% 
+            column_to_rownames(var = "Gene") %>%
+            dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
+            as.matrix()
+          
+          vstgsea.mat <- t(scale(t(vstgsea.mat)))
+          
+          #create a colorRamp function based on user input in color palette choices
+          colors.hmg <- colorRamp2(c(-2, 0, 2), c(colorGHeat(), "white", colorGHeat2()))
+          
+          #create a color vector for column annotations
+          col_anno <- setNames(c("blue", "red")[seq_along(levels(cond))], levels(cond))
+          
+          #annotation data frame from sample condition
+          top_anno <- data.frame(
+            Condition = cond
+          )
+          
+          #dynamicallly update condition variable based on dataset
+          annotation_label <- cond_var
+          
+          top_annotation <- ComplexHeatmap::HeatmapAnnotation(
+            df = top_anno,
+            col = list(Condition = col_anno),
+            annotation_legend_param = list(
+              title = annotation_label, 
+              title_gp = gpar(fontsize = 12),
+              labels_gp = gpar(fontsize = 12)
+            ),
+            annotation_height = unit(5, "mm"),
+            annotation_width = unit(5, "mm"),
+            show_annotation_name = FALSE
+          )
+          
+          ht = ComplexHeatmap::Heatmap(
+            vstgsea.mat,
+            name = "z scaled expression",
+            col = colors.hmg,
+            row_names_gp = gpar(fontsize = 12),
+            column_names_gp = gpar(fontsize = 12),
+            column_title = NULL,
+            row_title = "DEGs in Pathway",
+            top_annotation = top_annotation,
+            heatmap_legend_param = list(
+              title_gp = gpar(fontsize = 12),
+              labels_gp = gpar(fontsize = 12)
+            )
+          ) 
+          svglite::svglite(file, width = 8, height = 7, pointsize = 30)
+          # draw heatmap object
+          draw(ht)
+          dev.off()
+          } else {
+            fwrite(gseafile(),file, sep=",", sep2=c("", " ", ""))
+          }
+       }
     )
     
     observe({
@@ -951,7 +1156,6 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       updateMaterialSwitch(session, "heatmap", value = FALSE)
       
     })
-    
   })
 }
 
