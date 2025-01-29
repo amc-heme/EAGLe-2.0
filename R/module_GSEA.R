@@ -735,6 +735,8 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       #color function buliding a colorRamp palette based on user input from palette choices
       colors.hmg <- c(colorGHeat(), "white", colorGHeat2())
       
+      #need to create a ComplexHeatmap to get column and row orders to match in 
+      #plotly heatmap for image downloads
       ht1 = ComplexHeatmap::Heatmap(
         vstgsea.mat,
         name = "z scaled expression",
@@ -749,17 +751,14 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       row1_order <- row_order(ht1_res) #extract row order for plotly heatmap
       col_order <- column_order(ht1_res) #extract column order for plotly heatmap
       
-      print("vstgsea")
-      print(head(vstgsea.mat))
-      print(class(vstgsea.mat))
-      print(dim(vstgsea.mat))
-      
+      #data frame for top annotation
       top_anno <- data.frame(
         Condition = cond
       )
       
+      #rename colnames to match the condition variable of each dataset
       colnames(top_anno) <- cond_var
-      
+      #retain column order from ComplexHeatmap
       top_anno <- top_anno[col_order, , drop = FALSE]
       
       #if there is only one gene in the pathway, need to remove col_side_colors
@@ -773,7 +772,6 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
          width = 600,
          colors = colors.hmg,
          dendrogram = "none",
-         #col_side_colors = top_anno,
          showticklabels = c(FALSE, FALSE)
        )
      } else{
