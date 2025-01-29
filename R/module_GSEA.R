@@ -665,7 +665,9 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
         as_tibble() %>%
         dplyr::select(., -pval,-log2err, -ES) %>% 
         arrange(desc(NES))
+      
       top.up <- as.character(fgseaResTidy3[1,1])
+      
       updateSelectizeInput(session,
                            "pathwaylistht",
                            choices = names(pathwaygsea3),
@@ -747,7 +749,10 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       row1_order <- row_order(ht1_res) #extract row order for plotly heatmap
       col_order <- column_order(ht1_res) #extract column order for plotly heatmap
       
-      vst_reordered <- vstgsea.mat[row1_order, col_order]
+      print("vstgsea")
+      print(head(vstgsea.mat))
+      print(class(vstgsea.mat))
+      print(dim(vstgsea.mat))
       
       top_anno <- data.frame(
         Condition = cond
@@ -756,17 +761,33 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       colnames(top_anno) <- cond_var
       
       top_anno <- top_anno[col_order, , drop = FALSE]
- 
-      ht <- heatmaply(
-        vst_reordered,
-        row_text_angle = 45,
-        height = 600,
-        width = 600,
-        colors = colors.hmg,
-        dendrogram = "none",
-        col_side_colors = top_anno,
-        showticklabels = c(FALSE, FALSE)
-      )
+      
+      #if there is only one gene in the pathway, need to remove col_side_colors
+      #to load the heatmap because heatmaply tries to match nrow to the number 
+      # of samples and throws an error
+     if(ncol(vstgsea.mat) == 1){
+       ht <- heatmaply(
+         vstgsea.mat,
+         row_text_angle = 45,
+         height = 600,
+         width = 600,
+         colors = colors.hmg,
+         dendrogram = "none",
+         #col_side_colors = top_anno,
+         showticklabels = c(FALSE, FALSE)
+       )
+     } else{
+       ht <- heatmaply(
+         vstgsea.mat,
+         row_text_angle = 45,
+         height = 600,
+         width = 600,
+         colors = colors.hmg,
+         dendrogram = "none",
+         col_side_colors = top_anno,
+         showticklabels = c(FALSE, FALSE)
+       )
+     }
       ht
     })
  
