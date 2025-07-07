@@ -329,10 +329,10 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       # select only the human gene symbol and the 'stat' from the results,
       result <- result %>% 
         dplyr::select(HS_Symbol, stat) %>% 
-        na.omit() %>% 
+        dplyr::filter(!is.na(HS_Symbol) & HS_Symbol != "") %>% 
         distinct() %>% 
         group_by(HS_Symbol) %>% 
-        summarize(stat = mean(stat))
+        summarize(stat = mean(stat), .groups = "drop")
       
       #reconfigure the data and return ranks
       ranks <- deframe(result)
@@ -386,7 +386,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
               "</div>")
       HTML(large_text_style)
     })
-    
+ 
     #create pathway list
     fgseaRes <- reactive({
       pathwaygsea <- gsea_file_values[[input$filechoice]]
@@ -439,11 +439,11 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       {
         if (input$rankedplot == TRUE) {
           #color object reactive to user choice from palette
-          colors <- c("grey", colorWF())
+          colors <- c("FALSE" = "grey", "TRUE" = colorWF())
           
             ggplot(gseafile_waterfall(), aes(reorder(pathway, NES), NES)) +
             geom_col(aes(fill = padj < 0.05)) +
-            scale_fill_manual(values = colors) +
+            scale_fill_manual(values = colors, guide = "legend") +
             coord_flip() +
             labs(
               x = "Pathway",
@@ -495,14 +495,14 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       {
         if (input$moustache == TRUE) {
           #color object reactive to user input from plalette choice
-          colors <- c('grey', colorM())
+          colors <- c("no" = 'grey', "yes" = colorM())
           ma <-
             ggplot(toplotMoustache(), aes(x = NES, y = padj, color = sig, tooltip = pathway)) +
             geom_point_interactive(alpha = 0.8, size = 0.5) +
             theme_cowplot(font_size = 14) +
             theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
             xlab('NES') +
-            scale_color_manual(values = colors) +
+            scale_color_manual(values = colors, guide = "legend") +
             ylab('adjusted p-value') +
             ggtitle("Pathways from GSEA") +
             coord_cartesian(xlim = c(-3, 3), ylim = c(-0.1, 1)) 
@@ -586,7 +586,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
     
       
       colors <-
-        c("grey", v_col())
+        c("no" = "grey", "yes" = v_col())
      
       #if (input$volcanoplot == TRUE) {
        v <- ggplot(
@@ -601,7 +601,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
          theme_cowplot(font_size = 14) +
           theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold")) +
           geom_point_interactive(size = 1, alpha = 0.5) +
-          scale_color_manual(values = colors) +
+          scale_color_manual(values = colors, guide = "legend") +
           ggtitle(gseavol_title) + #reactive title
           xlab("log2foldchange")
         girafe(code = print(v))
