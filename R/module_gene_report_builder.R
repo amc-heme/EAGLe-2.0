@@ -1,3 +1,22 @@
+
+dataset_config2 <- 
+  read_yaml("./datasets.yaml")
+# Extract vector of human-readable labels from the config file
+dataset_labels <-
+  sapply(
+    dataset_config2,
+    function(dataset){
+      dataset$label
+    }
+  ) |> 
+  unname()
+
+# Construct vector of dataset choices using config file and above information
+# (human-readable labels as labels, machine-readable labels as values)
+dataset_choices <- names(dataset_config2)
+names(dataset_choices) <- dataset_labels
+
+
 geneModuleUI <- function(id) {
   ns <- NS(id)
   tagList(
@@ -117,8 +136,8 @@ geneModuleUI <- function(id) {
   )
 }
 
-geneModuleServer <- function(id, gene_input, dataset_config, genes_by_dataset, 
-                             DEgenes_by_dataset, raw_data_path) {
+geneModuleServer <- function(id, gene_input, genes_by_dataset, 
+                             DEgenes_by_dataset, raw_data_p) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -212,24 +231,24 @@ geneModuleServer <- function(id, gene_input, dataset_config, genes_by_dataset,
           div(
             class = "container-body dataset-container",
             lapply(
-              names(dataset_config),
-              function(data_key, dataset_config){
+              names(dataset_config2),
+              function(data_key, dataset_config2){
                 div(
                   class = "dataset-row",
                   # add unicode mouse icon for mouse datasets
-                  if(dataset_config[[data_key]]$species == "mouse") {
+                  if(dataset_config2[[data_key]]$species == "mouse") {
                     HTML(paste0(
                       '<span>&#x1F42D;</span>',
                       ' ',
                       tags$b(
-                        dataset_config[[data_key]]$label, 
+                        dataset_config2[[data_key]]$label, 
                         style = "display: inline-block"
                       )
                     ))
                   } else {
                     # Label for dataset
                     tags$b(
-                      dataset_config[[data_key]]$label, 
+                      dataset_config2[[data_key]]$label, 
                       style = "display: inline-block"
                     )
                   },
@@ -269,7 +288,7 @@ geneModuleServer <- function(id, gene_input, dataset_config, genes_by_dataset,
                   }
                 )
               },
-              dataset_config
+              dataset_config2
             )
           )
         )
@@ -386,11 +405,11 @@ geneModuleServer <- function(id, gene_input, dataset_config, genes_by_dataset,
               list(
                 gene = input$gene,
                 gene_symbol = gene_choices_symbol,
-                raw_data = raw_data_path,
+                raw_data = raw_data_p,
                 gene_present = gene_present(),
                 gene_DE = gene_DE(),
                 selected_datasets = input$select_datasets,
-                datasets = dataset_config
+                datasets = dataset_config2
               )
             
             

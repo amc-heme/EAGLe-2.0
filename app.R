@@ -34,6 +34,22 @@ load_qc <- function(raw_data_p, dataset_config) {
 
 dataset.qc <- load_qc(raw_data_p, dataset_config)
 
+#load shinyeagle look up tables
+#read in gene/ortholog table
+gene_input <- read.table(
+  file =
+    paste0(raw_data_p, "/new_raw_data/input_lookup_table.txt"),
+  sep = "\t",
+  header = T
+)
+
+# Load list of genes in each dataset
+genes_by_dataset <- 
+  read_yaml("genes_by_dataset.yaml")
+
+DEgenes_by_dataset <-
+  read_yaml("DEres_by_dataset.yaml")
+
  # Add dataset names to list generated
 names(dataset) <-
   names(dataset_config)
@@ -80,7 +96,9 @@ ui <-
                               tabPanel("Gene Expression",
                                       goi_UI("GOI1")),
                               tabPanel("Normal Tissue",
-                                       HPA_UI("HPA1"))
+                                       HPA_UI("HPA1")),
+                              tabPanel("EAGLe",
+                                       geneModuleUI("Gene1"))
                             ))
              ))
  
@@ -174,6 +192,12 @@ server <-
   #   # dds.HPA = HPA dds file 
   #   # vst.HPA = vst table created for HPA dataset
      HPA_Server("HPA1", vst.HPA, dds.HPA)
+     
+     
+  # #Gene expression report builder ####
+     # shiny eagle report generator functionality
+     geneModuleServer("Gene1", gene_input, genes_by_dataset, 
+                       DEgenes_by_dataset, raw_data_p)
 
     #returns user to QC tab after switching datasets
     observeEvent(input$change_data, {
