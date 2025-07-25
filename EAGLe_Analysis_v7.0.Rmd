@@ -1,0 +1,2173 @@
+---
+output: 
+  pdf_document:
+    toc: yes
+    toc_depth: '6'
+params:
+  gene: NA
+  gene_symbol: NA
+  raw_data: NA
+  datasets: NA
+  gene_present: NA
+  gene_DE: NA
+  selected_datasets: NA
+---
+
+```{r, echo=F, message=F, warning=F}
+gene <- params$gene
+gene_symbol <- params$gene_symbol
+raw_data <- params$raw_data
+datasets <- params$datasets
+gene_present <- params$gene_present
+gene_DE <- params$gene_DE
+selected_datasets <- params$selected_datasets
+```
+
+---
+title: "Analysis of `r gene_symbol` Expression in AML datasets Using EAGLe v7.0."
+author: "EAGLe: Expression of Any Gene in Leukemia"
+date: "Shanshan Pei, PhD  | Stephanie Gipson | AMC Hematology Informatics Team |  `r format(Sys.time(), '%d %B, %Y')`"
+---
+
+```{r, echo=F, message=F, warning=F}
+library(dplyr)
+library(tidyverse)
+library(survminer)
+library(tinytex)
+library(survival)
+library(RColorBrewer)
+library(data.table)
+library(ggpubr)
+library(reshape2)
+library(viridis)
+library(biomaRt)
+```
+
+```{r, echo=F, message=F, warning=F}
+
+# Jordan M0-ROSlow vs. M5-ROSlow
+exp.jordan.m0m5 <- read_rds(paste0(raw_data, "/new_raw_data/CD_ROSlow_dds.res.rds")) 
+vst.jordan.m0m5 <- read_rds(paste0(raw_data, "/new_raw_data/CD_vst_batchcorrected.rds")) 
+label.jordan.m0m5 <- read_rds(paste0(raw_data, "/new_raw_data/CD_ROSlow_metadata.rds")) 
+
+# exp.jordan.m0m5 <- read_rds("/Users/stephaniegipson/Documents/GitHub/shinyeagle/new_raw_data/CD_ROSlow_dds.res.rds")
+#Ye et al 2016 15 mouse samples from 5 tissue sources for LSC gene expression exploration
+exp.ye16 <- read_rds(paste0(raw_data, "/new_raw_data/Ye_16_dds.res.rds"))
+label.ye16 <- read_rds(paste0(raw_data, "/new_raw_data/Ye_2016_meta.rds"))
+vst.ye16 <- read_rds(paste0(raw_data, "/new_raw_data/Ye_16_vst.rds"))
+
+#exp.ye16 <- read_rds( "/Users/stephaniegipson/Documents/GitHub/shinyeagle/new_raw_data/Ye_16_dds.res.rds")
+# Ye et al 2020 
+exp.ye20 <-read_rds(paste0(raw_data, "/new_raw_data/Ye_2020_dds.res.rds"))
+label.ye20 <- read_rds(paste0(raw_data, "/new_raw_data/Ye_2020_meta.rds"))
+vst.ye20 <- read_rds(paste0(raw_data, "/new_raw_data/Ye_2020_vst.rds"))
+#exp.ye20 <-read_rds("/Users/stephaniegipson/Documents/GitHub/shinyeagle/new_raw_data/Ye_2020_dds.res.rds")
+# Pollyea venaza 
+exp.venaza <- read_rds(paste0(raw_data, "/new_raw_data/venaza.dds.res.rds"))
+label.venaza <- read_rds(paste0(raw_data, "/new_raw_data/venaza.meta.rds"))
+vst.venaza <- read_rds(paste0(raw_data, "/new_raw_data/venaza.vst.rds"))
+
+#exp.venaza <- read_rds("/Users/stephaniegipson/Documents/GitHub/shinyeagle/new_raw_data/venaza.dds.res.rds")
+# El AML 
+exp.elaml <- read_rds(paste0(raw_data, "/new_raw_data/EL.dds.res.rds"))
+label.elaml <- read_rds(paste0(raw_data, "/new_raw_data/EL.meta.rds"))
+vst.elaml <- read_rds(paste0(raw_data, "/new_raw_data/EL.vst.rds"))
+
+#exp.elaml <- read_rds("/Users/stephaniegipson/Documents/GitHub/shinyeagle/new_raw_data/EL.dds.res.rds")
+# Lee et al
+exp.lee <- read_rds(paste0(raw_data, "/new_raw_data/Lee_res.rds"))
+label.lee <- read_rds(paste0(raw_data, "/new_raw_data/Lee_meta.rds"))
+vst.lee <- read_rds(paste0(raw_data, "/new_raw_data/Lee_vst.rds"))
+
+# TCGA-AML
+tcga.res.FAB <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_res_FAB.rds"))
+tcga.res.MC <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_res_mc.rds"))
+tcga.res.RAS <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_res_ras.rds"))
+tcga.res.NPM1 <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_res_npm1.rds"))
+tcga.res.RFAB <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_res_RFAB.rds"))
+tcga.res.NFAB <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_res_NFAB.rds"))
+tcga.meta <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_meta.rds")) 
+tcga.meta.FAB <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_meta_FAB.rds")) 
+tcga.meta.RFAB <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_meta_RFAB.rds")) 
+tcga.meta.NFAB <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_meta_NFAB.rds")) 
+tcga.meta.MC <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_meta_MC.rds")) 
+tcga.vst1 <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_vst.rds"))
+tcga.vst2 <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_vst_mclass.rds"))
+tcga.vst3 <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_vst_RAS.rds"))
+tcga.vst4 <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_vst_NPM1.rds"))
+tcga.vstRFAB <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_vst_RFAB.rds"))
+tcga.vstNFAB <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_vst_NFAB.rds"))
+# objects for TCGA and BEAT header paragraph evals
+lsc_datasets <- c("Jordan_M0_M5", "Ye_16", "Ye_20", "Venaza", "Lagadinou")
+lsc_selected <- !any(lsc_datasets %in% selected_datasets)
+
+bulk_datasets <- c("TCGA_FAB", "TCGA_RFAB", "TCGA_NFAB", "TCGA_MC", "TCGA_RAS", "TCGA_NPM1", "BEAT_AML_FAB", "BEAT_AML", "BEAT_AML_DR", "Lee")
+bulk_selected <- !any(bulk_datasets %in% selected_datasets)
+
+TCGA_datasets <- c("TCGA_FAB", "TCGA_RFAB", "TCGA_NFAB", "TCGA_MC", "TCGA_RAS", "TCGA_NPM1")
+TCGA_eval <- any(TCGA_datasets %in% selected_datasets)
+
+BEAT_datasets <- c("BEAT_AML_FAB", "BEAT_AML", "BEAT_AML_DR")
+BEAT_eval <- any(BEAT_datasets %in% selected_datasets)
+# Beat-AML
+#exp.baml <- read_rds(paste0(raw_data, "/new_raw_data/BEAT_AML.rds"))
+dds.baml <- read_rds(paste0(raw_data, "/new_raw_data/BEAT_dds.res.rds"))
+q.meta.baml <- read_rds(paste0(raw_data, "/new_raw_data/BEAT_q.metadata.rds"))
+vst.baml <- read_rds(paste0(raw_data, "/new_raw_data/BEAT_vst.rds"))
+label.baml <- read_rds(paste0(raw_data, "/new_raw_data/BEAT_metalut.Rds"))
+FAB.meta.baml <- read_rds(paste0(raw_data, "/new_raw_data/BEAT_FAB.metadata.rds"))
+dds.FAB.baml <- read_rds(paste0(raw_data, "/new_raw_data/BEAT_dds.res.FAB.rds"))
+denovo.meta.baml <- read_rds(paste0(raw_data, "/new_raw_data/BEAT_DR.metadata.rds"))
+dds.DR.baml <- read_rds(paste0(raw_data, "/new_raw_data/BEAT_dds.res.DR.rds"))
+
+
+# Human Protein Atlas
+dds.hpa <- read_rds(paste0(raw_data, "/new_raw_data/HPA_res.rds"))
+vst.hpa <-  read_rds(paste0(raw_data, "/new_raw_data/HPA_vst.rds"))
+meta.hpa <- read_rds(paste0(raw_data,"/new_raw_data/HPA_metadata.rds"))
+
+
+```
+
+```{r, include=FALSE}
+## build gene LUT for human:mouse orthologs
+
+#ran on 8/28/24
+#ensembl_h <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+# attributes <- listAttributes(ensembl) %>%
+#   dplyr::filter(str_detect(description, "^Mouse"))
+#ensembl <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+# attributes <- listAttributes(ensembl) %>%
+#   dplyr::filter(str_detect(description, "^Human"))
+# human <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name', 'mmusculus_homolog_associated_gene_name'), mart = ensembl_h)
+# mouse <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'external_gene_name', 'hsapiens_homolog_associated_gene_name'), mart = ensembl)
+# mouse <- mouse %>%
+#   #dplyr::filter(., hsapiens_homolog_orthology_type == "ortholog_one2one") %>%
+#   dplyr::rename(Gene = external_gene_name, Ortholog = hsapiens_homolog_associated_gene_name)
+# #human_ensembl_id = hsapiens_homolog_ensembl_gene)
+# human <- human %>% 
+#     dplyr::rename(Gene = external_gene_name, Ortholog = mmusculus_homolog_associated_gene_name) 
+# 
+# write.table(mouse, file = paste0(getwd(),"/new_raw_data/Mm_TranscriptToGene_Orthologs.txt"), quote = F, sep = "\t", row.names = F)
+# write.table(human, file = paste0(getwd(),"/new_raw_data/Hs_TranscriptToGene_Orthologs.txt"), quote = F, sep = "\t", row.names = F)
+
+```
+
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# create function for vst matrix manipulation
+vst_ensembl <-
+  function(vst_matrix,
+           ext_gene_column,
+           ensembl_column) {
+    vst_matrix <- vst_matrix %>%
+      mutate(Gene = case_when({
+        {
+          ext_gene_column
+        }
+      } == "" ~ {
+        {
+          ensembl_column
+        }
+      },
+      TRUE ~ {
+        {
+          ext_gene_column
+        }
+      })) %>%
+      dplyr::select(-c({
+        {
+          ext_gene_column
+        }
+      })) %>%
+      dplyr::select(ensembl_gene_id, Gene, everything())
+    return(vst_matrix)
+  }
+
+```
+\newpage
+# Summary Table: Adjusted p values and log2FoldChange of `r gene_symbol` across datasets
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#exp.jordan.m0m5 <- read_rds("~/Documents/GitHub/shinyeagle/new_raw_data/CD_ROSlow_dds.res.rds")
+# jordan.filter <- exp.jordan.m0m5 %>% 
+#   dplyr::filter(.,Gene == "SERF1B")
+# create an empty list to contain loop objects
+
+data_list <- list()
+
+for (dataset_key in names(datasets)){
+  dataset <- datasets[[dataset_key]]
+  # Created a new element called data, and loaded the table from the .rds
+  dataset$data <-
+  read_rds(paste0(raw_data, dataset$path))
+  
+  # add the element to data_list if the gene is found in that dataset and the dataset is selected by the user
+   if (dataset_key %in% selected_datasets) {
+      
+      data_list[[dataset_key]] <- dataset$data
+      data_list[[dataset_key]]$label <- dataset$label
+  }
+}
+# empty objects for padj abd log2fc tables for loops
+padj_combined <- NULL
+l2fc_combined <- NULL
+#table for padj values for each dataset
+for(i in seq_along(data_list)) {
+  
+  dataset_key <- names(data_list)[i] 
+  dataset_data <- data_list[[dataset_key]]
+  #table <- dplyr::select(data_list[[dataset_key]], ensembl_gene_id, padj)
+  name_cols <- data_list[[dataset_key]]$label #name each column based on dataset label
+  #check if gene is found in res table:
+  if(gene %in% dataset_data$ensembl_gene_id) {
+    table <- dplyr::select(data_list[[dataset_key]], ensembl_gene_id, padj)
+  }else {
+    table <- data.frame(ensembl_gene_id = gene, padj = NA)
+  }
+  
+  colnames(table)[2] <- name_cols
+  
+  if(is.null(padj_combined)) {
+    padj_combined <- table
+  } else {
+    padj_combined <- left_join(padj_combined, table, by = "ensembl_gene_id")
+  }
+}
+#table for log2fc values for each dataset
+for(i in seq_along(data_list)) {
+  dataset_key <- names(data_list)[i] 
+  dataset_data <- data_list[[dataset_key]]
+  #table <- dplyr::select(data_list[[dataset_key]], ensembl_gene_id, log2FoldChange)
+  name_cols <- data_list[[dataset_key]]$label #name each column based on dataset label
+  #check if gene is in res table:
+  if(gene %in% dataset_data$ensembl_gene_id) {
+    table <- dplyr::select(data_list[[dataset_key]], ensembl_gene_id, log2FoldChange)
+  } else{
+    table <- data.frame(ensembl_gene_id = gene, log2FoldChange = NA)
+  }
+  colnames(table)[2] <- name_cols
+  
+  if(is.null(l2fc_combined)) {
+    l2fc_combined <- table
+  } else {
+    l2fc_combined <- left_join(l2fc_combined, table, by = "ensembl_gene_id")
+  }
+}
+# pivot to create a column for dataset name and a column for padj
+padj_combined <- pivot_longer(
+  data = padj_combined,
+  cols = -ensembl_gene_id,
+  names_to = "Dataset",
+  values_to = "padj"
+)
+#pivot to create a column for dataset name and a column for log2fc
+l2fc_combined <- pivot_longer(
+  data = l2fc_combined,
+  cols = -ensembl_gene_id,
+  names_to = "Dataset",
+  values_to = "log2FoldChange"
+ )
+#filter for gene
+l2fc_combined <- as.tibble(l2fc_combined) %>%
+  dplyr::filter(ensembl_gene_id == (gene))
+
+padj_combined <- as.tibble(padj_combined) %>%
+  dplyr::filter(ensembl_gene_id == (gene))
+#combine padj and log2fc tables by dataset and remove gene columns
+combined_table <- padj_combined %>% 
+ left_join(l2fc_combined, by = "Dataset") %>% 
+  dplyr::select(-c("ensembl_gene_id.x","ensembl_gene_id.y"))
+
+#add a column to indicate if the gene was tested in the dataset
+combined_table <- combined_table %>% 
+  mutate(
+    padj = ifelse(is.na(padj), "gene not tested", padj),
+    log2FoldChange = ifelse(is.na(log2FoldChange), "gene not tested", log2FoldChange)
+  )
+
+knitr::kable(combined_table)
+
+
+```
+
+\newpage
+# 1. Leukemia Stem Cells (LSCs) 
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='asis', eval=lsc_selected}
+#return a print statement for the user if the gene is not found in any of the lsc datasets, or if none were selected to view in the report
+  cat("Gene not found: \n")
+  cat("The selected gene is not found in any of the LSC datasets \n (or none of these datasets were selected for this report.")
+
+```
+
+
+```{r, echo=FALSE, results='asis', eval= "Jordan_M0-M5" %in% selected_datasets}
+cat('## 1.1. Primitive ROS-low LSCs vs. Monocytic ROS-low LSCs [(Pei et al. Cancer Discovery, 2020)](https://pubmed.ncbi.nlm.nih.gov/31974170/). \n\n 
+**Analysis**  
+\n\n Pei et al. have previously shown that ROS-low enriched LSCs from primitive and monocytic AML differ significantly in their transcriptome and metabolism. ROS-low LSCs from monocytic AML in particular, are less dependent on BCL2 therefore are more likely to be resistant to Venetoclax-based therapy. This section of analysis shows gene expression in primitive vs. monocytic ROS-low LSCs.')  
+```
+<br />  
+<br />  
+<br /> 
+```{r, echo=F, message=F, warning=F, eval = "Jordan_M0-M5" %in% selected_datasets, fig.width=8, fig.height=6}
+
+#rename any blank gene name in vst matrix with ensembl id
+vstlimma2 <- vst_ensembl(vst.jordan.m0m5, ext_gene, ensembl_gene_id)
+
+#create a data table filtered for only mono sample type
+res <- (label.jordan.m0m5) %>%
+  mutate(., class = condition) %>%
+  dplyr::select(., SRR, class) %>%
+  filter(., class == "mono")
+
+if(gene %in% exp.jordan.m0m5$ensembl_gene_id) {
+#join DE res and VST counts matrix to create data table with class, padj, and gene expression values for each sample
+vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., class = ifelse(variable %in% res$SRR, 'mono', 'prim')) %>% 
+  dplyr::filter(ensembl_gene_id %in% exp.jordan.m0m5$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(exp.jordan.m0m5, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') 
+
+#factor class and variable(sample id)
+vst.goi$class <-
+  factor(vst.goi$class, levels = c('prim', 'mono'))
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+#write_rds(vst.goi, "~/Documents/GitHub/shinyeagle/CD_ROSlow_vst.goi.rds")
+# Box plot
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]  
+#round padj value 
+DESeq_padj_CD <- round(datavst$padj[1], 3)
+colors <- viridis(2)
+ggplot(datavst, aes(x = class, y = value, fill = class)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = class)) +
+  theme_light() +
+    theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  geom_text(aes(
+    x = "mono",
+    y = max(value) + 1,
+    label = format(paste0("padj = ", DESeq_padj_CD))
+  ), check_overlap = T) + 
+  ylab("Batch Corrected Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Primitive vs Monocytic") 
+} else{
+  vst.goi <- as.tibble(vstlimma2) %>%
+  dplyr::filter(ensembl_gene_id == (gene)) %>%
+  melt(.) %>%
+  mutate(., class = ifelse(variable %in% res$SRR, 'mono', 'prim'))
+  
+  #factor class and variable(sample id)
+vst.goi$class <-
+  factor(vst.goi$class, levels = c('prim', 'mono'))
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+colors <- viridis(2)
+ggplot(vst.goi, aes(x = class, y = value, fill = class)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = class)) +
+  theme_light() +
+    theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Batch Corrected Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Primitive vs Monocytic") 
+}
+
+```
+<br />   
+```{r, echo=FALSE, results='asis', eval="Jordan_M0-M5" %in% selected_datasets}
+cat('**Figure 1.1. Expression of gene of interest in primitive ROS-low LSCs vs. Monocytic ROS-low LSCs.** Box plots show median +/- inter-quartile. Dot plots show individual patients. Gene expression values are batch corrected and variance stabilized. DESeq2 LRT was used to compare the groups and obtain the adjusted p-value shown. \n\n
+
+\n\n **Reference** \n\n
+_[1. Pei, S., et al. (2020). "Monocytic Subclones Confer Resistance to Venetoclax-Based Therapy in Patients with Acute Myeloid Leukemia." Cancer Discov 10(4): 536-551.](https://pubmed.ncbi.nlm.nih.gov/31974170/)_')
+```
+
+
+```{r, echo=FALSE, results='asis', eval= "Ye_16" %in% selected_datasets}
+cat('## 1.2. LSC gene expression from blood, bone marrow, spleen, gonadal adipose tissue, and normal bone marrow in mice. [(Ye et al. 2016 HSC_LSC)]')
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, eval= "Ye_16" %in% selected_datasets, fig.width=8, fig.height=6}
+
+#rename any blank gene name in vst matrix with ensembl id
+vstlimma2 <- vst_ensembl(vst.ye16, ext_gene, ensembl_gene_id)
+
+#create a data table filtered for only mono sample type
+res <- (label.ye16) %>%
+  dplyr::select(., SRR, Source) 
+
+if(gene %in% exp.ye16$ensembl_gene_id) {
+#create data table with class, padj, and gene expression values for each sample
+vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., Source = ifelse(variable %in% res$SRR, res$Source[match(variable, res$SRR)], "unknown")) %>%
+  dplyr::filter(ensembl_gene_id %in% exp.ye16$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(exp.ye16, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') 
+
+#factor class and variable(sample id)
+vst.goi$Source <-
+  factor(vst.goi$Source)
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+# Box plot
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]  
+
+DESeq_padj_ye16 <- round(datavst$padj[1], 3)
+
+colors <- viridis(5)
+
+ggplot(datavst, aes(x = Source, y = value, fill = Source)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = Source)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  # geom_signif(
+  #   comparisons = list(c("bone_marrow", "blood")),
+  #   annotations = paste0("padj = ", DESeq_padj_ye16)
+  # ) +
+  geom_text(aes(
+    x = "normal_bm",
+    y = max(value) + 1,
+    label = format(paste0("padj = ", DESeq_padj_ye16))
+  ), check_overlap = T) +  
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "LSC Expression by Tissue Type") 
+}else {
+  vst.goi <- as.tibble(vstlimma2) %>%
+  dplyr::filter(ensembl_gene_id == (gene)) %>%
+  melt(.) %>%
+  mutate(., Source = ifelse(variable %in% res$SRR, res$Source[match(variable, res$SRR)], "unknown"))
+  
+  #factor class and variable(sample id)
+vst.goi$Source <-
+  factor(vst.goi$Source)
+
+vst.goi$variable <- factor(vst.goi$variable)
+colors <- viridis(5)
+ggplot(vst.goi, aes(x = Source, y = value, fill = Source)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = Source)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "LSC Expression by Tissue Type") 
+}
+```
+<br />
+  
+```{r, echo=FALSE, results='asis', eval="Ye_16" %in% selected_datasets}
+cat('**Figure 1.2. Expression of gene of interest by tissue type: blood, bone marrow, gonadal adipose tissue, normal bone marrow, and spleen.** Box plots show median +/- inter-quartile. Dot plots show individual samples. Gene expression values are variance stabilized. DESeq2 LRT was used to compare the groups and obtain the adjusted p-value shown.\n\n')
+cat('\\vspace{1cm}\n')
+```
+<br />
+<br />
+<br />
+```{r, echo=FALSE, results='asis', eval= ifelse("Ye_16" %in% selected_datasets, exists("datavst") && datavst$padj[1] <= 0.05, FALSE)}
+cat('\\vspace{1cm}\n')
+cat('\\textbf{Table 1.2. Summary of Pairwise Wald Tests for Ye., et al 2016}\n')
+```
+<br />
+<br />
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis', eval="Ye_16" %in% selected_datasets}
+if(gene %in% exp.ye16$ensembl_gene_id) {
+pw.ye16 <- as_tibble(exp.ye16) %>% 
+  dplyr::select(-c("Gene", "padj", "log2FoldChange")) 
+
+pw.ye16 <- pivot_longer(
+  data = pw.ye16,
+  cols = -ensembl_gene_id,
+  names_to = "Dataset",
+  values_to = "Values"
+) %>%
+  separate(col = Dataset, into = c("Type", "Pairwise Test"), sep = "_",  extra = "merge") %>%
+  pivot_wider(
+    id_cols = c("ensembl_gene_id", "Pairwise Test"),
+    names_from = Type,
+    values_from = Values
+  )
+
+pw.ye16 <- pw.ye16 %>%
+dplyr::filter(ensembl_gene_id == (gene)) %>% 
+  dplyr::mutate(padj = lapply(padj, function(x) round(as.numeric(x), 4)),
+                log2FC = lapply(log2FC, function(x) round(as.numeric(x), 4))) %>% 
+  dplyr::select(-"ensembl_gene_id") 
+
+if(exists("datavst") && datavst$padj[1] <= 0.05) {
+  knitr::kable(pw.ye16)
+  #caption = "Summary of Pairwise Wald Tests for Ye., et al 2016") 
+}}
+
+```
+
+
+```{r, echo=FALSE, results='asis', eval="Ye_20" %in% selected_datasets}
+cat('## 1.3. Transcriptomes of LSCs from bone marrow and liver in mice were compared to better understand the biology of liver LSCs. A bcCML model (BCR-ABL + Nup98-Hoxa9) was used. Liver and bone marrow samples were combined from 3 mice in 3 different cohorts before sequencing. [(Ye et al. Cancer Discovery, 2020)](https://aacrjournals.org/cancerdiscovery/article/11/2/500/3265/The-Hepatic-Microenvironment-Uniquely-Protects)')
+
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, eval="Ye_20" %in% selected_datasets, fig.width=8, fig.height=6}
+
+
+vstlimma2 <- vst_ensembl(vst.ye20, ext_gene, ensembl_gene_id)
+#create a data table filtered for only mono sample type
+res <- (label.ye20) %>%
+  dplyr::select(., SRR, Source) 
+if(gene %in% exp.ye20$ensembl_gene_id) {
+  
+#create data table with class, padj, and gene expression values for each sample
+vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., Source = ifelse(variable %in% res$SRR, res$Source[match(variable, res$SRR)], "unknown")) %>%
+  dplyr::filter(ensembl_gene_id %in% exp.ye20$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(exp.ye20, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') 
+
+#factor class and variable(sample id)
+vst.goi$Source <-
+  factor(vst.goi$Source)
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+# Box plot
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]  
+DESeq_padj_ye20 <- round(datavst$padj[1], 3)
+colors <- viridis(2)
+ggplot(datavst, aes(x = Source, y = value, fill = Source)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = Source)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  # geom_signif(
+  #   comparisons = list(c("bone_marrow", "liver")),
+  #   annotations = paste0("padj = ", DESeq_padj_ye16)
+  # ) +
+  geom_text(aes(
+    x = "bone_marrow",
+    y = max(value) + 1,
+    label = format(paste0("padj = ", DESeq_padj_ye20))
+  ), check_overlap = T) +  #padj displayed in scientific notation
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "LSC Expression by Tissue Type") 
+}else {
+ vst.goi <- as.tibble(vstlimma2) %>%
+  dplyr::filter(ensembl_gene_id == (gene)) %>%
+  melt(.) %>%
+  mutate(., Source = ifelse(variable %in% res$SRR, res$Source[match(variable, res$SRR)], "unknown"))
+  
+  #factor class and variable(sample id)
+vst.goi$Source <-
+  factor(vst.goi$Source)
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+colors <- viridis(2)
+ggplot(vst.goi, aes(x = Source, y = value, fill = Source)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = Source)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "LSC Expression by Tissue Type") 
+}
+```
+<br />   
+```{r, echo=FALSE, results='asis', eval="Ye_20" %in% selected_datasets}
+cat('**Figure 1.3. Expression of gene of interest by tissue type: liver vs blood.** Box plots show median +/- inter-quartile. Dot plots show individual samples. Gene expression values are variance stabilized. DESeq2 LRT was used to compare the groups and obtain the adjusted p-value shown. \n\n')
+
+```
+
+
+```{r, echo=FALSE, results='asis', eval="Ye_20" %in% selected_datasets}
+cat('\n\n**Reference** \n\n
+_[1. Ye., et al. (2020). "The Hepatic Microenvironment Uniquely Protects Leukemia Cells through Induction of Growth and Survival Pathways Mediated by LIPG." Cancer Discov 11(2): 500-519.](https://doi.org/10.1158/2159-8290.CD-20-0318)_')
+```
+
+
+```{r, echo=FALSE, results='asis', eval="Venaza" %in% selected_datasets}
+cat('## 1.4. Pollyea Ven/Aza. Time zero pheresis was taken from 3 patients, then collected again at 6hr and 24hr post ven/aza treatment.[(Pollyea et al. Nature Medicine, 2018)](https://www.nature.com/articles/s41591-018-0233-1)')
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, eval="Venaza" %in% selected_datasets, fig.width=8, fig.height=6}
+
+vstlimma2 <- vst_ensembl(vst.venaza, ext_gene, ensembl_gene_id)
+
+#create a data table filtered for only mono sample type
+res <- (label.venaza) %>%
+  dplyr::select(., ID, condition) 
+
+if(gene %in% exp.venaza$ensembl_gene_id) {
+#create data table with class, padj, and gene expression values for each sample
+vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., Time_point = ifelse(variable %in% res$ID, res$condition[match(variable, res$ID)], "unknown")) %>%
+  dplyr::filter(ensembl_gene_id%in% exp.venaza$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(exp.venaza, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id')
+
+#factor class and variable(sample id)
+vst.goi$Time_point <-
+  factor(vst.goi$Time_point)
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+# Box plot
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]  
+DESeq_padj_venaza <- round(datavst$padj[1], 3)
+colors <- viridis(3)
+ggplot(datavst, aes(x = Time_point, y = value, fill = Time_point)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = Time_point)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  # geom_signif(
+  #   comparisons = list(c("6hr", "24hr")),
+  #   annotations = paste0("padj = ", DESeq_padj_ye16)
+  # ) +
+  geom_text(aes(
+    x = "control",
+    y = max(value) + 1,
+    label = format(paste0("padj = ", DESeq_padj_venaza))
+  ), check_overlap = T) +  
+  ylab("Batch Corrected Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol,"Ven/Aza Response at 0, 6, and 24 hours") 
+} else{
+  vst.goi <- as.tibble(vstlimma2) %>%
+  dplyr::filter(ensembl_gene_id == (gene)) %>%
+  melt(.) %>%
+  mutate(., Time_point = ifelse(variable %in% res$ID, res$condition[match(variable, res$ID)], "unknown"))
+  
+#factor class and variable(sample id)
+vst.goi$Time_point <-
+  factor(vst.goi$Time_point)
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+colors <- viridis(3)
+ggplot(vst.goi, aes(x = Time_point, y = value, fill = Time_point)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = Time_point)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Batch Corrected Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol,"Ven/Aza Response at 0, 6, and 24 hours") 
+}
+
+```
+<br />   
+```{r, echo=FALSE, results='asis', eval="Venaza" %in% selected_datasets}
+cat('**Figure 1.4. Expression of gene of interest: Ven/aza response at 0, 6, and 24 hours.** Box plots show median +/- inter-quartile. Dot plots show individual samples. Gene expression values are batch corrected and variance stabilized. DESeq2 LRT was used to compare the groups and obtain the adjusted p-value shown.\n\n')
+cat('\\vspace{1cm}\n')
+```
+
+```{r, echo=FALSE, results='asis', eval= ifelse("Venaza" %in% selected_datasets, exists("datavst") && datavst$padj[1] <= 0.05, FALSE)}
+cat('\\vspace{1cm}\n')
+cat('\\textbf{Table 1.4. Summary of Pairwise Wald Tests for Pollyea., et al. 2018}\n') 
+```
+<br />
+<br />
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis', eval="Venaza" %in% selected_datasets}
+
+if(gene %in% exp.venaza$ensembl_gene_id){
+pw.venaza <- as_tibble(exp.venaza) %>% 
+  dplyr::select(-c("Gene", "padj", "log2FoldChange")) 
+
+pw.venaza <- pivot_longer(
+  data = pw.venaza,
+  cols = -ensembl_gene_id,
+  names_to = "Dataset",
+  values_to = "Values"
+) %>%
+  separate(col = Dataset, into = c("Type", "Pairwise Test"), sep = "(?<=padj|log2FC)_",  extra = "merge") %>%
+  pivot_wider(
+    id_cols = c("ensembl_gene_id", "Pairwise Test"),
+    names_from = Type,
+    values_from = Values
+  )
+pw.venaza <- pw.venaza %>%
+dplyr::filter(ensembl_gene_id == (gene)) %>% 
+   dplyr::mutate(padj = lapply(padj, function(x) round(as.numeric(x), 4)),
+                log2FC = lapply(log2FC, function(x) round(as.numeric(x), 4))) %>%
+  dplyr::select(-"ensembl_gene_id")
+
+if(exists("datavst") && datavst$padj[1] <= 0.05) {
+  knitr::kable(pw.venaza)
+}}
+```
+
+```{r, echo=FALSE, results='asis', eval="Venaza" %in% selected_datasets}
+cat('\n\n**Reference** \n\n
+_[1. Pollyea., et al. (2018). "Venetoclax and Azacitidine Disrupts Energy Metabolism and Targets Leukemia Stem Cells in Patients with Acute Myeloid Leukemia." Nature Medicine 24: 1859-1866.](https://www.nature.com/articles/s41591-018-0233-1)_')
+
+```
+
+
+```{r, echo=FALSE, results='asis', eval="Lagadinou" %in% selected_datasets}
+cat('## 1.5. BCL-2 inhibition targets oxidative phosphorylation and selectively eradicates quiescent human leukemia stem cells. ROS high and ROS low LSCs were either treated with 5ul of PTL or not treated before sequencing. [Lagadinou et al, Cell Stem Cell, 2013)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3595363/)')
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, eval="Lagadinou" %in% selected_datasets, fig.width=8, fig.height=6}
+
+#need to fix format of colnames to match the format of sample names in metadata
+colnames(vst.elaml)[-(1:2)] <- gsub("\\.", "-",colnames(vst.elaml)[-(1:2)])
+
+vstlimma2 <- vst_ensembl(vst.elaml, ext_gene, ensembl_gene_id)
+
+#create a data table filtered for only ID and treatment
+res <- (label.elaml) %>%
+  rownames_to_column(var = "ID") %>% 
+  dplyr::select(., ID, Treatment) 
+
+if(gene %in% exp.elaml$ensembl_gene_id){
+#create data table with class, padj, and gene expression values for each sample
+vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., Treatment = ifelse(variable %in% res$ID, res$Treatment[match(variable, res$ID)], "unknown")) %>% #match ID to treatment for each sample
+  dplyr::filter(ensembl_gene_id %in% exp.elaml$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(exp.elaml, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') 
+
+#factor class and variable(sample id)
+vst.goi$Treatment <-
+  factor(vst.goi$Treatment)
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+# Box plot
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]  
+DESeq_padj_elaml <- round(datavst$padj[1], 3)
+colors <- viridis(4)
+
+ggplot(datavst, aes(x = Treatment, y = value, fill = Treatment)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = Treatment)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  geom_text(aes(
+    x = "low_no_drug",
+    y = max(value) + 1,
+    label = format(paste0("padj = ", DESeq_padj_elaml))
+  ), check_overlap = T) +  
+  ylab("Batch Corrected Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Treatment vs No Drug (ROS High and ROS Low LSCs)") 
+} else{
+  vst.goi <- as.tibble(vstlimma2) %>%
+  dplyr::filter(ensembl_gene_id == (gene)) %>%
+  melt(.) %>%
+  mutate(., Treatment = ifelse(variable %in% res$ID, res$Treatment[match(variable, res$ID)], "unknown"))
+  
+  #factor class and variable(sample id)
+vst.goi$Treatment <-
+  factor(vst.goi$Treatment)
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+colors <- viridis(4)
+
+ggplot(vst.goi, aes(x = Treatment, y = value, fill = Treatment)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = Treatment)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Batch Corrected Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Treatment vs No Drug (ROS High and ROS Low LSCs)") 
+}
+```
+<br />   
+```{r, echo=FALSE, results='asis', eval = "Lagadinou" %in% selected_datasets}
+cat('**Figure 1.5. Expression of gene of interest in ROS high and ROS low LSCs after treatment with PTL vs control.**  Box plots show median +/- inter-quartile. Dot plots show individual samples. Gene expression values are batch corrected and variance stabilized. DESeq2 LRT was used to compare the groups and obtain the adjusted p-value shown.\n\n')
+cat('\\vspace{1cm}\n')
+```
+
+```{r, echo=FALSE, results='asis', eval= ifelse("Lagadinou" %in% selected_datasets, exists("datavst") && datavst$padj[1] <= 0.05, FALSE)}
+cat('\\textbf{Table 1.5. Summary of Pairwise Wald Tests for Lagadinou., et al. 2013}\n') 
+```
+<br />
+<br />
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis', eval="Lagadinou" %in% selected_datasets}
+if(gene %in% exp.elaml$ensembl_gene_id){
+
+pw.elaml <- as_tibble(exp.elaml) %>% 
+  dplyr::select(-c("Gene", "padj", "log2FoldChange")) 
+
+pw.elaml <- pivot_longer(
+  data = pw.elaml,
+  cols = -ensembl_gene_id,
+  names_to = "Dataset",
+  values_to = "Values"
+) %>%
+  separate(col = Dataset, into = c("Type", "Pairwise Test"), sep = "(?<=padj|log2FC)_",  extra = "merge") %>%
+  pivot_wider(
+    id_cols = c("ensembl_gene_id", "Pairwise Test"),
+    names_from = Type,
+    values_from = Values
+  )
+pw.elaml <- pw.elaml %>%
+dplyr::filter(ensembl_gene_id == (gene)) %>% 
+   dplyr::mutate(padj = lapply(padj, function(x) round(as.numeric(x), 4)),
+                log2FC = lapply(log2FC, function(x) round(as.numeric(x), 4))) %>%
+  dplyr::select(-"ensembl_gene_id")
+
+if(exists("datavst") && datavst$padj[1] <= 0.05) {
+  knitr::kable(pw.elaml)
+}}
+```
+
+```{r, echo=FALSE, results='asis', eval = "Lagadinou" %in% selected_datasets}
+cat('\n\n **Reference** \n\n 
+_[1. Lagadinou., et al. (2013). "BCL-2 inhibition targets oxidative phosphorylation and selectively eradicates quiescent human leukemia stem cells." Cell Stem Cell 12(3): 329-341.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3595363/)_')
+
+```
+
+
+\newpage
+
+# 2. Bulk AML
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='asis', eval=bulk_selected}
+#return a print statement for the user if the gene is not found in any of the bulk datasets, or if none were selected to view in the report
+  cat("Gene not found: \n")
+  cat("The selected gene is not found in any of the Bulk AML datasets \n (or none of these datasets were selected for this report.")
+
+
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results= 'asis', eval = TCGA_eval}
+
+cat('## 2.1. Adult AML: TCGA-AML [(TCGA et al. NEJM, 2013)](https://pubmed.ncbi.nlm.nih.gov/23634996/) \n\n 
+**Analysis**  \n\n
+The Cancer Genome Atlas (TCGA) project published gene expression profiles of 151 primary AML patients along with their mutational profiles and clinical characteristics. This section of analysis shows expression of `r gene` in the TCGA-AML dataset parsed by various mutational/clinical variables including the French-American-British (**[FAB](https://www.cancer.org/cancer/acute-myeloid-leukemia/detection-diagnosis-staging/how-classified.html)**) subtypes, karyotype, RAS mutation status, and NPM1 mutation status.')  
+
+```
+
+```{r, echo=FALSE, results='asis', eval="TCGA_FAB" %in% selected_datasets}
+cat('### 2.1.1. FAB subtypes \n\n
+    + LRT was run on the 149 samples with known FAB subtype')
+```
+
+
+```{r, echo=F, message=F, warning=F, eval="TCGA_FAB" %in% selected_datasets, fig.width=8, fig.height=6}
+
+#rename columns to match and name any blank gene name with ensembl id
+vstlimma1 <- vst_ensembl(tcga.vst1, ext_gene, ensembl_gene_id)
+#create a data table filtered for FAB column and filename
+res <- (tcga.meta.FAB) %>%
+  #rownames_to_column(var = "filename") %>% 
+  dplyr::select(., id, SampleID, FAB)
+
+if(gene %in% tcga.res.FAB$ensembl_gene_id){
+#create data table with class, padj, and gene expression values for each sample
+vst.goi <- as_tibble(vstlimma1) %>%
+  melt(.) %>%
+  mutate(., FAB = ifelse(variable %in% res$id, res$FAB[match(variable, res$id)], "unknown")) %>%
+  dplyr::filter(ensembl_gene_id %in% tcga.res.FAB$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(tcga.res.FAB, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') %>% 
+  dplyr::filter(FAB != "unknown")
+
+vst.goi$variable <- factor(vst.goi$variable)
+vst.goi$FAB <- factor(vst.goi$FAB)
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+colors <- c(viridis(7))
+DESeq_padj_FAB <- round(datavst$padj[1], 3)
+
+ggplot(datavst, aes(x = FAB, y = value, fill = FAB)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = FAB)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  geom_text(aes(
+    x = "M4",
+    y = max(value) + 1,
+    label = format(paste0("padj = ", DESeq_padj_FAB))), 
+    check_overlap = T) +  
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by FAB Subtype") 
+} else{
+  vst.goi <- as_tibble(vstlimma1) %>%
+  melt(.) %>%
+  mutate(., FAB = ifelse(variable %in% res$id, res$FAB[match(variable, res$id)], "unknown"))
+  
+  vst.goi$variable <- factor(vst.goi$variable)
+  vst.goi$FAB <- factor(vst.goi$FAB)
+  datavst <-
+    vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+  colors <- c(viridis(7))
+
+
+ggplot(datavst, aes(x = FAB, y = value, fill = FAB)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = FAB)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by FAB Subtype") 
+}
+```
+
+<br />   
+```{r, echo=FALSE, results='asis', eval="TCGA_FAB" %in% selected_datasets}
+cat('**Figure 2.1.1. Expression of gene of interest in different FAB subtypes in the TCGA-AML dataset (N=151).** Box plots show median +/- inter-quartile. Dot plots show individual patients. Gene expression values are variance stabilized. DESeq2 LRT was used to compare the groups and obtain the adjusted p-value shown.')
+cat('\\vspace{1cm}\n')
+```
+
+```{r, echo=FALSE, results='asis', eval= ifelse("TCGA_FAB" %in% selected_datasets, exists("datavst") && datavst$padj[1] <= 0.05, FALSE)}
+
+cat('\\textbf{Table 2.1.1. Summary of Pairwise Wald Tests for TCGA FAB Subtypes}\n') 
+```
+<br />
+<br />
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis', eval="TCGA_FAB" %in% selected_datasets}
+
+#tcga.res.FAB <- read_rds("~/Documents/GitHub/shinyeagle/new_raw_data/TCGA_res_FAB.rds")
+if(gene %in% tcga.res.FAB$ensembl_gene_id){
+  
+pw.tcga.fab <- as_tibble(tcga.res.FAB) %>% 
+  dplyr::select(-c("Gene", "padj", "log2FoldChange")) 
+
+pw.tcga.fab <- pivot_longer(
+  data = pw.tcga.fab,
+  cols = -ensembl_gene_id,
+  names_to = "Dataset",
+  values_to = "Values"
+) %>%
+  separate(col = Dataset, into = c("Type", "Pairwise Test"), sep = "(?<=padj|log2FC)_",  extra = "merge") %>%
+  pivot_wider(
+    id_cols = c("ensembl_gene_id", "Pairwise Test"),
+    names_from = Type,
+    values_from = Values
+  )
+pw.tcga.fab <- pw.tcga.fab %>%
+dplyr::filter(ensembl_gene_id == (gene)) %>% 
+   dplyr::mutate(padj = lapply(padj, function(x) round(as.numeric(x), 4)),
+                log2FC = lapply(log2FC, function(x) round(as.numeric(x), 4))) %>%
+  dplyr::select(-"ensembl_gene_id")
+
+if(exists("datavst") && datavst$padj[1] <= 0.05) {
+  knitr::kable(pw.tcga.fab)
+}}
+```
+
+  
+
+```{r, echo=FALSE, results='asis', eval="TCGA_RFAB" %in% selected_datasets}
+cat('### 2.1.2. FAB + RAS mutation \n\n
+    + LRT run on 149 samples with known FAB subtype and RAS mutation status')
+```
+
+```{r, echo=F, message=F, warning=F, eval="TCGA_RFAB" %in% selected_datasets, fig.width=8, fig.height=6}
+#RAS mutation was determined by a mutation in any of the 3 genes in the RAS pathway: NRAS, KRAS, and PTPN11
+#rename columns to match and name any blank gene name with ensembl id
+vstlimmaRFAB <- vst_ensembl(tcga.vstRFAB, ext_gene, ensembl_gene_id) 
+#create a data table filtered for FAB column and filename
+res <- (tcga.meta.RFAB) %>%
+  dplyr::select(., id, SampleID, FAB, RAS_mut) 
+  
+if(gene %in% tcga.res.RFAB$ensembl_gene_id){
+#create data table with class, padj, and gene expression values for each sample
+vst.goi <- as_tibble(vstlimmaRFAB) %>%
+  melt(.) %>%
+  mutate(., RAS_mut = ifelse(variable %in% res$id, res$RAS_mut[match(variable, res$id)], "unknown")) %>%
+    mutate(., FAB = ifelse(variable %in% res$id, res$FAB[match(variable, res$id)], "unknown")) %>%
+  dplyr::filter(ensembl_gene_id%in% tcga.res.RFAB$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(tcga.res.RFAB, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') %>%
+  dplyr::filter(FAB != "unknown") %>% 
+  dplyr::filter(RAS_mut != "unknown") 
+
+vst.goi$variable <- factor(vst.goi$variable)
+vst.goi$FAB <- factor(vst.goi$FAB)
+vst.goi$RAS_mut <- factor(vst.goi$RAS_mut)
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+
+colors <- c(viridis(2))
+DESeq_padj_RFAB <- round(datavst$padj[1], 3)
+
+ggplot(datavst, aes(x = FAB, y = value, fill = RAS_mut)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = RAS_mut)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  geom_text(aes(
+    x = "M4",
+    y = max(value) + 1,
+    label = format(paste0("padj = ", DESeq_padj_RFAB))),
+    check_overlap = T) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by FAB + RAS mutation") 
+} else{
+  vst.goi <- as_tibble(vstlimmaRFAB) %>%
+    melt(.) %>%
+    mutate(., RAS_mut = ifelse(variable %in% res$id, res$RAS_mut[match(variable, res$id)], "unknown")) %>%
+    mutate(., FAB = ifelse(variable %in% res$id, res$FAB[match(variable, res$id)], "unknown")) %>%
+    dplyr::filter(FAB != "unknown") %>%
+    dplyr::filter(RAS_mut != "unknown") 
+  
+vst.goi$variable <- factor(vst.goi$variable)
+vst.goi$FAB <- factor(vst.goi$FAB)
+vst.goi$RAS_mut <- factor(vst.goi$RAS_mut)
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+colors <- c(viridis(2))
+ggplot(datavst, aes(x = FAB, y = value, fill = RAS_mut)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = RAS_mut)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by FAB + RAS mutation") 
+}
+
+
+```
+<br />   
+```{r, echo=FALSE, results='asis', eval="TCGA_RFAB" %in% selected_datasets}
+cat('**Figure 2.1.2. Expression of gene of interest in N/KRAS-mut vs. N/KRAS-wt by FAB in the TCGA-AML dataset.** RAS-mut patients are defined as ones having mutations in any one of the three RAS pathway genes: NRAS, KRAS, and PTPN11. Box plots show median +/- inter-quartile. Dot plots show individual patients. Expression values are variance stabilized. DESeq2 LRT was used to compare the groups and obtain the adjusted p-value shown.\n\n')
+cat('\\vspace{1cm}\n')
+```
+<br />
+```{r, echo=FALSE, results='asis', eval= ifelse("TCGA_RFAB" %in% selected_datasets, exists("datavst") && datavst$padj[1] <= 0.05, FALSE)}
+cat('\\vspace{1cm}\n')
+cat('\\textbf{Table 2.1.2. Summary of Pairwise Wald Tests for TCGA FAB Subtypes + RAS mutation}\n') 
+```
+<br />
+<br />
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis', eval="TCGA_RFAB" %in% selected_datasets}
+
+if(gene %in% tcga.res.RFAB$ensembl_gene_id){
+
+pw.tcga.rfab <- as_tibble(tcga.res.RFAB) %>% 
+  dplyr::select(-c("Gene", "padj", "log2FoldChange")) 
+
+pw.tcga.rfab <- pivot_longer(
+  data = pw.tcga.rfab,
+  cols = -ensembl_gene_id,
+  names_to = "Dataset",
+  values_to = "Values"
+) %>%
+  separate(col = Dataset, into = c("Type", "Pairwise Test"), sep = "(?<=padj|log2FC)_",  extra = "merge") %>%
+  pivot_wider(
+    id_cols = c("ensembl_gene_id", "Pairwise Test"),
+    names_from = Type,
+    values_from = Values
+  )
+pw.tcga.rfab <- pw.tcga.rfab %>%
+dplyr::filter(ensembl_gene_id == (gene)) %>% 
+   dplyr::mutate(padj = lapply(padj, function(x) round(as.numeric(x), 4)),
+                log2FC = lapply(log2FC, function(x) round(as.numeric(x), 4))) %>%
+  dplyr::select(-"ensembl_gene_id")
+
+if(exists("datavst") && datavst$padj[1] <= 0.05) {
+  knitr::kable(pw.tcga.rfab)
+}}
+```
+
+
+
+```{r, echo=FALSE, results='asis', eval="TCGA_NFAB" %in% selected_datasets}
+cat('### 2.1.3. FAB + NPM1 mutation \n\n
+    + LRT run on 149 samples with a known FAB subtype and NPM1 mutation status')
+```
+
+```{r, echo=FALSE, message=FALSE, eval= "TCGA_NFAB" %in% selected_datasets, warning=FALSE, fig.width=8, fig.height=6}
+vstlimmaNFAB <- vst_ensembl(tcga.vstNFAB, ext_gene, ensembl_gene_id)
+#create a data table filtered for FAB column and NPM1 mut
+res <- (tcga.meta.NFAB) %>%
+  dplyr::select(., id, SampleID,FAB, NPM1_mut) 
+
+if(gene %in% tcga.res.NFAB$ensembl_gene_id){
+#create data table with class, padj, and gene expression values for each sample
+# this plot is using the NFAB DE table 
+vst.goi <- as_tibble(vstlimmaNFAB) %>%
+  melt(.) %>%
+     mutate(., NPM1 = ifelse(variable %in% res$id, res$NPM1_mut[match(variable, res$id)], "unknown")) %>%
+    mutate(., FAB = ifelse(variable %in% res$id, res$FAB[match(variable, res$id)], "unknown")) %>%
+  dplyr::filter(ensembl_gene_id %in% tcga.res.NFAB$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(tcga.res.NFAB, c(
+   ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') %>%
+  dplyr::filter(NPM1 != "unknown") %>%
+  dplyr::filter(FAB != "unknown") 
+
+vst.goi$variable <- factor(vst.goi$variable)
+vst.goi$FAB <- factor(vst.goi$FAB)
+vst.goi$NPM1 <- factor(vst.goi$NPM1)
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+
+colors <- c(viridis(2))
+DESeq_padj_NFAB <- round(datavst$padj[1], 3)
+ggplot(datavst, aes(x = FAB, y = value, fill = NPM1)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = NPM1)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  geom_text(aes(
+    x = "M4",
+    y = max(value) + 1,
+    label = format(paste0("padj = ", DESeq_padj_NFAB))),
+    check_overlap = T) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by FAB + NPM1 mutation") 
+} else{
+  vst.goi <- as_tibble(vstlimmaNFAB) %>%
+    melt(.) %>%
+    mutate(., NPM1 = ifelse(variable %in% res$id, res$NPM1_mut[match(variable, res$id)], "unknown")) %>%
+    mutate(., FAB = ifelse(variable %in% res$id, res$FAB[match(variable, res$id)], "unknown")) %>%
+    dplyr::filter(NPM1 != "unknown") %>%
+    dplyr::filter(FAB != "unknown") 
+
+vst.goi$variable <- factor(vst.goi$variable)
+vst.goi$FAB <- factor(vst.goi$FAB)
+vst.goi$NPM1 <- factor(vst.goi$NPM1)
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+colors <- c(viridis(2))
+
+ggplot(datavst, aes(x = FAB, y = value, fill = NPM1)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = NPM1)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by FAB + NPM1 mutation") 
+}
+
+```
+<br/>
+```{r, echo=FALSE, results='asis', eval="TCGA_NFAB" %in% selected_datasets}
+cat('**Figure 2.1.3. Expression of gene of interest in NPM1- mut vs NPM1- wt by FAB in the TCGA-AML dataset.** Box plots show median +/- inter-quartile. Dot plots show individual patients. Expression values are variance stablilized. DESeq2 LRT was used to compare the groups and obtain the adjusted p-value shown.')
+cat('\\vspace{1cm}\n')
+```
+
+```{r, echo=FALSE, results='asis', eval=ifelse("TCGA_NFAB" %in% selected_datasets, exists("datavst") && datavst$padj[1] <= 0.05, FALSE)}
+
+cat('\\textbf{Table 2.1.3. Summary of Pairwise Wald Tests for TCGA FAB Subtypes + NPM1 mutation}\n') 
+```
+<br />
+<br />
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis', eval="TCGA_NFAB" %in% selected_datasets}
+if(gene %in% tcga.res.NFAB$ensembl_gene_id){
+pw.tcga.nfab <- as_tibble(tcga.res.NFAB) %>% 
+  dplyr::select(-c("Gene","padj", "log2FoldChange")) 
+
+pw.tcga.nfab <- pivot_longer(
+  data = pw.tcga.nfab,
+  cols = -ensembl_gene_id,
+  names_to = "Dataset",
+  values_to = "Values"
+) %>%
+  separate(col = Dataset, into = c("Type", "Pairwise Test"), sep = "(?<=padj|log2FC)_",  extra = "merge") %>%
+  pivot_wider(
+    id_cols = c("ensembl_gene_id", "Pairwise Test"),
+    names_from = Type,
+    values_from = Values
+  )
+pw.tcga.nfab <- pw.tcga.nfab %>%
+dplyr::filter(ensembl_gene_id == (gene)) %>% 
+   dplyr::mutate(padj = lapply(padj, function(x) round(as.numeric(x), 4)),
+                log2FC = lapply(log2FC, function(x) round(as.numeric(x), 4))) %>%
+  dplyr::select(-"ensembl_gene_id")
+
+if(exists("datavst") && datavst$padj[1] <= 0.05) {
+  knitr::kable(pw.tcga.nfab)
+}}
+```
+
+
+
+```{r, echo=FALSE, results='asis', eval="TCGA_MC" %in% selected_datasets}
+cat('### 2.1.4. Karyotype \n\n 
+    + LRT was run on the 146 samples with karyotype data')
+```
+
+```{r, echo=FALSE, message=FALSE, eval="TCGA_MC" %in% selected_datasets, warning=FALSE, fig.width=8, fig.height=6}
+
+vstlimma2 <- vst_ensembl(tcga.vst2, ext_gene, ensembl_gene_id) 
+
+#create a data table filtered for FAB column and filename
+res <- (tcga.meta.MC) %>%
+  dplyr::select(., id, SampleID, MClass) 
+
+if(gene %in% tcga.res.MC$ensembl_gene_id){
+#create data table with class, padj, and gene expression values for each sample
+# this plot is using the karyotype DE and padj is the result of LRT between groups
+vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., Karyotype = ifelse(variable %in% res$id, res$MClass[match(variable, res$id)], "unknown")) %>%
+  dplyr::filter(ensembl_gene_id%in% tcga.res.MC$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(tcga.res.MC, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') %>%
+  dplyr::filter(Karyotype != "unknown") 
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+vst.goi$Karyotype <- factor(vst.goi$Karyotype)
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id== (gene),]
+
+
+colors <- c(viridis(10))
+DESeq_padj_K <- round(datavst$padj[1], 3)
+ggplot(datavst, aes(x = Karyotype, y = value, fill = Karyotype)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = Karyotype)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  geom_text(aes(
+    x = "Poor Risk Cytogenetic Abnormality",
+    y = max(value) + 1,
+    label = format(paste0("padj = ", DESeq_padj_K))),
+    check_overlap = T) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by Karyotype")
+} else{
+  vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., Karyotype = ifelse(variable %in% res$id, res$MClass[match(variable, res$id)], "unknown")) %>%
+  dplyr::filter(Karyotype != "unknown")
+  
+vst.goi$variable <- factor(vst.goi$variable)
+
+vst.goi$Karyotype <- factor(vst.goi$Karyotype)
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id== (gene),]
+
+colors <- c(viridis(10))
+
+ggplot(datavst, aes(x = Karyotype, y = value, fill = Karyotype)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = Karyotype)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by Karyotype")
+}
+
+```
+<br/>
+```{r, echo=FALSE, results='asis', eval="TCGA_MC" %in% selected_datasets}
+cat('**Figure 2.1.4. Expression of gene of interest by Karyotype in the TCGA-AML dataset.** Box plots show median +/- inter-quartile. Dot plots show individual patients. Expression values are variance stablilized. DESeq2 LRT was used to compare the groups and obtain the adjusted p-value shown.')
+cat('\\vspace{1cm}\n')
+```
+
+```{r, echo=FALSE, results='asis', eval= ifelse("TCGA_MC" %in% selected_datasets, exists("datavst") && datavst$padj[1] <= 0.05, FALSE)}
+
+cat('\\textbf{Table 2.1.4. Summary of Pairwise Wald Tests for TCGA Karyotypes}\n') 
+```
+<br />
+<br />
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis', eval="TCGA_MC" %in% selected_datasets}
+if(gene %in% tcga.res.MC$ensembl_gene_id){
+
+pw.tcga.mc <- as_tibble(tcga.res.MC) %>% 
+  dplyr::select(-c("Gene","padj", "log2FoldChange")) 
+
+pw.tcga.mc <- pivot_longer(
+  data = pw.tcga.mc,
+  cols = -ensembl_gene_id,
+  names_to = "Dataset",
+  values_to = "Values"
+) %>%
+  separate(col = Dataset, into = c("Type", "Pairwise Test"), sep = "(?<=padj|log2FC)_",  extra = "merge") %>%
+  pivot_wider(
+    id_cols = c("ensembl_gene_id", "Pairwise Test"),
+    names_from = Type,
+    values_from = Values
+  )
+pw.tcga.mc <- pw.tcga.mc %>%
+dplyr::filter(ensembl_gene_id == (gene)) %>% 
+   dplyr::mutate(padj = lapply(padj, function(x) round(as.numeric(x), 4)),
+                log2FC = lapply(log2FC, function(x) round(as.numeric(x), 4))) %>%
+  dplyr::select(-"ensembl_gene_id")
+
+if(exists("datavst") && datavst$padj[1] <= 0.05) {
+  knitr::kable(pw.tcga.mc)
+}}
+```
+
+<br />  
+
+
+```{r, echo=FALSE, results='asis', eval="TCGA_RAS" %in% selected_datasets}
+cat('### 2.1.5. RAS-wt vs. RAS-mut')
+```
+
+
+```{r, echo=FALSE, message=FALSE, eval="TCGA_RAS" %in% selected_datasets, warning=FALSE, fig.width=8, fig.height=6}
+#RAS mutation was determined by a mutation in any of the 3 genes in the RAS pathway: NRAS, KRAS, and PTPN11
+#rename columns to match and name any blank gene name with ensembl id
+vstlimma3 <- vst_ensembl(tcga.vst3, ext_gene, ensembl_gene_id)
+#create a data table filtered for FAB column and filename
+res <- (tcga.meta) %>%
+  dplyr::select(., id, SampleID, RAS_mut) 
+##padj is taken from default DE comparison from the LRT (RAS mut vs wt)
+if(gene %in% tcga.res.RAS$ensembl_gene_id){
+#create data table with class, padj, and gene expression values for each sample
+# this plot is using the RAS mutation DE table for pairwise comparison of mut vs wt
+vst.goi <- as_tibble(vstlimma3) %>%
+  melt(.) %>%
+  mutate(., RAS_mut = ifelse(variable %in% res$id, res$RAS_mut[match(variable, res$id)], "unknown")) %>%
+  dplyr::filter(ensembl_gene_id %in% tcga.res.RAS$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(tcga.res.RAS, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') %>%
+  dplyr::filter(RAS_mut != "unknown")
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+vst.goi$RAS_mut <- factor(vst.goi$RAS_mut)
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+
+colors <- c(viridis(2))
+DESeq_padj_ras <- round(datavst$padj[1], 3)
+ggplot(datavst, aes(x = RAS_mut, y = value, fill = RAS_mut)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = RAS_mut)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  geom_text(aes(
+    x = "wt",
+    y = max(value) + 1,
+    label = format(paste0("padj = ", DESeq_padj_ras))),
+    check_overlap = T) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by RAS mutation")
+} else{
+  vst.goi <- as_tibble(vstlimma3) %>%
+  melt(.) %>%
+  mutate(., RAS_mut = ifelse(variable %in% res$id, res$RAS_mut[match(variable, res$id)], "unknown")) %>%
+  dplyr::filter(RAS_mut != "unknown")
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+vst.goi$RAS_mut <- factor(vst.goi$RAS_mut)
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+colors <- c(viridis(2))
+
+ggplot(datavst, aes(x = RAS_mut, y = value, fill = RAS_mut)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = RAS_mut)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by RAS mutation")
+}
+
+```
+<br/>
+
+```{r, echo=FALSE, results='asis', eval="TCGA_RAS" %in% selected_datasets}
+cat('**Figure 2.1.5. Expression of gene of interest in N/KRAS- mut vs N/KRAS- wt in the TCGA-AML dataset.** RAS-mut patients are defined as ones having mutations in any one of the three RAS pathway genes: NRAS, KRAS, and PTPN11. Box plots show median +/- inter-quartile. Dot plots show individual patients. Expression values are variance stabilized. DESeq2 LRT was used to compare the groups and obtain the adjusted p-value shown.')
+```
+<br />  
+
+
+```{r, echo=FALSE, results='asis', eval="TCGA_NPM1" %in% selected_datasets}
+cat('### 2.1.6. NPM1-wt vs. NPM1-mut')
+```
+
+
+```{r, echo=FALSE, message=FALSE, eval="TCGA_NPM1" %in% selected_datasets, warning=FALSE, fig.width=8, fig.height=6}
+vstlimma4 <- vst_ensembl(tcga.vst4, ext_gene, ensembl_gene_id)
+
+res <- (tcga.meta) %>%
+  dplyr::select(., id, SampleID, NPM1_mut) 
+if(gene %in% tcga.res.NPM1$ensembl_gene_id){
+#this plot is using the NPM1 DE table and padj values are from the comparison of mut vs wt for this mutation 
+vst.goi <- as_tibble(vstlimma4) %>%
+  melt(.) %>%
+     mutate(., NPM1 = ifelse(variable %in% res$id, res$NPM1_mut[match(variable, res$id)], "unknown")) %>%
+  dplyr::filter(ensembl_gene_id %in% tcga.res.NPM1$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(tcga.res.NPM1, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') %>%
+  dplyr::filter(NPM1 != "unknown") 
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+vst.goi$NPM1 <- factor(vst.goi$NPM1)
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+DESeq_padj_npm1 <- round(datavst$padj[1], 3)
+colors <- c(viridis(2))
+ggplot(datavst, aes(x = NPM1, y = value, fill = NPM1)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = NPM1)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  geom_text(aes(
+    x = "wt",
+    y = max(value) + 1,
+    label = format(paste0("padj = ", DESeq_padj_npm1))),
+    check_overlap = T) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by NPM1 mutation")
+} else{
+  vst.goi <- as_tibble(vstlimma4) %>%
+  melt(.) %>%
+     mutate(., NPM1 = ifelse(variable %in% res$id, res$NPM1_mut[match(variable, res$id)], "unknown")) %>%
+  dplyr::filter(NPM1 != "unknown") 
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+vst.goi$NPM1 <- factor(vst.goi$NPM1)
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+colors <- c(viridis(2))
+ggplot(datavst, aes(x = NPM1, y = value, fill = NPM1)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = NPM1)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by NPM1 mutation")
+}
+
+
+```
+<br/>
+```{r, echo=FALSE, results='asis', eval="TCGA_NPM1" %in% selected_datasets}
+cat('**Figure 2.1.6. Expression of gene of interest in NPM1- mut vs NPM1- wt in the TCGA-AML dataset.** Box plots show median +/- inter-quartile. Dot plots show individual patients. Expression values are variance stabilized. DESeq2 LRT was used to compare the groups and obtain the adjusted p-value shown.')
+```
+<br />
+<br />
+<br />
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='asis', eval=TCGA_eval}
+cat('**Reference** \n\n 
+_[1. Cancer Genome Atlas Research, N., et al. (2013). "Genomic and epigenomic landscapes of adult de novo acute myeloid leukemia." N Engl J Med 368(22): 2059-2074.](https://pubmed.ncbi.nlm.nih.gov/23634996/)_') 
+
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results= 'asis', eval= BEAT_eval}
+
+cat('## 2.2. Adult AML: BEAT-AML [(Tyner et al. Nature, 2018)](https://pubmed.ncbi.nlm.nih.gov/30333627/) \n\n
+
+**Analysis**  \n\n
+The BEAT-AML project published gene expression profiles of ~400 primary AML patients along with their mutational profiles and clinical characteristics. 
+This section of analysis shows expression of `r gene` in the BEAT-AML dataset parsed by various mutational/clinical variables including the French-American-British (**[FAB](https://www.cancer.org/cancer/acute-myeloid-leukemia/detection-diagnosis-staging/how-classified.html)**) subtypes, Venetoclax response, and disease stage (de novo vs. relapse).')  
+```
+
+
+```{r, echo=FALSE, results='asis', eval="BEAT_AML_FAB" %in% selected_datasets}
+
+cat('### 2.2.1. FAB subtypes \n\n
+ + LRT was run on the 25 samples that contain both a ven resonse and a known FAB subtype')
+```
+
+```{r, echo=F, message=F, warning=F, eval="BEAT_AML_FAB" %in% selected_datasets, fig.width=8, fig.height=6}
+
+#rename columns to match and name any blank gene name with ensembl id
+vstlimma2 <- vst_ensembl(vst.baml, ext_gene, ensembl_gene_id) 
+#create a data table filtered for FAB column and filename
+res <- (FAB.meta.baml) %>%
+  rownames_to_column(var = "filename") %>% 
+  dplyr::select(., filename, SampleID, FAB_BlastMorphology)
+if(gene %in% dds.FAB.baml$ensembl_gene_id){
+#create data table with class, padj, and gene expression values for each sample
+vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., FAB = ifelse(variable %in% res$filename, res$FAB_BlastMorphology[match(variable, res$filename)], "unknown")) %>%
+  dplyr::filter(ensembl_gene_id %in% dds.FAB.baml$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(dds.FAB.baml, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') %>% 
+  dplyr::filter(FAB != "unknown")
+
+
+
+vst.goi$variable <- factor(vst.goi$variable)
+vst.goi$FAB <- factor(vst.goi$FAB)
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+colors <- c(viridis(7))
+DESeq_padj_FAB <- round(datavst$padj[1], 3)
+ggplot(datavst, aes(x = FAB, y = value, fill = FAB)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = FAB)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  geom_text(aes(
+    x = "M4",
+    y = max(value) + 1,
+    label = format(paste0("padj = ", DESeq_padj_FAB))), 
+    check_overlap = T) +  
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by FAB Subtype") 
+} else{
+  vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., FAB = ifelse(variable %in% res$filename, res$FAB_BlastMorphology[match(variable, res$filename)], "unknown")) %>%
+  dplyr::filter(FAB != "unknown")
+
+vst.goi$variable <- factor(vst.goi$variable)
+vst.goi$FAB <- factor(vst.goi$FAB)
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+colors <- c(viridis(7))
+
+ggplot(datavst, aes(x = FAB, y = value, fill = FAB)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = FAB)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by FAB Subtype") 
+}
+ 
+```
+
+<br />  
+```{r, echo=FALSE, results='asis', eval="BEAT_AML_FAB" %in% selected_datasets}
+cat('**Figure 2.2.1. Expression of genen of interest in different FAB subtypes in the BEAT-AML dataset.** FAB labels in the BEAT-AML dataset are not available for all patients. Therefore, only a subset of patients with FAB labels were included in this analysis. Box plots show median +/- inter-quartile. Dot plots show individual patients. DESeq2 LRT was used to compare the groups and obtain the adjusted p-value shown.')
+cat('\\vspace{1cm}\n')
+```
+
+```{r, echo=FALSE, results='asis', eval= ifelse("BEAT_AML_FAB" %in% selected_datasets, exists("datavst") && datavst$padj[1] <= 0.05, FALSE)}
+
+cat('\\textbf{Table 2.2.1. Summary of Pairwise Wald Tests for BEAT-AML FAB Subtypes}\n') 
+```
+<br />
+<br />
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis', eval="BEAT_AML_FAB" %in% selected_datasets}
+if(gene %in% dds.FAB.baml$ensembl_gene_id){
+
+pw.beat.fab <- as_tibble(dds.FAB.baml) %>% 
+  dplyr::select(-c("Gene", "padj", "log2FoldChange")) 
+
+pw.beat.fab <- pivot_longer(
+  data = pw.beat.fab,
+  cols = -ensembl_gene_id,
+  names_to = "Dataset",
+  values_to = "Values"
+) %>%
+  separate(col = Dataset, into = c("Type", "Pairwise Test"), sep = "(?<=padj|log2FC)_",  extra = "merge") %>%
+  pivot_wider(
+    id_cols = c("ensembl_gene_id", "Pairwise Test"),
+    names_from = Type,
+    values_from = Values
+  )
+pw.beat.fab <- pw.beat.fab %>%
+dplyr::filter(ensembl_gene_id == (gene)) %>% 
+   dplyr::mutate(padj = lapply(padj, function(x) round(as.numeric(x), 4)),
+                log2FC = lapply(log2FC, function(x) round(as.numeric(x), 4))) %>%
+  dplyr::select(-"ensembl_gene_id")
+
+if(exists("datavst") && datavst$padj[1] <= 0.05) {
+  knitr::kable(pw.beat.fab)
+}}
+```
+
+
+
+```{r, echo=FALSE, results='asis', eval= "BEAT_AML" %in% selected_datasets}
+
+cat('### 2.2.2. Ven Response \n\n
+ + gene expression per ven response quantile. q1 = resistant, q4 = sensitive \n\n
+ + samples were filtered for those with any ven response (193)')
+```
+<br />
+```{r, echo=FALSE,message=FALSE, eval="BEAT_AML" %in% selected_datasets, warning=FALSE, fig.width=8, fig.height=6, fig.align='center'}
+
+vstlimma2 <- vst_ensembl(vst.baml, ext_gene, ensembl_gene_id) 
+#create a data table filtered for quantile
+res <- (q.meta.baml) %>%
+  rownames_to_column(var = "filename") %>% 
+  mutate(., quantile = quantile) %>%
+  dplyr::select(., filename, SampleID, quantile, FAB_BlastMorphology) 
+
+if(gene %in% dds.baml$ensembl_gene_id){
+#create data table with class, padj, and gene expression values for each sample
+vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., quantile = ifelse(variable %in% res$filename, res$quantile[match(variable, res$filename)], "unknown")) %>%
+  mutate(., FAB = ifelse(variable %in% res$filename, res$FAB[match(variable, res$filename)], "unknown")) %>% 
+  dplyr::filter(ensembl_gene_id %in% dds.baml$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(dds.baml, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') %>% 
+  dplyr::filter(quantile != "unknown") 
+
+
+vst.goi$variable <- factor(vst.goi$variable)
+vst.goi$quantile <- factor(vst.goi$quantile)
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+colors <- c(viridis(5))
+
+DESeq_padj_q <- round(datavst$padj[1], 3)
+
+ggplot(datavst, aes(x = quantile, y = value, fill = quantile)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = quantile)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  geom_text(aes(
+    x = "q3",
+    y = max(value) + 1,
+    label = format(paste("padj = ", DESeq_padj_q))
+  ), check_overlap = T) +  
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by Ven Response") 
+} else{
+  vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., quantile = ifelse(variable %in% res$filename, res$quantile[match(variable, res$filename)], "unknown")) %>%
+  mutate(., FAB = ifelse(variable %in% res$filename, res$FAB[match(variable, res$filename)], "unknown")) %>% 
+  dplyr::filter(quantile != "unknown") 
+
+
+vst.goi$variable <- factor(vst.goi$variable)
+vst.goi$quantile <- factor(vst.goi$quantile)
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+colors <- c(viridis(5))
+
+ggplot(datavst, aes(x = quantile, y = value, fill = quantile)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = quantile)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by Ven Response") 
+ 
+}
+
+
+```
+<br />
+```{r, echo=FALSE, results='asis', eval="BEAT_AML" %in% selected_datasets}
+cat('**Figure 2.2.2. Expression of gene of interest for Venetoclax response quantile in the BEAT-AML dataset.** The BEAT-AML dataset was filtered for only samples with Ven response data. Box plots show median +/- inter-quartile. Dot plots show individual patients. DESeq2 LRT was used to compare the groups. q1 contains samples resistant to venetoclax and q4 contains samples that are sensitive. DESeq2 LRT was used to compare the groups and obtain the adjusted p-value shown.')
+cat('\\vspace{1cm}\n')
+```
+
+
+```{r, echo=FALSE, results='asis', eval= ifelse("BEAT_AML" %in% selected_datasets, exists("datavst") && datavst$padj[1] <= 0.05, FALSE)}
+
+cat('\\textbf{Table 2.2.2. Summary of Pairwise Wald Tests for BEAT-AML Ven Response Quantiles}\n') 
+```
+<br />
+<br />
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='asis', eval="BEAT_AML" %in% selected_datasets}
+
+if(gene %in% dds.baml$ensembl_gene_id){
+  
+pw.beat <- as_tibble(dds.baml) %>% 
+  dplyr::select(-c( "Gene", "padj", "log2FoldChange")) 
+
+pw.beat <- pivot_longer(
+  data = pw.beat,
+  cols = -ensembl_gene_id,
+  names_to = "Dataset",
+  values_to = "Values"
+) %>%
+  separate(col = Dataset, into = c("Type", "Pairwise Test"), sep = "(?<=padj|log2FC)_",  extra = "merge") %>%
+  pivot_wider(
+    id_cols = c("ensembl_gene_id", "Pairwise Test"),
+    names_from = Type,
+    values_from = Values
+  )
+pw.beat <- pw.beat %>%
+dplyr::filter(ensembl_gene_id == (gene)) %>% 
+   dplyr::mutate(padj = lapply(padj, function(x) round(as.numeric(x), 4)),
+                log2FC = lapply(log2FC, function(x) round(as.numeric(x), 4))) %>%
+  dplyr::select(-"ensembl_gene_id")
+
+if(exists("datavst") && datavst$padj[1] <= 0.05) {
+  knitr::kable(pw.beat)
+}}
+```
+
+
+```{r, echo=FALSE, results='asis', eval="BEAT_AML_DR" %in% selected_datasets}
+
+cat('### 2.2.3. De novo vs. Relpase')
+```
+
+```{r, echo=F, message=F, warning=F, eval="BEAT_AML_DR" %in% selected_datasets, fig.width=8, fig.height=6}
+#add ensembl_gene_id in place of missing gene names in dds.res 
+vstlimma2 <- vst_ensembl(vst.baml, ext_gene, ensembl_gene_id) 
+
+#create a data table filtered for Denovo.Relapse
+res <- (denovo.meta.baml) %>%
+  rownames_to_column(var = "filename") %>% 
+  dplyr::select(., filename, SampleID, Denovo.Relapse) 
+
+if(gene %in% dds.DR.baml$ensembl_gene_id){
+
+#create data table with class, padj, and gene expression values for each sample
+vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., Denovo.Relapse = ifelse(variable %in% res$filename, res$Denovo.Relapse[match(variable, res$filename)], "unknown")) %>%
+  dplyr::filter(ensembl_gene_id %in% dds.DR.baml$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(dds.DR.baml, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') %>%
+   dplyr::filter(Denovo.Relapse != "unknown") 
+
+vst.goi$variable <- factor(vst.goi$variable)
+vst.goi$Denovo.Relapse <- factor(vst.goi$Denovo.Relapse, levels = c("Relapse", "Denovo"))
+
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+colors <- c(viridis(2))
+
+DESeq_padj_DR <- round(datavst$padj[1],3)
+
+ggplot(datavst, aes(x = Denovo.Relapse, y = value, fill = Denovo.Relapse)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = Denovo.Relapse)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  geom_text(aes(
+    x = "Denovo",
+    y = max(value) + 1,
+    label = format(paste("padj =", DESeq_padj_DR))
+  ), check_overlap = T) +  #padj displayed in scientific notation
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol,"Expression by Relapse vs De novo") 
+} else{
+  vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., Denovo.Relapse = ifelse(variable %in% res$filename, res$Denovo.Relapse[match(variable, res$filename)], "unknown")) %>%
+   dplyr::filter(Denovo.Relapse != "unknown") 
+
+vst.goi$variable <- factor(vst.goi$variable)
+vst.goi$Denovo.Relapse <- factor(vst.goi$Denovo.Relapse, levels = c("Relapse", "Denovo"))
+
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]
+
+colors <- c(viridis(2))
+
+ggplot(datavst, aes(x = Denovo.Relapse, y = value, fill = Denovo.Relapse)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = Denovo.Relapse)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol,"Expression by Relapse vs De novo") 
+}
+
+```
+<br />   
+```{r, echo=FALSE, results='asis', eval="BEAT_AML_DR" %in% selected_datasets}
+cat('**Figure 2.2.3. Expression of gene of interest in de novo vs. relapse AML patients in the BEAT-AML dataset.** The de novo and relapse patients included in this analysis are not paired. The relapse cohort contains patients who relapsed from various forms of conventional chemotherapy (not including venetoclax-based therapy). Box plots show median +/- inter-quartile. Dot plots show individual patients. DESeq2 LRT was used to compare the groups. Adjusted p-value is shown for the Relapse vs De novo LRT.') 
+```
+<br />  
+<br />
+<br />
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results= 'asis', eval= BEAT_eval}
+
+cat('**Reference** \n\n
+
+_[1. Tyner, J. W., et al. (2018). "Functional genomic landscape of acute myeloid leukaemia." Nature 562(7728): 526-531.](https://pubmed.ncbi.nlm.nih.gov/30333627/)_')
+
+```
+
+ 
+
+```{r, echo=FALSE, results='asis', eval="Lee" %in% selected_datasets}
+cat('## 2.3. Genome wide expression from 12 AML patient samples with either prior complete remission, or no prior complete remission [(Lee et al, Nature, 2018)](https://www.nature.com/articles/s41467-017-02465-5#MOESM4)')  
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, eval="Lee" %in% selected_datasets, fig.width=8, fig.height=6}
+
+
+vstlimma2 <- vst_ensembl(vst.lee, ext_gene, ensembl_gene_id) 
+
+#create a data table filtered for only mono sample type
+res <- (label.lee) %>%
+  rownames_to_column(var = "ID") %>% 
+  dplyr::select(., ID, prior_cr) 
+
+if(gene %in% exp.lee$ensembl_gene_id){
+#create data table with class, padj, and gene expression values for each sample
+vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., prior_cr = ifelse(variable %in% res$ID, res$prior_cr[match(variable, res$ID)], "unknown")) %>%
+  dplyr::filter(ensembl_gene_id %in% exp.lee$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(exp.lee, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') 
+#factor class and variable(sample id)
+vst.goi$prior_cr <-
+  factor(vst.goi$prior_cr, levels = c("n", "y", "unknown"))
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+# Box plot
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]  
+
+DESeq_padj_lee <- round(datavst$padj[1], 3)
+
+colors <- viridis(3)
+ggplot(datavst, aes(x = prior_cr, y = value, fill = prior_cr)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = prior_cr)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  geom_text(aes(
+    x = "unknown",
+    y = max(value) + 1,
+    label = format(paste0("padj = ", DESeq_padj_lee))
+  ), check_overlap = T) + 
+  ylab("Batch Corrected Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by Complete Remission Status") 
+} else{
+  vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., prior_cr = ifelse(variable %in% res$ID, res$prior_cr[match(variable, res$ID)], "unknown"))
+#factor class and variable(sample id)
+vst.goi$prior_cr <-
+  factor(vst.goi$prior_cr, levels = c("n", "y", "unknown"))
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]  
+
+colors <- viridis(3)
+ggplot(datavst, aes(x = prior_cr, y = value, fill = prior_cr)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = prior_cr)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Batch Corrected Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by Complete Remission Status") 
+}
+```
+<br />   
+```{r, echo=FALSE, results='asis', eval="Lee" %in% selected_datasets}
+cat('**Figure 2.3. Expression of gene of interest in AML patients by complete remission status.** Samples were taken from 12 AML patients with either a prior complete remission or no prior complete remission. Box plots show median +/- inter-quartile. Dot plots show individual patients. DESeq2 LRT was used to compare the groups and obtain the adjusted p-values shown. \n\n 
+
+\n\n**Reference**\n\n 
+_[1. Lee, et al. (2018). "A Machine Learning Approach to Integrate Big Data for Precision Medicine in Acute Myeloid Leukemia." Nature Communications 9: 42.](https://www.nature.com/articles/s41467-017-02465-5#MOESM4;)_')
+```
+
+
+```{r, echo=FALSE, results='asis', eval="HPA" %in% selected_datasets}
+cat('## 2.4. The Human Protein Atlas [(Uhlen M, et al.)](https://www.science.org/doi/10.1126/science.1260419) \n\n
+ + RNA-seq of coding RNA from tissue samples of 122 humans representing 32 different tissues')  
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, eval="HPA" %in% selected_datasets, fig.width=8, fig.height=6}
+
+vstlimma2 <- vst_ensembl(vst.hpa, ext_gene, ensembl_gene_id) 
+
+#create a data table filtered for only mono sample type
+res <- (meta.hpa) %>%
+  rownames_to_column(var = "ID") %>% 
+  dplyr::select(., ID, Tissue) 
+
+if(gene %in% dds.hpa$ensembl_gene_id){
+#create data table with class, padj, and gene expression values for each sample
+vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., Tissue = ifelse(variable %in% res$ID, res$Tissue[match(variable, res$ID)], "unknown")) %>%
+  dplyr::filter(ensembl_gene_id %in% dds.hpa$ensembl_gene_id) %>%
+  left_join(unique(dplyr::select(dds.hpa, c(
+    ensembl_gene_id, padj
+  ))), ., by = 'ensembl_gene_id') 
+#factor tissue and variable(sample id)
+vst.goi$Tissue <-
+  factor(vst.goi$Tissue)
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+# Box plot
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]  
+
+DESeq_padj_hpa <- round(datavst$padj[1], 3)
+
+colors <- viridis(32)
+ggplot(datavst, aes(x = Tissue, y = value, fill = Tissue)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = Tissue)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  geom_text(aes(
+    x = "spleen",
+    y = max(value) + 1,
+    label = format(paste0("padj = ", DESeq_padj_hpa))
+  ), check_overlap = T) + 
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by Normal Tissue") 
+} else{
+  vst.goi <- as_tibble(vstlimma2) %>%
+  melt(.) %>%
+  mutate(., Tissue = ifelse(variable %in% res$ID, res$Tissue[match(variable, res$ID)], "unknown"))
+#factor tissue and variable(sample id)
+vst.goi$Tissue <-
+  factor(vst.goi$Tissue)
+
+vst.goi$variable <- factor(vst.goi$variable)
+
+datavst <-
+  vst.goi[vst.goi$ensembl_gene_id == (gene),]  
+
+colors <- viridis(32)
+ggplot(datavst, aes(x = Tissue, y = value, fill = Tissue)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values = colors) +
+  scale_color_manual(values = colors) +
+  geom_point(alpha = 0.5,
+             position = position_jitterdodge(jitter.width = 0.2),
+             aes(color = Tissue)) +
+  theme_light() +
+  theme(axis.title = element_text(face = "bold"), title = element_text(face = "bold"), axis.text.x =
+                  element_text(angle = 60, hjust = 1)) +
+  ylab("Variance Stabilized Data") +
+  xlab("") +
+  ggtitle(gene_symbol, "Expression by Normal Tissue") 
+}
+```
+<br />   
+```{r, echo=FALSE, results='asis', eval="Lee" %in% selected_datasets}
+cat('**Figure 2.4. Expression of gene of interest in normal tissue.** Box plots show median +/- inter-quartile. Dot plots show individual samples. DESeq2 LRT was used to compare the groups and obtain the adjusted p-values shown. \n\n 
+
+\n\n**Reference**\n\n 
+_[1. Uhlen, et al. (2015). "Tissue-based map of the human proteome." Science 347:6220.](https://www.science.org/doi/10.1126/science.1260419)_')
+```
+

@@ -1,0 +1,61 @@
+/* CSS stles for app */
+
+/* Text CSS Classes */
+/* Center Header Tags */
+.center {
+    text-align: center;
+    /* Display must be set to block for centering to work */
+    display: block;
+  }
+
+/* Large font*/
+.large {
+    font-size: 1.17em;
+  }
+  
+/* Extra-large font */
+.x-large{
+font-size: 1.3em;
+}
+
+/* Classes for container used to display available datasets for a gene */
+.container-header {
+    background-color: #B1B1B1;
+    border-radius: 10px 10px 0px 0px;
+    margin-bottom: 0px;
+    padding: 5px 10px;
+    font-weight: bold;
+}
+
+.container-body {
+    background-color: #e1e1e1;
+    border-radius: 0px 0px 10px 10px;
+}
+
+/* Flexbox layout for dataset display */
+/* Flexbox is used to show the datasets in a multi-column format that is 
+   responsive to the window size */
+.dataset-container {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    height: 18em;
+    padding-top: 10px;
+    margin-bottom: 10px;
+} 
+
+/* Class applied to container for each entry */
+.dataset-row {
+    /* Margin at left and right to add space between yes/no symbol 
+       and edge of entry*/
+    margin: 0px 10px;
+}
+
+/* Style applied to yes, no buttons */
+.yes {
+    color: #008b00;
+}
+
+.no {
+    color: #8b0000;
+}
