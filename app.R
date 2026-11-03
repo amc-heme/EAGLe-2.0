@@ -6,7 +6,7 @@ options(
 ## Data ####
 # Config information for each dataset
 dataset_config <- 
-  read_yaml("./data.yaml")
+  load_analysis_config()
 
 raw_data_p <- getwd()
 
@@ -15,7 +15,11 @@ load_datasets <- function(raw_data_p, dataset_config) {
   dataset_keys <- names(dataset_config)
   
   dataset_path <- lapply(dataset_keys, function(key) {
-    read_rds(paste0(raw_data_p, dataset_config[[key]]$data_path))
+    if (isTRUE(dataset_config[[key]]$precomputed)) {
+      load_precomputed_analysis(raw_data_p, dataset_config[[key]])
+    } else {
+      read_rds(paste0(raw_data_p, dataset_config[[key]]$dds_path))
+    }
   })
   return(dataset_path)
 }
@@ -27,6 +31,7 @@ load_qc <- function(raw_data_p, dataset_config) {
   dataset_keys <- names(dataset_config)
   
   dataqc_path <- lapply(dataset_keys, function(key) {
+    if (is.null(dataset_config[[key]]$qc_path)) return(NULL)
     read_rds(paste0(raw_data_p, dataset_config[[key]]$qc_path))
   })
   return(dataqc_path)
@@ -95,6 +100,8 @@ ui <-
                               #Gene expression analysis ####
                               tabPanel("Gene Expression",
                                       goi_UI("GOI1")),
+                              tabPanel("IRF2BP2 Score",
+                                       IRF2BP2_UI("IRF2BP2_1")),
                               tabPanel("Normal Tissue",
                                        HPA_UI("HPA1")),
                               tabPanel("EAGLe",
@@ -153,7 +160,7 @@ server <-
   #   #dataset_choice = user selected dataset from data server
      vst <- vst_Server("vst1", dataset_dds, dataset_choice)
 
-     vst.HPA <- HPAvst_Server("HPAvst1", dataset_choice)
+     vst.HPA <- HPAvst_Server("HPAvst1", dataset_choice, dds.HPA)
 
   # ## qc objects 
   #   #dataset.qc = opens path to stored qc file for chosen dataset
@@ -172,6 +179,7 @@ server <-
   #   #dataset_choice = user selected dataset from data server
   #   #vst = vst table 
      goi_Server("GOI1", dataset_choice, dataset_dds, vst)
+     IRF2BP2_Server("IRF2BP2_1", dataset_choice, dataset_dds, dataset_config, raw_data_p)
 
   # # ##DESEq #####
   #   # data_species = needed to select appropiate t2g table

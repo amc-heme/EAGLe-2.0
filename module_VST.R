@@ -1,6 +1,6 @@
 # vst module
 datasets <- 
-  read_yaml("./data.yaml")
+  load_analysis_config()
 raw_data <- getwd()
 t2g_hs <- read_rds("data/t2g_hs.rds")
 t2g_mm <- read_rds("data/t2g_mm.rds")

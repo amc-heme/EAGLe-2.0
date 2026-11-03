@@ -14,6 +14,9 @@ dataset_identifiers <-
       # Read RDS file using the path defined for the current dataset
       dataset <- read_rds(paste0(raw_data_p, datasets[[data_key]]$vst_path))
       
+      if (is.matrix(dataset)) {
+        dataset <- data.frame(ensembl_gene_id = rownames(dataset))
+      }
       #filter each dataset for only genes that contain human/mouse orthologs based on the ortholog gene LUT
       if(datasets[[data_key]]$species == "mouse") {
         dataset <- dataset %>% 

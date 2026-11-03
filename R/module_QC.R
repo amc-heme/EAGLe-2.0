@@ -1,7 +1,7 @@
 ## QC tab module
 
 datasets.pca <- 
-  read_yaml("./data.yaml")
+  load_analysis_config()
 
 QC_UI <- function(id) {
   ns <- NS(id)
@@ -120,7 +120,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
       if(has_batch) {
         # variance stabilize the counts table
         vsd <- 
-          vst(dds.file, blind = F)
+          analysis_vsd(dds.file)
         batch1 <- meta[, batch_variable] #define batch variable from colData
         condition_variable <- datasets.pca[[dataset]]$PCA_var
         condition_dat <- colData(vsd)[[condition_variable]]
@@ -137,7 +137,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
       } else{
         # variance stabilize the counts table
         vsd <- 
-          vst(dds.file, blind = F)
+          analysis_vsd(dds.file)
         
         vpca <- 
           data.frame(prcomp(t(assay(vsd)))$x) %>%
@@ -157,7 +157,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
     vsd_fun <- function(dds) {
       dds.file <- dds
       vsd <- 
-        vst(dds.file, blind = F)
+        analysis_vsd(dds.file)
       return(vsd)
     }
    
@@ -196,7 +196,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
                          "Ye_20",
                          "Venaza",
                          "Lagadinou",
-                         "Lee")) {
+                         "Lee", "KO_response", "T0")) {
         color_v <- datasets.pca[[dataset]]$PCA_var
         meta <- colData(dds)
         color_var <- meta[, color_v]
@@ -224,7 +224,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
                          "Ye_20",
                          "Venaza",
                          "Lagadinou",
-                         "Lee")) {
+                         "Lee", "KO_response", "T0")) {
         shape_v <- datasets.pca[[dataset]]$PCA_shape
         meta <- colData(dds)
         shape_var <- meta[, shape_v]
@@ -252,7 +252,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
                          "Ye_20",
                          "Venaza",
                          "Lagadinou",
-                         "Lee")) {
+                         "Lee", "KO_response", "T0")) {
         color_l <- datasets.pca[[dataset]]$PCA_var
       } else if (dataset %in% c(
         "BEAT_quantile",
@@ -273,7 +273,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
                          "Ye_20",
                          "Venaza",
                          "Lagadinou",
-                         "Lee")) {
+                         "Lee", "KO_response", "T0")) {
         shape_l <- datasets.pca[[dataset]]$PCA_shape
       } else if (dataset %in% c(
         "BEAT_quantile",
@@ -347,7 +347,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
           ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
           ggtitle("PCA on VSD") +
           labs(color = color_legend(), shape = shape_legend()) + #rename legends
-          guides(fill = FALSE) #hide fill legend
+          guides(fill = "none") #hide fill legend
         print(pca)
       }
     })
@@ -356,67 +356,26 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
  #MultiQC table function ####   
 
     multiqc_res <- reactive({
-      multiqc_res <- qc_table()
-      
-      multiqc_res <- multiqc_res %>%
-        mutate_at(vars(-Sample), ~ round(., digits = 3))
-      
+      req(qc_table())
+      qc_table() %>% mutate(across(where(is.numeric), ~ round(., digits = 3)))
     })
-    
-    output$QCdt <- renderDataTable({
-      if (input$multiqc == TRUE & dataset_choice$user_dataset() %in%
-          c("Cancer_Discovery",
-            "Ye_16",
-            "Ye_20",
-            "Venaza",
-            "Lagadinou",
-            "Lee")) {
-        # venaza dataset does not have the same column names-need to add a
-        # condition for that dataset
-        
-        multiqc_res <- qc_table()
-        
-        multiqc_res <- multiqc_res %>%
-          mutate_at(vars(-Sample), ~ round(., digits = 3))
-        
-        multiqc_res_DT <- DT::datatable(multiqc_res(),
-                                        options = list(scrollX = TRUE))
-        
-        multiqc_res_DT
-      }
+
+    output$QCdt <- DT::renderDT({
+      req(isTRUE(input$multiqc), !is.null(qc_table()))
+      DT::datatable(multiqc_res(), options = list(scrollX = TRUE))
     })
-    
+
     output$QCdt2 <- renderUI({
-      if (input$multiqc == TRUE & dataset_choice$user_dataset() %in%
-          c(
-            "BEAT_quantile",
-            "BEAT_FAB",
-            "BEAT_Denovo.Relapse",
-            "TCGA_FAB",
-            "TCGA_NPM1",
-            "TCGA_RAS"
-          )) {
+      if (isTRUE(input$multiqc) && is.null(qc_table())) {
         div(style = "text-align: center; font-size: 18px; color: red;",
             "MultiQC data is unavailable for this dataset")
-      } else {
-        return(NULL)
       }
     })
-        
+
     observe({
-      toggleState(
-        "downloadMultiQC",
-        !dataset_choice$user_dataset() %in% c(
-          "BEAT_quantile",
-          "BEAT_FAB",
-          "BEAT_Denovo.Relapse",
-          "TCGA_FAB",
-          "TCGA_NPM1",
-          "TCGA_RAS"
-        )
-      )
+      toggleState("downloadMultiQC", !is.null(qc_table()))
     })
- 
+
     scree_variance_fun <- function(dds) {
       if (dataset_choice$user_dataset() %in% c(
         "BEAT_quantile",
@@ -521,7 +480,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
             ylab(paste('PC2 =', pc2(), '% variance')) + #reactive y lab for % variance
             ggtitle("PCA on VSD") +
             labs(color = color_legend(), shape = shape_legend()) + #rename legends
-            guides(fill = FALSE)#hide fill legend
+            guides(fill = "none")#hide fill legend
           ggsave(
             plot,
             file = file,
@@ -556,16 +515,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
           bg ="#FFFFFF"
         )
         } else {
-              shiny::req(
-                !dataset_choice$user_dataset() %in% c(
-                  "BEAT_quantile",
-                  "BEAT_FAB",
-                  "BEAT_Denovo.Relapse",
-                  "TCGA_FAB",
-                  "TCGA_NPM1",
-                  "TCGA_RAS"
-                )
-              )
+              shiny::req(!is.null(qc_table()))
               write.csv(multiqc_res(), file = file)
             }
       }

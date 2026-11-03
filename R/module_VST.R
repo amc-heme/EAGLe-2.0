@@ -1,7 +1,7 @@
 # vst module
 #dataset yaml
 datasets <- 
-  read_yaml("./data.yaml")
+  load_analysis_config()
 raw_data <- getwd()
 #read in t2g files for human and mouse
 t2g_hs <- read_rds(paste0(raw_data, "/data/t2g_hs.rds"))
@@ -13,6 +13,7 @@ vst_Server <- function(id, dataset_dds, dataset_choice) {
     # function for creating vst file
     vst.create <- function(dds, dataset){
       
+      if (is_precomputed_analysis(dds)) return(precomputed_vst_table(dds))
       dds.file <- dds
       
       vsd <-

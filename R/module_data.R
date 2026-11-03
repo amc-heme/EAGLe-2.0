@@ -1,5 +1,5 @@
 datasets <- 
-  read_yaml("./data.yaml")
+  load_analysis_config()
 data_UI <- function(id) {
   ns <- NS(id)
   fluidPage(
@@ -32,7 +32,9 @@ data_UI <- function(id) {
                          
                          
                          
-                         "Lee et al, 2018" = "Lee"), selected = "Cancer_Discovery"
+                         "Lee et al, 2018" = "Lee",
+                         "KO response: sensitive vs. resistant" = "KO_response",
+                         "T0: sensitive vs. resistant" = "T0"), selected = "Cancer_Discovery"
           ),
           selectizeInput(
             ns("DEmodel"),
@@ -79,7 +81,11 @@ data_Server <- function(id) {
   moduleServer(id, function(input, output, session){
     shinyjs::disable("runDE1")
     output$Data_text <- renderUI({
-      if (input$datainput == "Cancer_Discovery") {
+      if (input$datainput %in% c("KO_response", "T0")) {
+        tags$p(dataset_config2[[input$datainput]]$summary,
+               "The supplied analysis is precomputed; no new DE test is run.",
+               style = "font-size: 18px;")
+      } else if (input$datainput == "Cancer_Discovery") {
         intro <- paste(
           "Pei et al. have previously shown that ROS-low enriched LSCs
              from primitive and monocytic AML differ significantly in their
@@ -257,6 +263,7 @@ data_Server <- function(id) {
     })
     # model choice ####
     DEModelChoices <- function(dataset) {
+      if (isTRUE(datasets[[dataset]]$precomputed)) return(datasets[[dataset]]$PCA_var)
       m_choices <- switch(
         dataset,
         "Cancer_Discovery" = "condition",
@@ -271,6 +278,8 @@ data_Server <- function(id) {
         "TCGA_RAS" = "RAS_mut",
         "TCGA_NPM1" = "NPM1_mut",
         "Lee" = "prior_cr",
+        "KO_response" = "Treatment_Sensitivity",
+        "T0" = "KO_Sensitivity",
         default = character(0)
       )
     }
@@ -287,7 +296,8 @@ data_Server <- function(id) {
 
     
     
-    PWChoices <- function(dataset, model) { 
+    PWChoices <- function(dataset, model) {
+      if (!is.null(datasets[[dataset]]$comparisons)) return(names(datasets[[dataset]]$comparisons))
       if(dataset %in% c("Cancer_Discovery", "Ye_16", "Ye_20", "Venaza", "Lagadinou", "Lee")) {
       choices <- switch(
         paste(dataset, model, sep = "_"),
@@ -308,6 +318,8 @@ data_Server <- function(id) {
         "TCGA_FAB" = c("M0_vs_M5", "M1_vs_M5", "M2_vs_M5", "M3_vs_M5", "M4_vs_M5", "M6_vs_M5", "M7_vs_M5"),
         "TCGA_RAS" = "wt_vs_mut",
         "TCGA_NPM1" = "wt_vs_mut",
+        "KO_response" = "KO response in sensitive_vs_KO response in resistant",
+        "T0" = "Sensitive_vs_Resistant",
         default = character(0)
       )
       }

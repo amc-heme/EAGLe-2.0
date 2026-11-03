@@ -1,5 +1,5 @@
 datasets <- 
-  read_yaml("./data.yaml")
+  load_analysis_config()
 raw_data <- getwd()
 
 t2g_hs <- read_rds(paste0(raw_data, "/data/t2g_hs.rds"))

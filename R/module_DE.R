@@ -2,7 +2,7 @@
 library(colorRamp2)
 library(InteractiveComplexHeatmap)
 datasets <- 
-  read_yaml("./data.yaml")
+  load_analysis_config()
 raw_data <- getwd()
 t2g_hs <- read_rds(paste0(raw_data, "/data/t2g_hs.rds"))
 t2g_mm <- read_rds(paste0(raw_data, "/data/t2g_mm.rds"))
@@ -66,7 +66,7 @@ DE_UI <- function(id) {
         #color palette choice for plots
         
         h4("Color Palettes:"),
-        colorUI(ns("color"), "Choose 1st color", "#273F52"),
+        colorUI(ns("color"), "Choose 1st color", "#2166AC"),
         colorUI(ns("color2"), "Choose 2nd color", "#D53031"),
          hr(),
         
@@ -140,6 +140,9 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     waiter1 <- Waiter$new(html = span("Loading Data"))
  
   runDETest_GSEA <- function(dataset, dds, model, comparison) {
+    if (is_precomputed_analysis(dds)) {
+      return(precomputed_results(dds, tidy = TRUE, comparison = comparison))
+    }
     # return dds if LRT is chosen
     if(comparison == "LRT" & dataset %in% c("Cancer_Discovery","Ye_16", "Ye_20", "Venaza",
                                               "Lagadinou", "Lee")) {
@@ -170,6 +173,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   } #this is what needs to be sent to GSEA#
 
   runDETest <- function(dataset, dds, model, comparison) {
+    if (is_precomputed_analysis(dds)) return(precomputed_results(dds, comparison = comparison))
     # return dds if LRT is chosen
     if(comparison == "LRT") {
       return(results(dds))
@@ -207,6 +211,9 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
     return(var_value)
   }
   generateRes <- function(dataset, de_results) {
+    if (isTRUE(datasets[[dataset]]$precomputed)) {
+      return(precomputed_display_results(de_results))
+    }
     #mouse or human?
     is_hs <- grepl("t2g_hs", datasets[[dataset]]$t2g)
     
@@ -325,19 +332,11 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   
   # render DEG table ####
 
-  observe({
-    if(!is.null(dds_result())) { #only run after runDE action button has been selected
-     
-      dds.res <- generateRes(dataset_choice$user_dataset(), dds_result())
-    
-      output$results <- renderDataTable({
-        if (input$DESeqtable == TRUE) {
-          DT::datatable(dds.res,
-                        options = list(scrollX = TRUE))
-       }
-    })
-  }
-})
+  output$results <- DT::renderDT({
+    req(isTRUE(input$DESeqtable), dds_result())
+    dds.res <- generateRes(dataset_choice$user_dataset(), dds_result())
+    DT::datatable(dds.res, options = list(scrollX = TRUE))
+  })
 
   #create objects for color palettes from the palette module
   colorDE <-  
@@ -353,6 +352,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   
   output$volplot <- 
     renderGirafe({
+      req(isTRUE(input$DESeqvolcano))
       vol_text <-
         text_generator(dataset_choice$user_dataset(), dataset_choice$user_PW())
       #colors <- c(viridis(15)[10], "grey", magma(15)[9])
@@ -396,10 +396,13 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       
   output$MAplot <- 
     renderGirafe ({
+      req(isTRUE(input$DESeqMA))
       ma_text <-
         text_generator(dataset_choice$user_dataset(), dataset_choice$user_PW())
       colors <- c(colorDE(), "grey", color2DE())
       if(input$DESeqMA == TRUE) { #only call plot if the MA plot switch is toggled
+        validate(need(any(is.finite(res.ma$baseMean)),
+                      "MA plot unavailable: the saved results do not include mean normalized counts."))
         ma <- ggplot(res.ma, 
                      aes(
                        x = log2(baseMean),
@@ -442,116 +445,34 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
 
     #Heatmap ####
 
+  de_heatmap_data <- reactive({
+    req(dds_result())
+    res <- generateRes(dataset_choice$user_dataset(), dds_result())
+    prepare_expression_heatmap(vst(), res, min_lfc = 2, max_genes = 50)
+  })
+
+  de_heatmap_layout <- reactive({
+    values <- de_heatmap_data()
+    req(nrow(values) > 0)
+    condition <- datasets[[dataset_choice$user_dataset()]]$PCA_var
+    expression_heatmap_layout(values, dataset_dds(), condition)
+  })
+
   output$ht <- renderPlotly({
     req(input$DESeqHeat)
-    ns <- NS(id)
-    
-    #determine which column needed for cluster annotations based on model choice 
-    if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
-      dds.file <- dataset_dds()
-      cond_var <- dataset_choice$user_model()
-      meta <- colData(dds.file)
-      cond <- meta[, cond_var]
-    } else {
-      dds.file <- dataset_dds()
-      meta <- colData(dds.file)
-      cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
-      cond <- meta[, cond_var]
-    }
-    
-    #generate dds results table 
-    res.hm <-
-      generateRes(dataset_choice$user_dataset(), dds_result())
-
-    #filter DE object for only significantly differentially expressed genes and
-    #take the top 50 most highly expressed genes for visualization
-    dds.mat <- res.hm %>%
-      dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>% 
-      dplyr::arrange(desc(abs(`log2FoldChange`))) %>% 
-      slice(1:50)
-  
-    if(nrow(dds.mat) == 0) {
-      return(NULL)
-    }
-    #filter vst counts matrix by sig expressed genes
-    vst.mat <- vst() %>%
-      dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
-      distinct(ext_gene_ensembl, .keep_all = TRUE) %>% 
-      column_to_rownames(., var = "ensembl_gene_id") %>%
-      dplyr::select(., -ext_gene_ensembl) %>%
-      as.matrix()
-    
-    rownames(vst.mat) = dds.mat$Gene
-    
-    vst.mat <- t(scale(t(vst.mat)))
-    #the heatmap needs to be produced by complex heatmap to 
-    #extract the row and column order so that the donloaded heatmap
-    #matches the interactive plotly heatmap shown in the app
-    
-    #create a colorRamp function based on user input in color palette choices
-    colors.hm <- c(colorDE(), "#FFFFFF", color2DE())
-    
-    ht1 = ComplexHeatmap::Heatmap(
-      vst.mat,
-      name = "z scaled expression",
-      col = colors.hm,
-      row_names_gp = gpar(fontsize = 12),
-      column_names_gp = gpar(fontsize = 12),
-      column_title = NULL,
-      row_title = "Top DEGs"
-    )
-    ht1_res <- draw(ht1)
-    row1_order <- row_order(ht1_res) #extract row order for plotly heatmap
-    col_order <- column_order(ht1_res) #extract column order for plotly heatmap
-    
-    vst_reordered <- vst.mat[row1_order, col_order]
-    
-    
-    top_anno <- data.frame(
-      Condition = cond
-    )
-    
-    colnames(top_anno) <- cond_var
-    
-    top_anno <- top_anno[col_order, , drop = FALSE]
-    
-    ht <- heatmaply(
-      vst_reordered,
-      row_text_angle = 45,
-      height = 600,
-      width = 600,
-      colors = colors.hm,
-      dendrogram = "none",
-     # show_dendrogram = TRUE,
-      col_side_colors = top_anno,#adds labels to clusters
-      showticklabels = c(FALSE, FALSE)# removes column and row labels
-    )
-   
-    ht
+    if (nrow(de_heatmap_data()) == 0) return(NULL)
+    req(colorDE(), color2DE())
+    interactive_expression_heatmap(de_heatmap_layout(), c(colorDE(), "#FFFFFF", color2DE()))
   })
 
-  
   output$htwarn <- renderUI({
     req(input$DESeqHeat)
-    
-    res.hm <- generateRes(dataset_choice$user_dataset(), dds_result())
-    dds.mat <- res.hm %>% 
-      dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>% 
-      dplyr::arrange(desc(abs(`log2FoldChange`))) %>% 
-      slice(1:50)
-    
-    if(nrow(dds.mat) == 0){
-      div(
-        style = "text-align: center; font-size: 18px; color: red;",
-        "No significant DEGs found"
-        )
-    }else {
-      return(NULL)
+    if (nrow(de_heatmap_data()) == 0) {
+      div(style = "text-align: center; font-size: 18px; color: red;",
+          "No significant DEGs with variable expression found")
     }
   })
 
-
-  
   observeEvent(input$plot_type, {
     if(input$plot_type == "DEG Table"){
       updateSelectInput(
@@ -613,6 +534,7 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
       } else if (input$plot_type == "MA"){
             colors <- c(colorDE(), "grey", color2DE())
             res.ma <- generateRes(dataset_choice$user_dataset(), dds_result())
+            req(any(is.finite(res.ma$baseMean)))
             plot <- ggplot(res.ma,
                          aes(
                            x = log2(baseMean),
@@ -643,163 +565,10 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
           dpi = 100,
           bg ="#FFFFFF"
         )
-      } else if(input$plot_type == "Heatmap" & input$file_type == "png"){
-        #determine which column needed for cluster annotations based on model choice 
-        if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
-          dds.file <- dataset_dds()
-          cond_var <- dataset_choice$user_model()
-          meta <- colData(dds.file)
-          cond <- meta[, cond_var]
-          cond <- factor(cond, levels = levels(cond))
-        } else {
-          dds.file <- dataset_dds()
-          meta <- colData(dds.file)
-          cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
-          cond <- meta[, cond_var]
-          cond <- factor(cond, levels = levels(cond))
-        }
-         #generate dds results table
-            res.hm <-
-              generateRes(dataset_choice$user_dataset(), dds_result())
-            dds.mat <- res.hm %>%
-              dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>%
-              dplyr::arrange(desc(abs(`log2FoldChange`))) %>%
-              slice(1:50)
-            
-            #filter vst counts matrix by sig expressed genes
-            vst.mat <- vst() %>%
-              dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
-              distinct(ext_gene_ensembl, .keep_all = TRUE) %>%
-              column_to_rownames(., var = "ensembl_gene_id") %>%
-              dplyr::select(., -ext_gene_ensembl) %>%
-              as.matrix()
-            rownames(vst.mat) = dds.mat$Gene
-            
-            #transform matrix
-            vst.mat <- t(scale(t(vst.mat)))
-            
-            #create a colorRamp function based on user input in color palette choices
-            colors.hm <- colorRamp2(c(-2, 0, 2), c(colorDE(), "white", color2DE()))
-            
-            #create a color vector for column annotations
-            col_anno <- setNames(c("blue", "red")[seq_along(levels(cond))], levels(cond))
-            
-            #annotation data frame from sample condition
-            top_anno <- data.frame(
-              Condition = cond
-            )
-            
-            #dynamicallly update condition variable based on dataset
-            annotation_label <- cond_var
-          
-            top_annotation <- ComplexHeatmap::HeatmapAnnotation(
-              df = top_anno,
-              col = list(Condition = col_anno),
-              annotation_legend_param = list(
-                title = annotation_label, 
-                title_gp = gpar(fontsize = 12),
-                labels_gp = gpar(fontsize = 12)
-                ),
-              annotation_height = unit(5, "mm"),
-              annotation_width = unit(5, "mm"),
-              show_annotation_name = FALSE
-              )
-        
-            plot = ComplexHeatmap::Heatmap(
-              vst.mat,
-              name = "z scaled expression",
-              col = colors.hm,
-              row_names_gp = gpar(fontsize = 12),
-              column_names_gp = gpar(fontsize = 12),
-              column_title = NULL,
-              row_title = "Top DEGs",
-              top_annotation = top_annotation,
-              heatmap_legend_param = list(
-                title_gp = gpar(fontsize = 12),
-                labels_gp = gpar(fontsize = 12)
-              )
-            )
-              png(file, width = 780, height = 780, units = "px", pointsize = 60)
-              draw(plot)
-              dev.off()
-       
-      } else if (input$plot_type == "Heatmap" & input$file_type == "svg"){
-        #determine which column needed for cluster annotations based on model choice 
-        if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
-          dds.file <- dataset_dds()
-          cond_var <- dataset_choice$user_model()
-          meta <- colData(dds.file)
-          cond <- meta[, cond_var]
-          cond <- factor(cond, levels = levels(cond))
-        } else {
-          dds.file <- dataset_dds()
-          meta <- colData(dds.file)
-          cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
-          cond <- meta[, cond_var]
-          cond <- factor(cond, levels = levels(cond))
-        }
-        #generate dds results table
-        res.hm <-
-          generateRes(dataset_choice$user_dataset(), dds_result())
-        dds.mat <- res.hm %>%
-          dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 2) %>%
-          dplyr::arrange(desc(abs(`log2FoldChange`))) %>%
-          slice(1:50)
-        #filter vst counts matrix by sig expressed genes
-        vst.mat <- vst() %>%
-          dplyr::filter(., ensembl_gene_id %in% dds.mat$ensembl_gene_id) %>%
-          distinct(ext_gene_ensembl, .keep_all = TRUE) %>%
-          column_to_rownames(., var = "ensembl_gene_id") %>%
-          dplyr::select(., -ext_gene_ensembl) %>%
-          as.matrix()
-        rownames(vst.mat) = dds.mat$Gene
-        
-        vst.mat <- t(scale(t(vst.mat)))
-        #create a colorRamp function based on user input in color palette choices
-        colors.hm <- colorRamp2(c(-2, 0, 2), c(colorDE(), "white", color2DE()))
-        
-        #create a color vector for column annotations
-        col_anno <- setNames(c("blue", "red")[seq_along(levels(cond))], levels(cond))
-        
-        #annotation data frame from sample condition
-          
-        top_anno <- data.frame(
-          Condition = cond
-        )
-        
-        #dynamicallly update condition variable based on dataset
-        annotation_label <- cond_var
-        
-        top_annotation <- ComplexHeatmap::HeatmapAnnotation(
-          df = top_anno,
-          col = list(Condition = col_anno),
-          annotation_legend_param = list(
-            title = annotation_label, 
-            title_gp = gpar(fontsize = 12),
-            labels_gp = gpar(fontsize = 12)
-          ),
-          annotation_height = unit(5, "mm"),
-          annotation_width = unit(5, "mm"),
-          show_annotation_name = FALSE
-        )
-        
-        plot = ComplexHeatmap::Heatmap(
-          vst.mat,
-          name = "z scaled expression",
-          col = colors.hm,
-          row_names_gp = gpar(fontsize = 12),
-          column_names_gp = gpar(fontsize = 12),
-          column_title = NULL,
-          row_title = "Top DEGs",
-          top_annotation = top_annotation,
-          heatmap_legend_param = list(
-            title_gp = gpar(fontsize = 12),
-            labels_gp = gpar(fontsize = 12)
-          )
-        )
-        svglite::svglite(file, width = 8, height = 7, pointsize = 30)
-        draw(plot)
-        dev.off()
+      } else if(input$plot_type == "Heatmap") {
+        req(nrow(de_heatmap_data()) > 0, colorDE(), color2DE())
+        colors <- c(colorDE(), "white", color2DE())
+        save_expression_heatmap(file, input$file_type, de_heatmap_layout(), colors, "Top DEGs")
         } else {
         dds.res <- generateRes(dataset_choice$user_dataset(), dds_result())
         write.csv(dds.res, file = file)

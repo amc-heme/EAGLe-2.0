@@ -102,6 +102,10 @@ geneModuleUI <- function(id) {
              ROS high and ROS low LSCs were either treated with 5ul of PTL or not treated before sequencing."),
                 h6("Lee et al., Nature, 2018: "),
                 h6("Genome wide expression from 12 AML patient samples with either prior complete remission, or no prior complete remission."),
+                h6("KO response: sensitive vs. resistant"),
+                h6(dataset_config2$KO_response$summary),
+                h6("T0: sensitive vs. resistant"),
+                h6(dataset_config2$T0$summary),
                 h6("TCGA: "),
                 h6("The Cancer Genome Atlas (TCGA) project published gene expression profiles of 151 primary AML patients 
              along with their mutational profiles and clinical characteristics. This section of analysis shows gene expression 

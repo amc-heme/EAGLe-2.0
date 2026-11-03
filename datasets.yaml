@@ -1,103 +1,325 @@
 Jordan_M0-M5:
-  label: "Jordan M0-M5"
-  vst_path: "/new_raw_data/CD_vst_batchcorrected.rds"
-  path: "/new_raw_data/CD_ROSlow_dds.res.rds"
-  type: "lsc"
-  species: "human"
-  summary: "Pei et al. have previously shown that ROS-low enriched LSCs from primitive and monocytic AML differ significantly in their transcriptome and metabolism. ROS-low LSCs from monocytic AML in particular, are less dependent on BCL2 therefore are more likely to be resistant to Venetoclax-based therapy. This section of analysis shows gene expression in primitive vs. monocytic ROS-low LSCs."
+  label: Jordan M0-M5
+  vst_path: /new_raw_data/CD_vst_batchcorrected.rds
+  path: /new_raw_data/CD_ROSlow_dds.res.rds
+  type: lsc
+  species: human
+  summary: Pei et al. have previously shown that ROS-low enriched LSCs from primitive
+    and monocytic AML differ significantly in their transcriptome and metabolism.
+    ROS-low LSCs from monocytic AML in particular, are less dependent on BCL2 therefore
+    are more likely to be resistant to Venetoclax-based therapy. This section of analysis
+    shows gene expression in primitive vs. monocytic ROS-low LSCs.
+  interactive_id: Cancer_Discovery
+  t2g: t2g_hs
+  ID: SRR
+  PCA_var: condition
+  PCA_shape: batch
+  shape_num: '2'
+  batch: 'yes'
+  batch_var: batch
+  dds_path: /data/CD_ROSlow_dds.rds
+  qc_path: /data/CD_qc.rds
+  precomputed: no
 Ye_16:
-  label: "Ye et al. 2016"
-  vst_path: "/new_raw_data/Ye_16_vst.rds"
-  path: "/new_raw_data/Ye_16_dds.res.rds"
-  type: "lsc"
-  species: "mouse"
-  summary: "LSC gene expression from blood, bone marrow, spleen, gonadal adipose tissue, and normal bone marrow in mice."
+  label: Ye et al. 2016
+  vst_path: /new_raw_data/Ye_16_vst.rds
+  path: /new_raw_data/Ye_16_dds.res.rds
+  type: lsc
+  species: mouse
+  summary: LSC gene expression from blood, bone marrow, spleen, gonadal adipose tissue,
+    and normal bone marrow in mice.
+  interactive_id: Ye_16
+  t2g: t2g_mm
+  ID: SRR
+  PCA_var: Source
+  PCA_shape: Source
+  shape_num: '5'
+  batch: 'no'
+  dds_path: /data/Ye_16_dds.rds
+  qc_path: /data/Ye16_multiqc.rds
+  precomputed: no
 Ye_20:
-  label: "Ye et al. 2020"
-  vst_path: "/new_raw_data/Ye_2020_vst.rds"
-  path: "/new_raw_data/Ye_2020_dds.res.rds"
-  type: "lsc"
-  species: "mouse"
-  summary: "Transcriptomes of LSCs from bone marrow and liver in mice were compared to better understand the biology of liver LSCs. A bcCML model (BCR-ABL + Nup98-Hoxa9) was used. Liver and bone marrow samples were combined from 3 mice in 3 different cohorts before sequencing."
+  label: Ye et al. 2020
+  vst_path: /new_raw_data/Ye_2020_vst.rds
+  path: /new_raw_data/Ye_2020_dds.res.rds
+  type: lsc
+  species: mouse
+  summary: Transcriptomes of LSCs from bone marrow and liver in mice were compared
+    to better understand the biology of liver LSCs. A bcCML model (BCR-ABL + Nup98-Hoxa9)
+    was used. Liver and bone marrow samples were combined from 3 mice in 3 different
+    cohorts before sequencing.
+  interactive_id: Ye_20
+  t2g: t2g_mm
+  ID: SRR
+  PCA_var: Source
+  PCA_shape: Rep
+  shape_num: '3'
+  batch: 'yes'
+  batch_var: Rep
+  dds_path: /data/Ye_20_dds.rds
+  qc_path: /data/Ye20_qc.rds
+  precomputed: no
 Venaza:
-  label: "Pollyea et al., Nature, 2018"
-  vst_path: "/new_raw_data/venaza.vst.rds"
-  path:  "/new_raw_data/venaza.dds.res.rds"
-  type: "lsc"
-  species: "human"
-  summary: "Time zero pheresis was taken from 3 patients, then collected again at 6hr and 24hr post ven/aza treatment."
+  label: Pollyea et al., Nature, 2018
+  vst_path: /new_raw_data/venaza.vst.rds
+  path: /new_raw_data/venaza.dds.res.rds
+  type: lsc
+  species: human
+  summary: Time zero pheresis was taken from 3 patients, then collected again at 6hr
+    and 24hr post ven/aza treatment.
+  interactive_id: Venaza
+  t2g: t2g_hs
+  ID: ID
+  PCA_var: condition
+  PCA_shape: patient
+  shape_num: '3'
+  batch: 'yes'
+  batch_var: patient
+  dds_path: /data/venaza_dds.rds
+  qc_path: /data/Venaza_qc.rds
+  precomputed: no
 Lagadinou:
-  label: "Lagadinou et al., Cell Stem Cell, 2013"
-  vst_path: "/new_raw_data/EL.vst.rds"
-  path:  "/new_raw_data/EL.dds.res.rds"
-  type: "lsc"
-  species: "human"
-  summary: "BCL-2 inhibition targets oxidative phosphorylation and selectively eradicates quiescent human leukemia stem cells. ROS high and ROS low LSCs were either treated with 5ul of PTL or not treated before sequencing."
+  label: Lagadinou et al., Cell Stem Cell, 2013
+  vst_path: /new_raw_data/EL.vst.rds
+  path: /new_raw_data/EL.dds.res.rds
+  type: lsc
+  species: human
+  summary: BCL-2 inhibition targets oxidative phosphorylation and selectively eradicates
+    quiescent human leukemia stem cells. ROS high and ROS low LSCs were either treated
+    with 5ul of PTL or not treated before sequencing.
+  interactive_id: Lagadinou
+  t2g: t2g_hs
+  ID: Sample
+  PCA_var: Treatment
+  PCA_shape: Batch
+  shape_num: '3'
+  batch: 'yes'
+  batch_var: Batch
+  dds_path: /data/EL_AML_dds.rds
+  qc_path: /data/El_AML_qc.rds
+  precomputed: no
 Lee:
-  label: "Lee et al., Nature, 2018"
-  vst_path: "/new_raw_data/Lee_vst.rds"
-  path:  "/new_raw_data/Lee_res.rds"
-  type: "bulk"
-  species: "human"
-  summary: "Genome wide expression from 12 AML patient samples with either prior complete remission, or no prior complete remission."
+  label: Lee et al., Nature, 2018
+  vst_path: /new_raw_data/Lee_vst.rds
+  path: /new_raw_data/Lee_res.rds
+  type: bulk
+  species: human
+  summary: Genome wide expression from 12 AML patient samples with either prior complete
+    remission, or no prior complete remission.
+  interactive_id: Lee
+  t2g: t2g_hs
+  ID: SRR
+  PCA_var: prior_cr
+  PCA_shape: Patient
+  shape_num: '12'
+  batch: 'yes'
+  batch_var: Patient
+  dds_path: /data/Lee_dds.rds
+  qc_path: /data/Lee_qc.rds
+  precomputed: no
 TCGA_FAB:
-  label: "TCGA - FAB Subtypes"
-  vst_path: "/new_raw_data/TCGA_vst.rds"
-  path: "/new_raw_data/TCGA_res_FAB.rds"
-  type: "bulk"
-  species: "human"
+  label: TCGA - FAB Subtypes
+  vst_path: /new_raw_data/TCGA_vst.rds
+  path: /new_raw_data/TCGA_res_FAB.rds
+  type: bulk
+  species: human
+  interactive_id: TCGA_FAB
+  t2g: t2g_hs
+  ID: Sample
+  PCA_var: FAB
+  PCA_shape: 'no'
+  shape_num: '8'
+  batch: 'no'
+  batch_var: 'no'
+  precomputed: yes
+  qc_path: ~
+  metadata_path: /new_raw_data/TCGA_meta_FAB.rds
+  metadata_id: id
+  comparisons:
+    M0_vs_M5: m0_m5
+    M1_vs_M5: m1_m5
+    M2_vs_M5: m2_m5
+    M3_vs_M5: m3_m5
+    M4_vs_M5: m4_m5
+  gsea_rank: log2FoldChange
 TCGA_MC:
-  label: "TCGA - Expression by Karyotype"
-  vst_path: "/new_raw_data/TCGA_vst_mclass.rds"
-  path: "/new_raw_data/TCGA_res_mc.rds"
-  type: "bulk"
-  species: "human"
+  label: TCGA - Expression by Karyotype
+  vst_path: /new_raw_data/TCGA_vst_mclass.rds
+  path: /new_raw_data/TCGA_res_mc.rds
+  type: bulk
+  species: human
 TCGA_RAS:
-  label: "TCGA - RAS-wt vs. RAS-mut"
-  vst_path: "/new_raw_data/TCGA_vst_RAS.rds"
-  path: "/new_raw_data/TCGA_res_ras.rds"
-  type: "bulk"
-  species: "human"
+  label: TCGA - RAS-wt vs. RAS-mut
+  vst_path: /new_raw_data/TCGA_vst_RAS.rds
+  path: /new_raw_data/TCGA_res_ras.rds
+  type: bulk
+  species: human
+  interactive_id: TCGA_RAS
+  t2g: t2g_hs
+  ID: Sample
+  PCA_var: RAS_mut
+  PCA_shape: 'no'
+  shape_num: '2'
+  batch: 'no'
+  batch_var: 'no'
+  precomputed: yes
+  qc_path: ~
+  metadata_path: /new_raw_data/TCGA_meta.rds
+  metadata_id: id
+  gsea_rank: signed_sqrt_lrt
 TCGA_NPM1:
-  label: "TCGA - NPM1-wt vs. NPM1-mut"
-  vst_path: "/new_raw_data/TCGA_vst_NPM1.rds"
-  path: "/new_raw_data/TCGA_res_npm1.rds"
-  type: "bulk"
-  species: "human"
+  label: TCGA - NPM1-wt vs. NPM1-mut
+  vst_path: /new_raw_data/TCGA_vst_NPM1.rds
+  path: /new_raw_data/TCGA_res_npm1.rds
+  type: bulk
+  species: human
+  interactive_id: TCGA_NPM1
+  t2g: t2g_hs
+  ID: Sample
+  PCA_var: NPM1_mut
+  PCA_shape: 'no'
+  shape_num: '2'
+  batch: 'no'
+  batch_var: 'no'
+  precomputed: yes
+  qc_path: ~
+  metadata_path: /new_raw_data/TCGA_meta.rds
+  metadata_id: id
+  gsea_rank: signed_sqrt_lrt
 TCGA_RFAB:
-  label: "TCGA - FAB + RAS Mutation"
-  vst_path: "/new_raw_data/TCGA_vst_RFAB.rds"
-  path: "/new_raw_data/TCGA_res_RFAB.rds"
-  type: "bulk"
-  species: "human"
+  label: TCGA - FAB + RAS Mutation
+  vst_path: /new_raw_data/TCGA_vst_RFAB.rds
+  path: /new_raw_data/TCGA_res_RFAB.rds
+  type: bulk
+  species: human
 TCGA_NFAB:
-  label: "TCGA - FAB + NPM1 Mutation"
-  vst_path: "/new_raw_data/TCGA_vst_NFAB.rds"
-  path: "/new_raw_data/TCGA_res_NFAB.rds"
-  type: "bulk"
-  species: "human"
+  label: TCGA - FAB + NPM1 Mutation
+  vst_path: /new_raw_data/TCGA_vst_NFAB.rds
+  path: /new_raw_data/TCGA_res_NFAB.rds
+  type: bulk
+  species: human
 BEAT_AML:
-  label: "Beat AML"
-  vst_path: "/new_raw_data/BEAT_vst.rds"
-  path: "/new_raw_data/BEAT_dds.res.rds"
-  type: "bulk"
-  species: "human"
+  signature_score_path: /new_raw_data/BEAT_IRF2BP2_scores.rds
+  label: Beat AML
+  vst_path: /new_raw_data/BEAT_vst.rds
+  path: /new_raw_data/BEAT_dds.res.rds
+  type: bulk
+  species: human
+  interactive_id: BEAT_quantile
+  t2g: t2g_hs
+  ID: Sample
+  PCA_var: quantile
+  PCA_shape: 'no'
+  shape_num: '4'
+  batch: 'no'
+  batch_var: 'no'
+  precomputed: yes
+  qc_path: ~
+  metadata_path: /new_raw_data/BEAT_q.metadata.rds
+  metadata_id: .rownames
+  comparisons:
+    q2_vs_q1: q2_q1
+    q3_vs_q1: q3_q1
+    q4_vs_q1: q4_q1
+  gsea_rank: log2FoldChange
 BEAT_AML_FAB:
-  label: "Beat AML - FAB subtypes"
-  vst_path: "/new_raw_data/BEAT_vst.rds"
-  path: "/new_raw_data/BEAT_dds.res.FAB.rds"
-  type: "bulk"
-  species: "human"
+  signature_score_path: /new_raw_data/BEAT_IRF2BP2_scores.rds
+  label: Beat AML - FAB subtypes
+  vst_path: /new_raw_data/BEAT_vst.rds
+  path: /new_raw_data/BEAT_dds.res.FAB.rds
+  type: bulk
+  species: human
+  interactive_id: BEAT_FAB
+  t2g: t2g_hs
+  ID: Sample
+  PCA_var: FAB_BlastMorphology
+  PCA_shape: 'no'
+  shape_num: '7'
+  batch: 'no'
+  batch_var: 'no'
+  precomputed: yes
+  qc_path: ~
+  metadata_path: /new_raw_data/BEAT_FAB.metadata.rds
+  metadata_id: .rownames
+  comparisons:
+    M0_vs_M5: m0_m5
+    M1_vs_M5: m1_m5
+    M3_vs_M5: m3_m5
+    M4_vs_M5: m4_m5
+    M5b_vs_M5: m5b_m5
+  gsea_rank: log2FoldChange
 BEAT_AML_DR:
-  label: "Beat AML - De novo vs. Relpase"
-  vst_path: "/new_raw_data/BEAT_vst.rds"
-  path: "/new_raw_data/BEAT_dds.res.DR.rds"
-  type: "bulk"
-  species: "human"
+  signature_score_path: /new_raw_data/BEAT_IRF2BP2_scores.rds
+  label: Beat AML - De novo vs. Relpase
+  vst_path: /new_raw_data/BEAT_vst.rds
+  path: /new_raw_data/BEAT_dds.res.DR.rds
+  type: bulk
+  species: human
+  interactive_id: BEAT_Denovo.Relapse
+  t2g: t2g_hs
+  ID: Sample
+  PCA_var: Denovo.Relapse
+  PCA_shape: 'no'
+  shape_num: '4'
+  batch: 'no'
+  batch_var: 'no'
+  precomputed: yes
+  qc_path: ~
+  metadata_path: /new_raw_data/BEAT_DR.metadata.rds
+  metadata_id: .rownames
+  gsea_rank: signed_sqrt_lrt
 HPA:
-  label: "Human Protein Atlas"
-  vst_path: "/new_raw_data/HPA_vst.rds"
-  path: "/new_raw_data/HPA_res.rds"
-  type: "bulk"
-  species: "human"
-    
+  label: Human Protein Atlas
+  vst_path: /new_raw_data/HPA_vst.rds
+  path: /new_raw_data/HPA_res.rds
+  type: bulk
+  species: human
+  interactive_id: HPA
+  t2g: t2g_hs
+  ID: Sample
+  PCA_var: Tissue
+  PCA_shape: 'no'
+  batch: 'no'
+  batch_var: 'no'
+  precomputed: yes
+  qc_path: ~
+  metadata_path: /new_raw_data/HPA_metadata.rds
+  metadata_id: .rownames
+  shape_num: '32'
+KO_response:
+  label: 'KO response: sensitive vs. resistant'
+  vst_path: /new_raw_data/KO_response_vst_matrix.rds
+  path: /new_raw_data/KO_response_dds.res.rds
+  metadata_path: /new_raw_data/KO_response_metadata.rds
+  type: bulk
+  species: human
+  summary: Difference in KO response between sensitive and resistant samples. Supplied
+    differential-expression results; expression is shown by treatment and sensitivity.
+  interactive_id: KO_response
+  t2g: t2g_hs
+  ID: Sample
+  PCA_var: Treatment_Sensitivity
+  PCA_shape: Batch
+  shape_num: '3'
+  batch: 'no'
+  precomputed: yes
+  qc_path: ~
+T0:
+  label: 'T0: sensitive vs. resistant'
+  vst_path: /new_raw_data/T0_vst_matrix.rds
+  path: /new_raw_data/T0_dds.res.rds
+  metadata_path: /new_raw_data/T0_metadata.rds
+  type: bulk
+  species: human
+  summary: Sensitive versus resistant samples at T0. Supplied differential-expression
+    results and variance-stabilized expression.
+  interactive_id: T0
+  t2g: t2g_hs
+  ID: Sample
+  PCA_var: KO_Sensitivity
+  PCA_shape: Batch
+  shape_num: '3'
+  batch: 'no'
+  precomputed: yes
+  qc_path: ~
+  gsea_rank: signed_sqrt_lrt

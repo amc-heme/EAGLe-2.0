@@ -1,6 +1,6 @@
 ## GSEA tab module
 datasets <- 
-  read_yaml("./data.yaml")
+  load_analysis_config()
 raw_data <- getwd()
 t2g_hs <- read_rds(paste0(raw_data, "/data/t2g_hs.rds"))
 t2g_mm <- read_rds(paste0(raw_data, "/data/t2g_mm.rds"))
@@ -180,7 +180,7 @@ GSEA_UI <- function(id) {
           h4("Heatmap Specific Options"),
 
           #color palette choices for heatmap
-          colorUI(ns("colorHM1"), "Choose 1st color","#273F52"),
+          colorUI(ns("colorHM1"), "Choose 1st color","#2166AC"),
 
           colorUI(ns("colorHM2"), "Choose 2nd color", "#D53031"),
           #dropdown menu of specific pathways for heatmap, reactive to pathway sets dropdown
@@ -229,7 +229,7 @@ GSEA_UI <- function(id) {
           condition = "input.fgseaTable == true",
           shinycssloaders::withSpinner(
           DTOutput( #add loading spinners
-            ns("fgseaTable")
+            ns("fgseaResults")
           )
           )
         ),
@@ -358,6 +358,14 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
     }
     # render reactive text to explain to the user which variables are being shown for each dataset in the plots
     output$reactiveTextGSEA <- renderUI({
+      config <- datasets[[dataset_choice$user_dataset()]]
+      if (identical(config$gsea_rank, "signed_sqrt_lrt")) {
+        return(tags$p("GSEA uses the square root of the saved LRT statistic, signed by the saved log2 fold change, for ", dataset_choice$user_PW(), "."))
+      }
+      if (identical(config$gsea_rank, "log2FoldChange")) {
+        return(tags$p("GSEA ranks genes by the saved log2 fold changes for ",
+                      dataset_choice$user_PW(), "; the saved pairwise summary does not include test statistics."))
+      }
       data_text <-
         text_generator(dataset_choice$user_dataset(), dataset_choice$user_PW())
       text <-
@@ -392,7 +400,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       pathwaygsea <- gsea_file_values[[input$filechoice]]
       fgsea::fgsea(pathways = pathwaygsea,
                    stats = ranks(),
-                   nproc = 10)
+                   BPPARAM = BiocParallel::SerialParam())
     })
     #reactive expression to run fgsea and load results table for each chosen pathway
     gseafile <-
@@ -420,14 +428,11 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       })
     
     #table output for Res tables
-    output$fgseaTable <- renderDataTable({
-      if (input$fgseaTable == TRUE) {
-        gsea_table <- gseafile()
-        DT::datatable(gsea_table,
-                     options = list(scrollX = TRUE))
-      }
+    output$fgseaResults <- DT::renderDT({
+      req(isTRUE(input$fgseaTable))
+      DT::datatable(gseafile(), options = list(scrollX = TRUE))
     })
-    
+
     #### GSEA pathway ranks waterfall plot ####
     #call in singlecolor_palette module for plot
     colorWF <- 
@@ -493,6 +498,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       colorServer("color7")
     output$GSEAMoustache <- renderGirafe(
       {
+        req(isTRUE(input$moustache))
         if (input$moustache == TRUE) {
           #color object reactive to user input from plalette choice
           colors <- c("no" = 'grey', "yes" = colorM())
@@ -577,7 +583,7 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
     v_col <- colorServer("color7")
     
     output$GSEAvolcano <- renderGirafe ({
-      
+      req(isTRUE(input$volcanoplot))
       req(pathway.genes())
       
       #reactive title for volcano based on specific pathway choice
@@ -610,46 +616,23 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
   
     #GSEA heatmap ####
     
-    #check for NULL output
+    gsea_heatmap_data <- reactive({
+      req(DE_res$dds_res(), input$filechoice, input$pathwaylistht)
+      pathway <- gsea_file_values[[input$filechoice]][[input$pathwaylistht]]
+      req(!is.null(pathway))
+      prepare_expression_heatmap(vst(), DE_res$dds_res(), min_lfc = 0.5, genes = pathway)
+    })
+
     null_check <- reactive({
       req(input$heatmap)
-      req(DE_res$dds_res())
-      req(input$pathwaylistht)
-      
-      res.hmg <- DE_res$dds_res() 
-      
-      #filter DE object for significance
-      dds.sig <- res.hmg %>%
-        dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
-      
-      if(nrow(dds.sig) == 0) {
-        return(TRUE)
-      }
-      
-      pathwaygsea4 <- gsea_file_values[[input$filechoice]]
-      
-      
-      p2 <- unlist((pathwaygsea4[names(pathwaygsea4) %in% input$pathwaylistht]))
-      
-      #filter vst counts matrix for genes in pathway
-      vst.myc <- vst() %>%
-        mutate(., pathwayheat = ifelse(ext_gene_ensembl %in% p2, 'yes', 'no')) %>%
-        dplyr::filter(pathwayheat == "yes") %>% 
-        dplyr::rename("Gene" = "ext_gene_ensembl")
-      
-      #create matrix for heatmap using genes in significant DE that are in pathway of choice
-      vstgsea.mat <- vst.myc %>%
-        dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
-        distinct(Gene, .keep_all = TRUE) %>% 
-        column_to_rownames(var = "Gene") %>%
-        dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
-        as.matrix()
-      
-      if(nrow(vstgsea.mat) == 0) {
-        return(TRUE)
-      }
-      
-      return(FALSE)
+      nrow(gsea_heatmap_data()) == 0
+    })
+
+    gsea_heatmap_layout <- reactive({
+      values <- gsea_heatmap_data()
+      req(nrow(values) > 0)
+      condition <- datasets[[dataset_choice$user_dataset()]]$PCA_var
+      expression_heatmap_layout(values, dataset_dds(), condition)
     })
     #reactive expression for selected pathway choice for heatmap
     observe({
@@ -657,16 +640,12 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       req(input$heatmap)
       
        pathwaygsea3 <- gsea_file_values[[input$filechoice]]
-      # fgseaRes3 <-
-      #   fgsea::fgsea(pathways = pathwaygsea3,
-      #                stats = ranks(),
-      #                nproc = 10)
       fgseaResTidy3 <- fgseaRes() %>%
         as_tibble() %>%
         dplyr::select(., -pval,-log2err, -ES) %>% 
         arrange(desc(NES))
       
-      top.up <- as.character(fgseaResTidy3[1,1])
+      top.up <- if (nrow(fgseaResTidy3)) fgseaResTidy3$pathway[1] else names(pathwaygsea3)[1]
       
       updateSelectizeInput(session,
                            "pathwaylistht",
@@ -681,119 +660,16 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
       colorServer("colorHM2")
     #interactive heatmap must be wrapped in a reactive expression
     output$htgsea <- renderPlotly({
-      if(null_check()) {
-        return(NULL)
-      }
-      
-      req(input$heatmap)
-      req(DE_res$dds_res())
-      req(input$pathwaylistht)
-      
-      #determine which column needed for cluster annotations based on model choice 
-      if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
-        dds.file <- dataset_dds()
-        cond_var <- dataset_choice$user_model()
-        meta <- colData(dds.file)
-        cond <- meta[, cond_var]
-        cond <- factor(cond, levels = levels(cond))
-      } else {
-        dds.file <- dataset_dds()
-        meta <- colData(dds.file)
-        cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
-        cond <- meta[, cond_var]
-        cond <- factor(cond, levels = levels(cond))
-      }
-      
-      res.hmg <- DE_res$dds_res() 
-
-      #filter DE object for significance
-      dds.sig <- res.hmg %>%
-        dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
-
-      pathwaygsea4 <- gsea_file_values[[input$filechoice]]
-     
-      
-      p2 <- unlist((pathwaygsea4[names(pathwaygsea4) %in% input$pathwaylistht]))
-
-      #filter vst counts matrix for genes in pathway
-      vst.myc <- vst() %>%
-        mutate(., pathwayheat = ifelse(ext_gene_ensembl %in% p2, 'yes', 'no')) %>%
-        dplyr::filter(pathwayheat == "yes") %>% 
-        dplyr::rename("Gene" = "ext_gene_ensembl")
-      
-      #create matrix for heatmap using genes in significant DE that are in pathway of choice
-      vstgsea.mat <- vst.myc %>%
-        dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
-        distinct(Gene, .keep_all = TRUE) %>% 
-        column_to_rownames(var = "Gene") %>%
-        dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
-        as.matrix()
-
-      #transform and scale and transform back
-      vstgsea.mat <- t(scale(t(vstgsea.mat)))
-      
-      #color function buliding a colorRamp palette based on user input from palette choices
-      colors.hmg <- c(colorGHeat(), "white", colorGHeat2())
-      
-      #need to create a ComplexHeatmap to get column and row orders to match in 
-      #plotly heatmap for image downloads
-      ht1 = ComplexHeatmap::Heatmap(
-        vstgsea.mat,
-        name = "z scaled expression",
-        col = colors.hmg,
-        row_names_gp = gpar(fontsize = 12),
-        column_names_gp = gpar(fontsize = 12),
-        column_title = NULL,
-        row_title = "DEGs in Pathway"
-      ) 
-      
-      ht1_res <- draw(ht1)
-      row1_order <- row_order(ht1_res) #extract row order for plotly heatmap
-      col_order <- column_order(ht1_res) #extract column order for plotly heatmap
-      
-      #data frame for top annotation
-      top_anno <- data.frame(
-        Condition = cond
-      )
-      
-      #rename colnames to match the condition variable of each dataset
-      colnames(top_anno) <- cond_var
-      #retain column order from ComplexHeatmap
-      top_anno <- top_anno[col_order, , drop = FALSE]
-      
-      #if there is only one gene in the pathway, need to remove col_side_colors
-      #to load the heatmap because heatmaply tries to match nrow to the number 
-      # of samples and throws an error
-     if(ncol(vstgsea.mat) == 1){
-       ht <- heatmaply(
-         vstgsea.mat,
-         row_text_angle = 45,
-         height = 600,
-         width = 600,
-         colors = colors.hmg,
-         dendrogram = "none",
-         showticklabels = c(FALSE, FALSE)
-       )
-     } else{
-       ht <- heatmaply(
-         vstgsea.mat,
-         row_text_angle = 45,
-         height = 600,
-         width = 600,
-         colors = colors.hmg,
-         dendrogram = "none",
-         col_side_colors = top_anno,
-         showticklabels = c(FALSE, FALSE)
-       )
-     }
-      ht
+      if (null_check()) return(NULL)
+      req(colorGHeat(), colorGHeat2())
+      interactive_expression_heatmap(gsea_heatmap_layout(), c(colorGHeat(), "white", colorGHeat2()))
     })
- 
+
     output$htwarnGSEA <- renderUI({
       if(null_check()){
         div(
           style = "text-align: center; font-size: 18px; color: red;",
-       "No significant DEGs found in pathway"
+       "No significant DEGs with variable expression found in pathway"
         )
       } else {
         return(NULL)
@@ -957,189 +833,11 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
             dpi = 100,
             bg ="#FFFFFF"
           )
-        } else if(input$plot_type == "Heatmap" & input$file_type == "png"){
-          #determine which column needed for cluster annotations based on model choice 
-          if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
-            dds.file <- dataset_dds()
-            cond_var <- dataset_choice$user_model()
-            meta <- colData(dds.file)
-            cond <- meta[, cond_var]
-            cond <- factor(cond, levels = levels(cond))
-          } else {
-            dds.file <- dataset_dds()
-            meta <- colData(dds.file)
-            cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
-            cond <- meta[, cond_var]
-            cond <- factor(cond, levels = levels(cond))
-          }
-          #generate dds results table 
-          res.hmg <- DE_res$dds_res() 
-          
-          dds.sig <- res.hmg %>%
-            dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
-          
-          if(nrow(dds.sig) == 0) {
-            return(NULL)
-          }
-          
-          pathwaygsea4 <- gsea_file_values[[input$filechoice]]
-          
-          
-          p2 <- unlist((pathwaygsea4[names(pathwaygsea4) %in% input$pathwaylistht]))
-          
-          
-          #filter vst counts matrix for genes in pathway
-          vst.myc <- vst() %>%
-            mutate(., pathwayheat = ifelse(ext_gene_ensembl %in% p2, 'yes', 'no')) %>%
-            dplyr::filter(pathwayheat == "yes") %>% 
-            dplyr::rename("Gene" = "ext_gene_ensembl")
-          
-          vstgsea.mat <- vst.myc %>%
-            dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
-            distinct(Gene, .keep_all = TRUE) %>% 
-            column_to_rownames(var = "Gene") %>%
-            dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
-            as.matrix()
-          
-          vstgsea.mat <- t(scale(t(vstgsea.mat)))
-          
-          #create a colorRamp function based on user input in color palette choices
-          colors.hmg <- colorRamp2(c(-2, 0, 2), c(colorGHeat(), "white", colorGHeat2()))
-          
-          #create a color vector for column annotations
-          col_anno <- setNames(c("blue", "red")[seq_along(levels(cond))], levels(cond))
-          
-          #annotation data frame from sample condition
-          top_anno <- data.frame(
-            Condition = cond
-          )
-          
-          #dynamicallly update condition variable based on dataset
-          annotation_label <- cond_var
-          
-          top_annotation <- ComplexHeatmap::HeatmapAnnotation(
-            df = top_anno,
-            col = list(Condition = col_anno),
-            annotation_legend_param = list(
-              title = annotation_label, 
-              title_gp = gpar(fontsize = 12),
-              labels_gp = gpar(fontsize = 12)
-            ),
-            annotation_height = unit(5, "mm"),
-            annotation_width = unit(5, "mm"),
-            show_annotation_name = FALSE
-          )
-          
-          ht = ComplexHeatmap::Heatmap(
-            vstgsea.mat,
-            name = "z scaled expression",
-            col = colors.hmg,
-            row_names_gp = gpar(fontsize = 12),
-            column_names_gp = gpar(fontsize = 12),
-            column_title = NULL,
-            row_title = "DEGs in Pathway",
-            top_annotation = top_annotation,
-            heatmap_legend_param = list(
-              title_gp = gpar(fontsize = 12),
-              labels_gp = gpar(fontsize = 12)
-            )
-          ) 
-          png(file, width = 780, height = 780, units = "px", pointsize = 60)
-          # draw heatmap object
-          draw(ht)
-          dev.off()
-        } else if(input$plot_type == "Heatmap" & input$file_type == "svg"){
-          #determine which column needed for cluster annotations based on model choice 
-          if(dataset_choice$user_dataset() %in% c("Ye_16", "Venaza", "Lagadinou", "BEAT", "TCGA")){
-            dds.file <- dataset_dds()
-            cond_var <- dataset_choice$user_model()
-            meta <- colData(dds.file)
-            cond <- meta[, cond_var]
-            cond <- factor(cond, levels = levels(cond))
-          } else {
-            dds.file <- dataset_dds()
-            meta <- colData(dds.file)
-            cond_var <- datasets[[dataset_choice$user_dataset()]]$PCA_var
-            cond <- meta[, cond_var]
-            cond <- factor(cond, levels = levels(cond))
-          }
-          #generate dds results table 
-          res.hmg <- DE_res$dds_res() 
-          
-          dds.sig <- res.hmg %>%
-            dplyr::filter(padj < 0.05 & abs(`log2FoldChange`) >= 0.5)
-          
-          if(nrow(dds.sig) == 0) {
-            return(NULL)
-          }
-          
-          pathwaygsea4 <- gsea_file_values[[input$filechoice]]
-          
-          
-          p2 <- unlist((pathwaygsea4[names(pathwaygsea4) %in% input$pathwaylistht]))
-          
-          
-          #filter vst counts matrix for genes in pathway
-          vst.myc <- vst() %>%
-            mutate(., pathwayheat = ifelse(ext_gene_ensembl %in% p2, 'yes', 'no')) %>%
-            dplyr::filter(pathwayheat == "yes") %>% 
-            dplyr::rename("Gene" = "ext_gene_ensembl")
-          
-          vstgsea.mat <- vst.myc %>%
-            dplyr::filter(., ensembl_gene_id %in% dds.sig$ensembl_gene_id) %>%
-            distinct(Gene, .keep_all = TRUE) %>% 
-            column_to_rownames(var = "Gene") %>%
-            dplyr::select(.,-ensembl_gene_id, -pathwayheat) %>%
-            as.matrix()
-          
-          vstgsea.mat <- t(scale(t(vstgsea.mat)))
-          
-          #create a colorRamp function based on user input in color palette choices
-          colors.hmg <- colorRamp2(c(-2, 0, 2), c(colorGHeat(), "white", colorGHeat2()))
-          
-          #create a color vector for column annotations
-          col_anno <- setNames(c("blue", "red")[seq_along(levels(cond))], levels(cond))
-          
-          #annotation data frame from sample condition
-          top_anno <- data.frame(
-            Condition = cond
-          )
-          
-          #dynamicallly update condition variable based on dataset
-          annotation_label <- cond_var
-          
-          top_annotation <- ComplexHeatmap::HeatmapAnnotation(
-            df = top_anno,
-            col = list(Condition = col_anno),
-            annotation_legend_param = list(
-              title = annotation_label, 
-              title_gp = gpar(fontsize = 12),
-              labels_gp = gpar(fontsize = 12)
-            ),
-            annotation_height = unit(5, "mm"),
-            annotation_width = unit(5, "mm"),
-            show_annotation_name = FALSE
-          )
-          
-          ht = ComplexHeatmap::Heatmap(
-            vstgsea.mat,
-            name = "z scaled expression",
-            col = colors.hmg,
-            row_names_gp = gpar(fontsize = 12),
-            column_names_gp = gpar(fontsize = 12),
-            column_title = NULL,
-            row_title = "DEGs in Pathway",
-            top_annotation = top_annotation,
-            heatmap_legend_param = list(
-              title_gp = gpar(fontsize = 12),
-              labels_gp = gpar(fontsize = 12)
-            )
-          ) 
-          svglite::svglite(file, width = 8, height = 7, pointsize = 30)
-          # draw heatmap object
-          draw(ht)
-          dev.off()
-          } else {
+        } else if(input$plot_type == "Heatmap") {
+          req(nrow(gsea_heatmap_data()) > 0, colorGHeat(), colorGHeat2())
+          colors <- c(colorGHeat(), "white", colorGHeat2())
+          save_expression_heatmap(file, input$file_type, gsea_heatmap_layout(), colors, "DEGs in Pathway")
+        } else {
             fwrite(gseafile(),file, sep=",", sep2=c("", " ", ""))
           }
        }

@@ -13,7 +13,7 @@ dataset_genes <-
       dataset <- read_rds(paste0(raw_data_p, datasets[[data_key]]$vst_path))
    
       # Extract/return gene names
-      dataset$ensembl_gene_id
+      if (is.matrix(dataset)) rownames(dataset) else dataset$ensembl_gene_id
     }
   )
 

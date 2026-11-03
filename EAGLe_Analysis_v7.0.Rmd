@@ -101,7 +101,7 @@ tcga.vstNFAB <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_vst_NFAB.rds"))
 lsc_datasets <- c("Jordan_M0_M5", "Ye_16", "Ye_20", "Venaza", "Lagadinou")
 lsc_selected <- !any(lsc_datasets %in% selected_datasets)
 
-bulk_datasets <- c("TCGA_FAB", "TCGA_RFAB", "TCGA_NFAB", "TCGA_MC", "TCGA_RAS", "TCGA_NPM1", "BEAT_AML_FAB", "BEAT_AML", "BEAT_AML_DR", "Lee")
+bulk_datasets <- c("TCGA_FAB", "TCGA_RFAB", "TCGA_NFAB", "TCGA_MC", "TCGA_RAS", "TCGA_NPM1", "BEAT_AML_FAB", "BEAT_AML", "BEAT_AML_DR", "Lee", "KO_response", "T0")
 bulk_selected <- !any(bulk_datasets %in% selected_datasets)
 
 TCGA_datasets <- c("TCGA_FAB", "TCGA_RFAB", "TCGA_NFAB", "TCGA_MC", "TCGA_RAS", "TCGA_NPM1")
@@ -2171,3 +2171,46 @@ cat('**Figure 2.4. Expression of gene of interest in normal tissue.** Box plots 
 _[1. Uhlen, et al. (2015). "Tissue-based map of the human proteome." Science 347:6220.](https://www.science.org/doi/10.1126/science.1260419)_')
 ```
 
+
+
+```{r ko-report-helper, include=FALSE}
+plot_ko_report <- function(dataset_key) {
+  config <- datasets[[dataset_key]]
+  values <- read_rds(paste0(raw_data, config$vst_path))
+  meta <- read_rds(paste0(raw_data, config$metadata_path))
+  res <- read_rds(paste0(raw_data, config$path))
+  if (!gene %in% rownames(values)) return(invisible(NULL))
+  meta <- meta[match(colnames(values), meta$Sample), , drop = FALSE]
+  meta$value <- as.numeric(values[gene, ])
+  group <- if (dataset_key == "KO_response") "Treatment_Sensitivity" else "KO_Sensitivity"
+  meta$condition <- factor(meta[[group]])
+  gene_res <- res[res$ensembl_gene_id == gene, c("padj", "log2FoldChange"), drop = FALSE]
+  print(ggplot(meta, aes(x = condition, y = value, fill = condition)) +
+          geom_boxplot(outlier.shape = NA) +
+          geom_jitter(width = 0.15, alpha = 0.6) +
+          scale_fill_viridis_d() + theme_light() +
+          labs(title = gene_symbol, subtitle = config$label,
+               x = NULL, y = "Variance Stabilized Data") +
+          theme(axis.text.x = element_text(angle = 45, hjust = 1),
+                legend.position = "none"))
+  if (nrow(gene_res)) {
+    cat("\n\nSupplied differential-expression results for the selected gene:\n\n")
+    print(knitr::kable(gene_res, row.names = FALSE))
+    cat("\n\n")
+  }
+}
+```
+
+```{r ko-response-report, echo=FALSE, message=FALSE, warning=FALSE, results='asis', eval="KO_response" %in% selected_datasets, fig.width=8, fig.height=6}
+cat('## 2.5. Difference in KO response between sensitive and resistant samples\n\n')
+cat(datasets$KO_response$summary, "\n\n")
+plot_ko_report("KO_response")
+cat('Box plots show the median and interquartile range; points show individual samples. Expression is grouped by treatment and KO sensitivity. The supplied adjusted p-value and log2 fold change describe the difference in KO response between sensitive and resistant samples, rather than separate tests between each plotted group.\n\n')
+```
+
+```{r t0-report, echo=FALSE, message=FALSE, warning=FALSE, results='asis', eval="T0" %in% selected_datasets, fig.width=8, fig.height=6}
+cat('## 2.6. Sensitive versus resistant samples at T0\n\n')
+cat(datasets$T0$summary, "\n\n")
+plot_ko_report("T0")
+cat('Box plots show the median and interquartile range; points show individual T0 samples. The table shows the supplied adjusted p-value and log2 fold change for sensitive versus resistant samples at T0.\n\n')
+```

@@ -21,8 +21,6 @@ colorUI <- function(id, label, value) {
 colorServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     singlecolor <- reactive({
-      print("value of color palette within color module")
-      print(input$colorpallete)
       input$colorpalette
     })
 
