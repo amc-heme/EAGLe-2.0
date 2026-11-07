@@ -196,7 +196,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
                          "Ye_20",
                          "Venaza",
                          "Lagadinou",
-                         "Lee", "KO_response", "T0")) {
+                         "Lee", "KO_response", "T0", "drug_effect")) {
         color_v <- datasets.pca[[dataset]]$PCA_var
         meta <- colData(dds)
         color_var <- meta[, color_v]
@@ -224,7 +224,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
                          "Ye_20",
                          "Venaza",
                          "Lagadinou",
-                         "Lee", "KO_response", "T0")) {
+                         "Lee", "KO_response", "T0", "drug_effect")) {
         shape_v <- datasets.pca[[dataset]]$PCA_shape
         meta <- colData(dds)
         shape_var <- meta[, shape_v]
@@ -252,7 +252,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
                          "Ye_20",
                          "Venaza",
                          "Lagadinou",
-                         "Lee", "KO_response", "T0")) {
+                         "Lee", "KO_response", "T0", "drug_effect")) {
         color_l <- datasets.pca[[dataset]]$PCA_var
       } else if (dataset %in% c(
         "BEAT_quantile",
@@ -273,7 +273,7 @@ QC_Server <- function(id, dataset_dds, dataset_choice, qc_table, reset_trigger) 
                          "Ye_20",
                          "Venaza",
                          "Lagadinou",
-                         "Lee", "KO_response", "T0")) {
+                         "Lee", "KO_response", "T0", "drug_effect")) {
         shape_l <- datasets.pca[[dataset]]$PCA_shape
       } else if (dataset %in% c(
         "BEAT_quantile",

@@ -288,6 +288,9 @@ DE_Server <- function(id, data_species, dataset_dds, dataset_choice, reset_trigg
   
   # render reactive text to explain to the user which variables are being shown for each dataset in the plots
   output$reactiveText <- renderUI({
+    if (dataset_choice$user_dataset() == "drug_effect") {
+      return(tags$p(datasets$drug_effect$summary, style = "font-size: 18px;"))
+    }
     data_text <-
       text_generator(dataset_choice$user_dataset(), dataset_choice$user_PW())
     if(dataset_choice$user_PW() =="LRT" & !(dataset_choice$user_dataset() %in% 

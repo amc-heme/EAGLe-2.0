@@ -323,3 +323,23 @@ T0:
   precomputed: yes
   qc_path: ~
   gsea_rank: signed_sqrt_lrt
+
+drug_effect:
+  label: 'Drug-induced changes: KO vs. T0 (all samples)'
+  vst_path: /new_raw_data/drug_effect_vst_matrix.rds
+  path: /new_raw_data/drug_effect_dds.res.rds
+  metadata_path: /new_raw_data/drug_effect_metadata.rds
+  type: bulk
+  species: human
+  summary: Drug-induced changes (KO versus T0) across sensitive and resistant samples
+    combined, using all 44 samples (22 KO and 22 T0), with KO sensitivity included
+    as a covariate in the supplied differential-expression model.
+  interactive_id: drug_effect
+  t2g: t2g_hs
+  ID: Sample
+  PCA_var: Treatment
+  PCA_shape: Batch
+  shape_num: '3'
+  batch: 'no'
+  precomputed: yes
+  qc_path: ~

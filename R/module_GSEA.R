@@ -359,6 +359,12 @@ GSEA_Server <- function(id, dataset_choice, DE_res, reset_trigger, vst, dataset_
     # render reactive text to explain to the user which variables are being shown for each dataset in the plots
     output$reactiveTextGSEA <- renderUI({
       config <- datasets[[dataset_choice$user_dataset()]]
+      if (dataset_choice$user_dataset() == "drug_effect") {
+        return(tagList(
+          tags$p(config$summary),
+          tags$p("GSEA uses the supplied treatment-effect statistics. Positive NES indicates enrichment toward KO; negative NES indicates enrichment toward T0.")
+        ))
+      }
       if (identical(config$gsea_rank, "signed_sqrt_lrt")) {
         return(tags$p("GSEA uses the square root of the saved LRT statistic, signed by the saved log2 fold change, for ", dataset_choice$user_PW(), "."))
       }

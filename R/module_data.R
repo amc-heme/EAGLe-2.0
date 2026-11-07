@@ -34,7 +34,8 @@ data_UI <- function(id) {
                          
                          "Lee et al, 2018" = "Lee",
                          "KO response: sensitive vs. resistant" = "KO_response",
-                         "T0: sensitive vs. resistant" = "T0"), selected = "Cancer_Discovery"
+                         "T0: sensitive vs. resistant" = "T0",
+                         "Drug-induced changes: KO vs. T0 (all samples)" = "drug_effect"), selected = "Cancer_Discovery"
           ),
           selectizeInput(
             ns("DEmodel"),
@@ -81,9 +82,8 @@ data_Server <- function(id) {
   moduleServer(id, function(input, output, session){
     shinyjs::disable("runDE1")
     output$Data_text <- renderUI({
-      if (input$datainput %in% c("KO_response", "T0")) {
+      if (input$datainput %in% c("KO_response", "T0", "drug_effect")) {
         tags$p(dataset_config2[[input$datainput]]$summary,
-               "The supplied analysis is precomputed; no new DE test is run.",
                style = "font-size: 18px;")
       } else if (input$datainput == "Cancer_Discovery") {
         intro <- paste(
@@ -320,6 +320,7 @@ data_Server <- function(id) {
         "TCGA_NPM1" = "wt_vs_mut",
         "KO_response" = "KO response in sensitive_vs_KO response in resistant",
         "T0" = "Sensitive_vs_Resistant",
+        "drug_effect" = c("KO vs. T0 across all samples (adjusted for sensitivity)" = "KO_vs_T0"),
         default = character(0)
       )
       }

@@ -101,7 +101,7 @@ tcga.vstNFAB <- read_rds(paste0(raw_data, "/new_raw_data/TCGA_vst_NFAB.rds"))
 lsc_datasets <- c("Jordan_M0_M5", "Ye_16", "Ye_20", "Venaza", "Lagadinou")
 lsc_selected <- !any(lsc_datasets %in% selected_datasets)
 
-bulk_datasets <- c("TCGA_FAB", "TCGA_RFAB", "TCGA_NFAB", "TCGA_MC", "TCGA_RAS", "TCGA_NPM1", "BEAT_AML_FAB", "BEAT_AML", "BEAT_AML_DR", "Lee", "KO_response", "T0")
+bulk_datasets <- c("TCGA_FAB", "TCGA_RFAB", "TCGA_NFAB", "TCGA_MC", "TCGA_RAS", "TCGA_NPM1", "BEAT_AML_FAB", "BEAT_AML", "BEAT_AML_DR", "Lee", "KO_response", "T0", "drug_effect")
 bulk_selected <- !any(bulk_datasets %in% selected_datasets)
 
 TCGA_datasets <- c("TCGA_FAB", "TCGA_RFAB", "TCGA_NFAB", "TCGA_MC", "TCGA_RAS", "TCGA_NPM1")
@@ -2182,7 +2182,7 @@ plot_ko_report <- function(dataset_key) {
   if (!gene %in% rownames(values)) return(invisible(NULL))
   meta <- meta[match(colnames(values), meta$Sample), , drop = FALSE]
   meta$value <- as.numeric(values[gene, ])
-  group <- if (dataset_key == "KO_response") "Treatment_Sensitivity" else "KO_Sensitivity"
+  group <- config$PCA_var
   meta$condition <- factor(meta[[group]])
   gene_res <- res[res$ensembl_gene_id == gene, c("padj", "log2FoldChange"), drop = FALSE]
   print(ggplot(meta, aes(x = condition, y = value, fill = condition)) +
@@ -2213,4 +2213,12 @@ cat('## 2.6. Sensitive versus resistant samples at T0\n\n')
 cat(datasets$T0$summary, "\n\n")
 plot_ko_report("T0")
 cat('Box plots show the median and interquartile range; points show individual T0 samples. The table shows the supplied adjusted p-value and log2 fold change for sensitive versus resistant samples at T0.\n\n')
+```
+
+
+```{r drug-effect-report, echo=FALSE, message=FALSE, warning=FALSE, results='asis', eval="drug_effect" %in% selected_datasets, fig.width=8, fig.height=6}
+cat('## 2.7. Drug-induced changes: KO versus T0 across all samples\n\n')
+cat(datasets$drug_effect$summary, "\n\n")
+plot_ko_report("drug_effect")
+cat('Box plots show the median and interquartile range; points show individual samples. Expression is grouped by treatment with sensitive and resistant samples combined. The table shows the supplied adjusted p-value and log2 fold change for the KO versus T0 comparison from the differential-expression model with KO sensitivity included as a covariate.\n\n')
 ```

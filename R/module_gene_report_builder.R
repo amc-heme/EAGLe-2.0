@@ -106,6 +106,8 @@ geneModuleUI <- function(id) {
                 h6(dataset_config2$KO_response$summary),
                 h6("T0: sensitive vs. resistant"),
                 h6(dataset_config2$T0$summary),
+                h6(dataset_config2$drug_effect$label),
+                h6(dataset_config2$drug_effect$summary),
                 h6("TCGA: "),
                 h6("The Cancer Genome Atlas (TCGA) project published gene expression profiles of 151 primary AML patients 
              along with their mutational profiles and clinical characteristics. This section of analysis shows gene expression 
